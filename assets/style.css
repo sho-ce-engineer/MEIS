@@ -1,0 +1,17 @@
+:root {
+  --bg-gray: #f4f5fa;
+  --sub-color-navy1: #1e293b;
+  --sub-color-navygray: #5e5669;
+  --clickable-table-hover: #d7d7d7;
+}
+* {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+h2 {
+  color: #333;
+}
+p {
+  color: #333;
+}
