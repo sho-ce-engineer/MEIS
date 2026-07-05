@@ -32,6 +32,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.2",
     "@types/bcrypt": "^5.0.2",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.7",
