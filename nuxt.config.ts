@@ -36,7 +36,7 @@ export default defineNuxtConfig({
   build: {
     transpile: ['vuetify'],
   },
-  modules: ['@sidebase/nuxt-auth', 'nuxt-nodemailer', 'nuxt-security'],
+  modules: ['@sidebase/nuxt-auth', 'nuxt-security'],
   auth: {
     globalAppMiddleware: true,
     provider: {
@@ -52,14 +52,6 @@ export default defineNuxtConfig({
       pages: {
         login: '/',
       },
-    },
-  },
-  nodemailer: {
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    auth: {
-      user: process.env.EMAIL_SERVICE_USER,
-      pass: process.env.EMAIL_SERVICE_PASS,
     },
   },
   security: {
