@@ -35,7 +35,6 @@
     "@types/bcrypt": "^5.0.2",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.10"
   }
 }
