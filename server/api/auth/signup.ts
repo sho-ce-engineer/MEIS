@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt';
 import pool from '~/server/config/db';
 import { format } from 'date-fns';
 import { toRomaji } from 'wanakana';
+import { Resend } from 'resend';
+
+//ToDo：将来Verify式のメアド認証を導入する
 
 // ユーザーID生成関数
 const generateUserId = (facilityCode: string): string => {
@@ -24,6 +27,27 @@ interface InvitationRecord {
   facility_name: string;
   user_role: string;
   expires_at: Date;
+}
+
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+  console.error('[signup] RESEND_API_KEY is not configured');
+  throw createError({
+    statusCode: 500,
+    statusText: 'Internal Server Error',
+    data: { message: 'サーバー設定エラー' },
+  });
+}
+const resend = new Resend(resendApiKey);
+
+const ownerEmail = process.env.EMAIL_SERVICE_OWNER;
+if (!ownerEmail) {
+  console.error('[signup] EMAIL_SERVICE_OWNER is not configured');
+  throw createError({
+    statusCode: 500,
+    statusText: 'Internal Server Error',
+    data: { message: 'サーバー設定エラー' },
+  });
 }
 
 export default defineEventHandler(async (event) => {
@@ -189,12 +213,11 @@ export default defineEventHandler(async (event) => {
     await pool.query(updateInviteQuery, [inviteCode]);
   }
 
-  // メール送信処理は将来的にservice層に切り出す予定だが、現状はここで直接nodemailerを使用して送信する
-  const nodemailer = useNodeMailer();
+  // メール送信処理は将来的にservice層に切り出す予定だが、現状はここで直接resendを使用して送信する
   // ユーザー向けのメールオプション
   const userMailOptions = {
-    from: process.env.EMAIL_SERVICE_USER,
-    to: user_email,
+    from: `MEIS|医療機器点検記録管理アプリ<${process.env.EMAIL_SERVICE_USER}>`,
+    to: [user_email],
     subject: 'クラウド医療機器管理M.E.I.S｜ユーザー登録が完了しました！',
     text: `こんにちは、${user_name}さん！\n
         \n
@@ -204,14 +227,14 @@ export default defineEventHandler(async (event) => {
         \n
         - メールアドレス: ${user_email} \n
         - パスワード: ＊＊セキュリティ保護の観点から伏せています＊＊ \n
-        - URL: https://meis.coils-net.net/ \n
+        - URL: ${process.env.FRONTEND_URL} \n
         \n
         ログイン後は、さまざまな機能をご利用いただけます。ぜひご活用ください。\n
         \n
         何かご不明な点や問題がございましたら、お気軽にお問い合わせください。\n
         \n
         これからもM.E.I.Sをよろしくお願いいたします。\n
-        M.E.I.S開発チーム URL: https://meis.coils-net.net/\n
+        M.E.I.S開発チーム URL: ${process.env.FRONTEND_URL}\n
         ※万が一このメールに身に覚えがない場合は、削除いただくようお願いいたします。`,
     html: `<p>こんにちは、${user_name}さん！</p>
         <p>このたびは【M.E.I.S｜クラウド医療機器管理サービス】にご登録いただき、誠にありがとうございます。あなたのアカウントが無事に作成されました。</p>
@@ -219,20 +242,20 @@ export default defineEventHandler(async (event) => {
         <ul>
             <li><strong>メールアドレス:</strong> ${user_email}</li>
             <li><strong>パスワード：</strong>＊＊セキュリティ保護の観点から伏せています＊＊</li>
-            <li><strong>URL：</strong> <a href="https://meis.coils-net.net/">https://meis.coils-net.net/</a></li>
+            <li><strong>URL：</strong> <a href="${process.env.FRONTEND_URL}">${process.env.FRONTEND_URL}</a></li>
         </ul>
         <p>ログイン後は、さまざまな機能をご利用いただけます。ぜひご活用ください。</p>
         <p>何かご不明な点や問題がございましたら、お気軽にお問い合わせください。</p>
         <p>これからもM.E.I.Sをよろしくお願いいたします。</p>
         <p>M.E.I.S開発チーム<br>
-        <a href="https://meis.coils-net.net/">https://meis.coils-net.net/</a></p>
+        <a href="${process.env.FRONTEND_URL}">${process.env.FRONTEND_URL}</a></p>
         <p>※万が一このメールに身に覚えがない場合は、削除いただくようお願いいたします。</p>`,
   };
 
   // 管理者向けのメールオプション
   const adminMailOptions = {
-    from: process.env.EMAIL_SERVICE_USER,
-    to: process.env.EMAIL_SERVICE_OWNER,
+    from: `MEIS|医療機器点検記録管理アプリ<${process.env.EMAIL_SERVICE_USER}>`,
+    to: [ownerEmail],
     subject: 'M.E.I.Sに新規ユーザーが登録されました',
     text: `新規ユーザーが登録されました！\n
         \n
@@ -251,10 +274,15 @@ export default defineEventHandler(async (event) => {
   };
 
   try {
-    await nodemailer.sendMail(userMailOptions);
-    await nodemailer.sendMail(adminMailOptions);
-  } catch (mailError) {
-    console.error('[signup]メール送信エラー:', mailError);
+    await resend.emails.send(userMailOptions);
+  } catch (userMailError) {
+    console.error('[signup]登録ユーザー宛メール送信エラー:', userMailError);
+  }
+
+  try {
+    await resend.emails.send(adminMailOptions);
+  } catch (adminMailError) {
+    console.error('[signup]管理者宛メール送信エラー:', adminMailError);
     // メール送信に失敗してもユーザー登録は成功とする
   }
 
