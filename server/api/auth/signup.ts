@@ -32,22 +32,15 @@ interface InvitationRecord {
 const resendApiKey = process.env.RESEND_API_KEY;
 if (!resendApiKey) {
   console.error('[signup] RESEND_API_KEY is not configured');
-  throw createError({
-    statusCode: 500,
-    statusText: 'Internal Server Error',
-    data: { message: 'サーバー設定エラー' },
-  });
+  throw new Error('[signup] RESEND_API_KEY is not configured');
 }
+
 const resend = new Resend(resendApiKey);
 
 const ownerEmail = process.env.EMAIL_SERVICE_OWNER;
 if (!ownerEmail) {
   console.error('[signup] EMAIL_SERVICE_OWNER is not configured');
-  throw createError({
-    statusCode: 500,
-    statusText: 'Internal Server Error',
-    data: { message: 'サーバー設定エラー' },
-  });
+  throw new Error('[signup] EMAIL_SERVICE_OWNER is not configured');
 }
 
 export default defineEventHandler(async (event) => {
