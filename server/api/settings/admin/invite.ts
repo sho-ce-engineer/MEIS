@@ -1,5 +1,6 @@
 import pool from '~/server/config/db';
 import crypto from 'crypto';
+import { Resend } from 'resend';
 
 // TODO: 現状はSMTPへの送信成功までしか検知できない。
 // 不達検知の必要性など、今後検討
@@ -41,18 +42,26 @@ const createInvitation = async (
   return result.rows[0];
 };
 
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+  console.error('[invite] RESEND_API_KEY is not configured');
+  throw new Error('[invite] RESEND_API_KEY is not configured');
+}
+const resend = new Resend(resendApiKey);
+
 export default defineEventHandler(async (event) => {
   // 認証ユーザーの取得
   const authenticatedUser = getAuthenticatedUser(event);
 
   // 認証情報からデータを取得
   const authenticatedUserQuery = `
-    SELECT
-      facility_code,
-      facility_name,
-      user_role
-    FROM users
-    WHERE user_id = $1
+  SELECT
+    u.facility_code,
+    f.facility_name,
+    u.user_role
+  FROM users u
+  LEFT JOIN facilities f ON u.facility_code = f.facility_code
+  WHERE u.user_id = $1
   `;
 
   const AuthenticatedUserFacilityResult = await pool.query(
@@ -109,10 +118,9 @@ export default defineEventHandler(async (event) => {
   const frontendUrl = process.env.FRONTEND_URL;
   const inviteUrl = `${frontendUrl}/?invite=${inviteCode}`;
 
-  const nodemailer = useNodeMailer();
   const mailOptions = {
-    from: process.env.EMAIL_SERVICE_USER,
-    to: email,
+    from: `MEIS|医療機器点検記録管理アプリ<${process.env.EMAIL_SERVICE_USER}>`,
+    to: [email],
     subject: 'クラウド医療機器管理M.E.I.S｜施設から招待状が届きました！',
     text: `クラウド医療機器管理サービス< M.E.I.S >\n\nこんにちは！\nあなたに ${facilityName} の${invited_by_user_name}様から招待状が発行されました！以下のリンクからサインアップして、業務を開始してください！\n\n${inviteUrl}\n\n※万が一このメールに身に覚えがない場合は、削除いただくようお願いいたします。`,
     html: `<p>クラウド医療機器管理サービス &lt; M.E.I.S &gt;</p>
@@ -145,7 +153,7 @@ export default defineEventHandler(async (event) => {
 
   // メール送信
   try {
-    await nodemailer.sendMail(mailOptions);
+    await resend.emails.send(mailOptions);
   } catch (error) {
     console.error('[invite] Mail error:', error);
     throw createError({
