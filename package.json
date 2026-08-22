@@ -16,6 +16,8 @@
     "@sidebase/nuxt-auth": "^0.10.0",
     "bcrypt": "^5.1.1",
     "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.2",
     "jsonwebtoken": "^9.0.2",
     "nuxt": "^3.13.0",
     "nuxt-security": "^2.0.0",
@@ -28,13 +30,15 @@
     "vuedraggable": "^4.1.0",
     "vuetify": "^3.7.0-beta.1",
     "wanakana": "^5.3.1",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.2",
+    "@biomejs/biome": "^2.5.2",
     "@types/bcrypt": "^5.0.2",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/pg": "^8.11.10"
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.10"
   }
 }
