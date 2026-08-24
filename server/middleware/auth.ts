@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   '/api/auth/signup',
   '/api/auth/logout',
   '/api/auth/session',
+  '/api/v2/',
 ];
 
 export default defineEventHandler((event: H3Event) => {
