@@ -4,6 +4,7 @@ import type { Variables } from '~/server/v2/auth';
 
 const getUnreadCountMock = vi.fn();
 const listAnnouncementsMock = vi.fn();
+const markAsReadMock = vi.fn();
 
 vi.mock('./unread-count/service', () => ({
   getUnreadCount: (...args: unknown[]) => getUnreadCountMock(...args),
@@ -11,6 +12,10 @@ vi.mock('./unread-count/service', () => ({
 
 vi.mock('./announcements/service', () => ({
   listAnnouncements: (...args: unknown[]) => listAnnouncementsMock(...args),
+}));
+
+vi.mock('./already-read/service', () => ({
+  markAsRead: (...args: unknown[]) => markAsReadMock(...args),
 }));
 
 async function buildAppWithJwtPayload(userId: string) {
@@ -147,5 +152,85 @@ describe('notifications router: /announcements', () => {
 
     expect(res.status).toBe(400);
     expect(listAnnouncementsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('notifications router: /already-read', () => {
+  const validBody = {
+    is_viewed: true,
+    notificationId: '1',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    markAsReadMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200で{success: true}を返す', async () => {
+    markAsReadMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/already-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ success: true });
+    expect(markAsReadMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      announcementId: '1',
+      isViewed: true,
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    markAsReadMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/already-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: notificationsRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/notifications', notificationsRouter);
+
+    const res = await app.request('/notifications/already-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(markAsReadMock).not.toHaveBeenCalled();
+  });
+
+  it('notificationIdが数値文字列でない場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/already-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, notificationId: 'not-a-number' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(markAsReadMock).not.toHaveBeenCalled();
   });
 });
