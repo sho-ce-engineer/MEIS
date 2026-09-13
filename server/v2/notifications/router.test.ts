@@ -1,0 +1,69 @@
+import { Hono } from 'hono';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Variables } from '~/server/v2/auth';
+
+const getUnreadCountMock = vi.fn();
+
+vi.mock('./unread-count/service', () => ({
+  getUnreadCount: (...args: unknown[]) => getUnreadCountMock(...args),
+}));
+
+async function buildAppWithJwtPayload(userId: string) {
+  const { default: notificationsRouter } = await import('./router');
+
+  const app = new Hono<{ Variables: Variables }>()
+    .use('*', async (c, next) => {
+      c.set('jwtPayload', { user_id: userId });
+      await next();
+    })
+    .route('/notifications', notificationsRouter);
+
+  return app;
+}
+
+describe('notifications router: /unread-count', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    getUnreadCountMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・DB正常応答の場合、200でunreadCountを返す', async () => {
+    getUnreadCountMock.mockResolvedValue(3);
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/unread-count');
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ unreadCount: 3 });
+    expect(getUnreadCountMock).toHaveBeenCalledWith('user-1');
+  });
+
+  it('認証済み・DBエラーの場合、500になる', async () => {
+    getUnreadCountMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/unread-count');
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: notificationsRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/notifications', notificationsRouter);
+
+    const res = await app.request('/notifications/unread-count');
+
+    expect(res.status).toBe(401);
+    expect(getUnreadCountMock).not.toHaveBeenCalled();
+  });
+});
