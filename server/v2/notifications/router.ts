@@ -4,6 +4,8 @@ import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
 import { listAnnouncementsRequestSchema } from '~/server/v2/notifications/announcements/domain';
 import { listAnnouncements } from '~/server/v2/notifications/announcements/service';
+import { markAsReadRequestSchema } from '~/server/v2/notifications/already-read/domain';
+import { markAsRead } from '~/server/v2/notifications/already-read/service';
 import { getUnreadCount } from './unread-count/service';
 
 const app = new Hono<{ Variables: Variables }>();
@@ -42,6 +44,31 @@ app
         console.error('[announcements]Error fetching data:', error);
         throw new HTTPException(500, {
           message: 'データの取得に失敗しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/already-read',
+    zValidator('json', markAsReadRequestSchema),
+    async (c) => {
+      const { user_id: userId } = c.get('jwtPayload');
+      const { is_viewed, notificationId } = c.req.valid('json');
+
+      try {
+        await markAsRead({
+          userId,
+          announcementId: notificationId,
+          isViewed: is_viewed,
+        });
+        return c.json({ success: true });
+      } catch (error) {
+        console.error(
+          '[already-read]Error updating or inserting notification:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '通知の更新中にエラーが発生しました。',
         });
       }
     },
