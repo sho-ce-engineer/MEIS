@@ -2,6 +2,10 @@
   "name": "m.e.i.s",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=12"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
