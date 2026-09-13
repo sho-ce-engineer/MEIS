@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { announcements, userNotifications } from '~/server/db/schema';
@@ -56,7 +56,7 @@ export async function listAnnouncements({
   const formattedRows = rows.map((row) => ({
     ...row,
     createdAt: row.createdAt
-      ? format(parseISO(row.createdAt), 'yyyy-MM-dd')
+      ? formatInTimeZone(row.createdAt, 'Asia/Tokyo', 'yyyy-MM-dd')
       : row.createdAt,
   }));
 

@@ -1,5 +1,5 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import pool from '~/server/config/db';
-import { parseISO, format } from 'date-fns';
 
 interface InspectionHistoryRequestBody {
   page?: number;
@@ -167,22 +167,10 @@ export default defineEventHandler(async (event) => {
     const result = await pool.query(query, queryParams);
 
     const formattedResults = result.rows.map((row) => {
-      let inspectionDate;
-      if (row.inspection_date == null) {
-        inspectionDate = null;
-      } else if (typeof row.inspection_date === 'string') {
-        inspectionDate = !isNaN(Date.parse(row.inspection_date))
-          ? row.inspection_date
-          : null;
-      } else if (row.inspection_date instanceof Date) {
-        inspectionDate = row.inspection_date.toISOString();
-      } else {
-        inspectionDate = null;
-      }
       return {
         ...row,
-        inspection_date: inspectionDate
-          ? format(parseISO(inspectionDate), 'yyyy-MM-dd')
+        inspection_date: row.inspection_date
+          ? formatInTimeZone(row.inspection_date, 'Asia/Tokyo', 'yyyy-MM-dd')
           : null,
       };
     });

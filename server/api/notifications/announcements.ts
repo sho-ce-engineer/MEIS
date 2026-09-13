@@ -1,5 +1,5 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import pool from '~/server/config/db';
-import { format, parseISO } from 'date-fns';
 
 interface AnnouncementRequestBody {
   page?: number;
@@ -44,16 +44,12 @@ export default defineEventHandler(async (event) => {
   try {
     const result = await pool.query(query, queryParams);
     // 日付を整形
-    const formattedCreatedAt = result.rows.map((row) => {
-      const createdAtDate =
-        typeof row.created_at === 'string'
-          ? row.created_at
-          : row.created_at.toISOString();
-      return {
-        ...row,
-        created_at: format(parseISO(createdAtDate), 'yyyy-MM-dd'),
-      };
-    });
+    const formattedCreatedAt = result.rows.map((row) => ({
+      ...row,
+      created_at: row.created_at
+        ? formatInTimeZone(row.created_at, 'Asia/Tokyo', 'yyyy-MM-dd')
+        : null,
+    }));
     const totalQuery = 'SELECT COUNT(*) FROM announcements';
     const totalResult = await pool.query(totalQuery);
     return {

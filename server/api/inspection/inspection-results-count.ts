@@ -42,9 +42,9 @@ export default defineEventHandler(async (event) => {
 
   try {
     const result = await pool.query(
-      `SELECT COUNT(DISTINCT inspection_date) FROM inspection_results 
-            WHERE facility_code = $1 
-            AND inspection_date::date = $2`,
+      `SELECT COUNT(DISTINCT inspection_date) FROM inspection_results
+            WHERE facility_code = $1
+            AND (inspection_date AT TIME ZONE 'Asia/Tokyo')::date = $2::date`,
       [facilityCode, jpyDate],
     );
     const count = parseInt(result.rows[0].count, 10);

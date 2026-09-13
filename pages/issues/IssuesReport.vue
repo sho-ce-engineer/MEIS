@@ -494,7 +494,8 @@ const filterCriteria = reactive<IssuesFilterCriteria>({
 });
 
 const sortbyReportedDate = (date: Date | undefined) => {
-  filterCriteria.reported_date = changeUTCtoJPN(date);
+  // JSTの日付でフィルタするため、ブラウザのローカル日付(yyyy-MM-dd)を送る
+  filterCriteria.reported_date = date ? format(date, 'yyyy-MM-dd') : '';
 };
 
 //機器IDのオートコンプリート
@@ -545,6 +546,7 @@ const fetchEquipmentDetail = async (equipmentId: string) => {
   }
 };
 
+import { format } from 'date-fns';
 //バーコードリーダー機能
 //今後機能変更予定
 import { QrcodeStream } from 'vue-qrcode-reader';
@@ -631,9 +633,8 @@ const handleUpdateOptions = (options: {
 
 //新規報告ダイアログ
 const issuesReportDialog = ref(false);
-import { changeUTCtoJPN } from '@/utils/changeUTCtoJPN';
 const select_reported_date = (date: Date | undefined) => {
-  newReport.value.reported_date = changeUTCtoJPN(date);
+  newReport.value.reported_date = date ? date.toISOString() : '';
 };
 
 const newReport = ref<NewIssueItem>({

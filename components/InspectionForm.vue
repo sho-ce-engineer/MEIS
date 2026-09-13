@@ -256,12 +256,7 @@ const confirmationDialog = ref(false);
 
 //点検日取得
 const date = ref(new Date());
-const inspection_date = () => {
-  const selectDate = date.value;
-  const japanDate = new Date(selectDate.getTime() + 9 * 60 * 60 * 1000);
-  const yyyymmddhhmmss = japanDate.toISOString().slice(0, 19);
-  return yyyymmddhhmmss;
-};
+const inspection_date = () => date.value.toISOString();
 
 // Form validation rules
 const rules = {

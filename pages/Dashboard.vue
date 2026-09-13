@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { changeUTCtoJPN } from '~/utils/changeUTCtoJPN';
+import { format } from 'date-fns';
 
 const loading = ref(false);
 const disabled = ref(false);
@@ -67,8 +67,8 @@ const inspectionTotal = ref<number | null>(null);
 const getInspectionCount = async () => {
   loading.value = true;
   disabled.value = true;
-  const nowDate = new Date();
-  const jpyDate = changeUTCtoJPN(nowDate);
+  // JSTの「今日」で件数を数えるため、ブラウザのローカル日付(yyyy-MM-dd)を送る
+  const jpyDate = format(new Date(), 'yyyy-MM-dd');
   try {
     const response = await $fetch<{ count: number }>(
       '/api/inspection/inspection-results-count',
