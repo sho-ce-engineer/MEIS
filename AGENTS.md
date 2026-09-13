@@ -41,7 +41,8 @@ Vue側（frontend）のテストは現時点で未整備。
 
 ## Commit & Push
 - 指示もなく勝手にCommitやPushをしない。明示的に「Commitして」と言われた時のみ実行する。
-- 基本的に、1 commit = 1 issue とする
+- 基本的に、1 PR(push) = 1 issue とする
+- 実装とテストは別Commitとする
 - Commit時のタイトルは、Conventional Commitsに準拠する
     - 例）<type>(対象レイヤー、apiやwebなど): < 日本語で一行で完結にまとめる >
     - 例）大きなPJのissueの場合は、「<type>(対象レイヤー/PJの略):~」
