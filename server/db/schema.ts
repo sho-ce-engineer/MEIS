@@ -27,12 +27,14 @@ export const facilities = pgTable(
       'active',
     ),
     contractState: varchar('contract_state', { length: 50 }),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [unique('facilities_facility_code_key').on(table.facilityCode)],
 );
@@ -47,12 +49,14 @@ export const users = pgTable(
     userEmail: varchar('user_email', { length: 255 }).notNull(),
     facilityCode: varchar('facility_code', { length: 50 }),
     userRole: varchar('user_role', { length: 50 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
     password: varchar({ length: 255 }).notNull(),
   },
   (table) => [
@@ -109,17 +113,22 @@ export const inspectionResults = pgTable(
     inspectionItemId: varchar('inspection_item_id', { length: 50 }),
     equipmentSerialNumber: varchar('equipment_serial_number', { length: 100 }),
     equipmentId: varchar('equipment_id', { length: 50 }),
-    inspectionDate: timestamp('inspection_date', { mode: 'string' }).notNull(),
+    inspectionDate: timestamp('inspection_date', {
+      withTimezone: true,
+      mode: 'string',
+    }).notNull(),
     userId: varchar('user_id', { length: 50 }),
     facilityCode: varchar('facility_code', { length: 50 }),
     result: varchar({ length: 50 }).notNull(),
     resultNotes: text('result_notes'),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     foreignKey({
@@ -158,10 +167,11 @@ export const invitations = pgTable(
     facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     userRole: varchar('user_role', { length: 50 }).default('general'),
     invitedByUserId: varchar('invited_by_user_id', { length: 50 }),
-    expiresAt: timestamp('expires_at', { mode: 'string' }),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [unique('invitations_invite_code_key').on(table.inviteCode)],
 );
@@ -182,12 +192,14 @@ export const equipmentLedger = pgTable(
       'active',
     ),
     equipmentNotes: text('equipment_notes'),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
     equipmentMaintenanceContract: varchar('equipment_maintenance_contract', {
       length: 255,
     }),
@@ -216,9 +228,10 @@ export const userNotifications = pgTable(
     userId: varchar('user_id', { length: 50 }),
     announcementId: integer('announcement_id'),
     isViewed: boolean('is_viewed').default(false),
-    viewedAt: timestamp('viewed_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    viewedAt: timestamp('viewed_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     foreignKey({
@@ -237,16 +250,19 @@ export const announcements = pgTable('announcements', {
     .default('normal')
     .notNull(),
   isActive: boolean('is_active').default(true),
-  startsAt: timestamp('starts_at', { mode: 'string' }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  expiresAt: timestamp('expires_at', { mode: 'string' }),
-  createdAt: timestamp('created_at', { mode: 'string' }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
+  startsAt: timestamp('starts_at', {
+    withTimezone: true,
+    mode: 'string',
+  }).default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+    mode: 'string',
+  }).default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp('updated_at', {
+    withTimezone: true,
+    mode: 'string',
+  }).default(sql`CURRENT_TIMESTAMP`),
   audience: varchar({ length: 50 }).default('all').notNull(),
 });
 
@@ -254,7 +270,10 @@ export const issues = pgTable(
   'issues',
   {
     issueId: varchar('issue_id', { length: 50 }).primaryKey().notNull(),
-    reportedDate: timestamp('reported_date', { mode: 'string' }).notNull(),
+    reportedDate: timestamp('reported_date', {
+      withTimezone: true,
+      mode: 'string',
+    }).notNull(),
     reporter: varchar({ length: 255 }).notNull(),
     facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     equipmentId: varchar('equipment_id', { length: 50 }).notNull(),
@@ -285,12 +304,14 @@ export const employees = pgTable(
     facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     employeeCode: integer('employee_code').notNull(),
     department: varchar({ length: 100 }),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     foreignKey({
@@ -313,16 +334,24 @@ export const equipmentLoans = pgTable(
     facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     equipmentId: varchar('equipment_id', { length: 50 }).notNull(),
     loanLocation: varchar('loan_location', { length: 255 }).notNull(),
-    loanDate: timestamp('loan_date', { mode: 'string' }).notNull(),
+    loanDate: timestamp('loan_date', {
+      withTimezone: true,
+      mode: 'string',
+    }).notNull(),
     loanedBy: integer('loaned_by').notNull(),
-    returnDate: timestamp('return_date', { mode: 'string' }),
+    returnDate: timestamp('return_date', {
+      withTimezone: true,
+      mode: 'string',
+    }),
     returnedBy: integer('returned_by'),
-    createdAt: timestamp('created_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
-    updatedAt: timestamp('updated_at', { mode: 'string' }).default(
-      sql`CURRENT_TIMESTAMP`,
-    ),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).default(sql`CURRENT_TIMESTAMP`),
     returnLocation: varchar('return_location', { length: 255 }).default(
       sql`NULL`,
     ),

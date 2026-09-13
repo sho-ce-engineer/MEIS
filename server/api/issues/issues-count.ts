@@ -30,9 +30,10 @@ export default defineEventHandler(async (event) => {
 
   try {
     const result = await pool.query<{ count: string }>(
-      `SELECT COUNT(reported_date) FROM issues 
-            WHERE facility_code = $1 
-            AND reported_date::date = CURRENT_DATE`,
+      `SELECT COUNT(reported_date) FROM issues
+            WHERE facility_code = $1
+            AND (reported_date AT TIME ZONE 'Asia/Tokyo')::date
+              = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Tokyo')::date`,
       [facilityCode],
     );
     const count = parseInt(result.rows[0].count, 10);

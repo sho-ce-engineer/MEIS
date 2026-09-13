@@ -1,5 +1,5 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import pool from '~/server/config/db';
-import { parseISO, format } from 'date-fns';
 
 interface issuesRequestBody {
   page?: number;
@@ -21,7 +21,7 @@ const addFilterConditions = (
   for (const [key, value] of Object.entries(filteredCriteria)) {
     if (!ALLOWED_FILTER_KEYS.includes(key)) continue;
     if (DATE_COLUMNS.includes(key)) {
-      query += ` AND ${key}::DATE = $${params.length + 1}`;
+      query += ` AND (${key} AT TIME ZONE 'Asia/Tokyo')::DATE = $${params.length + 1}`;
       params.push(value);
     } else {
       query += ` AND ${key} ILIKE $${params.length + 1}`;
@@ -121,27 +121,12 @@ export default defineEventHandler(async (event) => {
     const result = await pool.query(query, queryParams);
 
     // 日付フォーマットの整形
-    const formattedReportedDate = result.rows.map((row) => {
-      let reportedDate;
-      if (row.reported_date == null) {
-        reportedDate = null;
-      } else if (typeof row.reported_date === 'string') {
-        reportedDate = !isNaN(Date.parse(row.reported_date))
-          ? row.reported_date
-          : null;
-      } else if (row.reported_date instanceof Date) {
-        reportedDate = row.reported_date.toISOString();
-      } else {
-        reportedDate = null;
-      }
-
-      return {
-        ...row,
-        reported_date: reportedDate
-          ? format(parseISO(reportedDate), 'yyyy-MM-dd')
-          : null,
-      };
-    });
+    const formattedReportedDate = result.rows.map((row) => ({
+      ...row,
+      reported_date: row.reported_date
+        ? formatInTimeZone(row.reported_date, 'Asia/Tokyo', 'yyyy-MM-dd')
+        : null,
+    }));
 
     // データの合計数を取得
     let totalQuery = `SELECT COUNT(*) FROM issues WHERE facility_code = $1`;
