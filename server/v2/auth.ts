@@ -4,7 +4,7 @@ import type { JwtVariables } from 'hono/jwt';
 import { jwt } from 'hono/jwt';
 import pool from '~/server/config/db';
 
-type Variables = JwtVariables<{ user_id: string }> & {
+export type Variables = JwtVariables<{ user_id: string }> & {
   facilityCode: string;
 };
 
