@@ -3,9 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const getUnreadCountMock = vi.fn();
+const listAnnouncementsMock = vi.fn();
 
 vi.mock('./unread-count/service', () => ({
   getUnreadCount: (...args: unknown[]) => getUnreadCountMock(...args),
+}));
+
+vi.mock('./announcements/service', () => ({
+  listAnnouncements: (...args: unknown[]) => listAnnouncementsMock(...args),
 }));
 
 async function buildAppWithJwtPayload(userId: string) {
@@ -65,5 +70,82 @@ describe('notifications router: /unread-count', () => {
 
     expect(res.status).toBe(401);
     expect(getUnreadCountMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('notifications router: /announcements', () => {
+  const validBody = {
+    page: 1,
+    itemsPerPage: 10,
+    sortRow: 'created_at',
+    sortOrder: 'desc',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    listAnnouncementsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200でlistAnnouncementsの結果を返す', async () => {
+    listAnnouncementsMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ items: [], total: 0 });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    listAnnouncementsMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: notificationsRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/notifications', notificationsRouter);
+
+    const res = await app.request('/notifications/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(listAnnouncementsMock).not.toHaveBeenCalled();
+  });
+
+  it('不正なsortRowを送ると400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, sortRow: 'not-a-valid-column' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(listAnnouncementsMock).not.toHaveBeenCalled();
   });
 });
