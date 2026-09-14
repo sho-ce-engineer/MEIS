@@ -5,6 +5,7 @@ import type { Variables } from '~/server/v2/auth';
 const listInspectionTypesMock = vi.fn();
 const deleteInspectionResultsMock = vi.fn();
 const countInspectionResultsMock = vi.fn();
+const deleteInspectionItemMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
@@ -18,6 +19,11 @@ vi.mock('./results-delete/service', () => ({
 vi.mock('./results-count/service', () => ({
   countInspectionResults: (...args: unknown[]) =>
     countInspectionResultsMock(...args),
+}));
+
+vi.mock('./item-delete/service', () => ({
+  deleteInspectionItem: (...args: unknown[]) =>
+    deleteInspectionItemMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -257,5 +263,82 @@ describe('inspection router: DELETE /results', () => {
 
     expect(res.status).toBe(400);
     expect(deleteInspectionResultsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('inspection router: DELETE /items', () => {
+  const validBody = {
+    inspection_item_id: 'FAC001InspItemId20260914000000R123456',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    deleteInspectionItemMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    deleteInspectionItemMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(deleteInspectionItemMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      inspectionItemId: validBody.inspection_item_id,
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    deleteInspectionItemMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: inspectionRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/inspection', inspectionRouter);
+
+    const res = await app.request('/inspection/items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(deleteInspectionItemMock).not.toHaveBeenCalled();
+  });
+
+  it('inspection_item_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inspection_item_id: '' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(deleteInspectionItemMock).not.toHaveBeenCalled();
   });
 });
