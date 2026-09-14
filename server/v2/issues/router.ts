@@ -7,10 +7,34 @@ import { addIssue } from '~/server/v2/issues/add/service';
 import { getTodayIssuesCount } from '~/server/v2/issues/count/service';
 import { deleteIssueRequestSchema } from '~/server/v2/issues/delete/domain';
 import { deleteIssue } from '~/server/v2/issues/delete/service';
+import { listIssuesRequestSchema } from '~/server/v2/issues/list/domain';
+import { listIssues } from '~/server/v2/issues/list/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
 app
+  .post('/list', zValidator('json', listIssuesRequestSchema), async (c) => {
+    const facilityCode = c.get('facilityCode');
+    const { page, itemsPerPage, sortRow, sortByOrder, filterCriteria } =
+      c.req.valid('json');
+
+    try {
+      const result = await listIssues({
+        page,
+        itemsPerPage,
+        sortRow,
+        sortByOrder,
+        filterCriteria,
+        facilityCode,
+      });
+      return c.json(result);
+    } catch (error) {
+      console.error('[issues/list]Error fetching list:', error);
+      throw new HTTPException(500, {
+        message: 'データの取得に失敗しました。',
+      });
+    }
+  })
   .post('/', zValidator('json', addIssueRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
     const {
