@@ -5,6 +5,7 @@ import type { Variables } from '~/server/v2/auth';
 const addIssueMock = vi.fn();
 const deleteIssueMock = vi.fn();
 const getTodayIssuesCountMock = vi.fn();
+const listIssuesMock = vi.fn();
 
 vi.mock('./add/service', () => ({
   addIssue: (...args: unknown[]) => addIssueMock(...args),
@@ -16,6 +17,10 @@ vi.mock('./delete/service', () => ({
 
 vi.mock('./count/service', () => ({
   getTodayIssuesCount: (...args: unknown[]) => getTodayIssuesCountMock(...args),
+}));
+
+vi.mock('./list/service', () => ({
+  listIssues: (...args: unknown[]) => listIssuesMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -30,6 +35,92 @@ async function buildAppWithFacilityCode(facilityCode: string) {
 
   return app;
 }
+
+describe('issues router: POST /list', () => {
+  const validBody = {
+    page: 1,
+    itemsPerPage: 10,
+    sortRow: 'reported_date',
+    sortByOrder: 'desc',
+    filterCriteria: {},
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    listIssuesMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200でlistIssuesの結果を返す', async () => {
+    listIssuesMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ items: [], total: 0 });
+    expect(listIssuesMock).toHaveBeenCalledWith({
+      page: 1,
+      itemsPerPage: 10,
+      sortRow: 'reported_date',
+      sortByOrder: 'desc',
+      filterCriteria: {},
+      facilityCode: 'FAC001',
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    listIssuesMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: issuesRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/issues', issuesRouter);
+
+    const res = await app.request('/issues/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(listIssuesMock).not.toHaveBeenCalled();
+  });
+
+  it('不正なsortRowを送ると400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, sortRow: 'not-a-valid-column' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(listIssuesMock).not.toHaveBeenCalled();
+  });
+});
 
 describe('issues router: POST /', () => {
   const validBody = {
