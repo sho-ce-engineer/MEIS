@@ -2,34 +2,58 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
+import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results-delete/domain';
+import { deleteInspectionResults } from '~/server/v2/inspection/results-delete/service';
 import { listInspectionTypesRequestSchema } from '~/server/v2/inspection/types/domain';
 import { listInspectionTypes } from '~/server/v2/inspection/types/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
-app.post(
-  '/types',
-  zValidator('json', listInspectionTypesRequestSchema),
-  async (c) => {
-    const facilityCode = c.get('facilityCode');
-    const { equipmentModel } = c.req.valid('json');
+app
+  .post(
+    '/types',
+    zValidator('json', listInspectionTypesRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentModel } = c.req.valid('json');
 
-    try {
-      const result = await listInspectionTypes({
-        facilityCode,
-        equipmentModel,
-      });
-      return c.json(result);
-    } catch (error) {
-      console.error(
-        '[inspection/types]Error fetching inspection types:',
-        error,
-      );
-      throw new HTTPException(500, {
-        message: 'サーバーエラーが発生しました',
-      });
-    }
-  },
-);
+      try {
+        const result = await listInspectionTypes({
+          facilityCode,
+          equipmentModel,
+        });
+        return c.json(result);
+      } catch (error) {
+        console.error(
+          '[inspection/types]Error fetching inspection types:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました',
+        });
+      }
+    },
+  )
+  .delete(
+    '/results',
+    zValidator('json', deleteInspectionResultsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { result_ids: resultIds } = c.req.valid('json');
+
+      try {
+        await deleteInspectionResults({ facilityCode, resultIds });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/results-delete]Error occurred while deleting Inspection Result Data.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検結果の削除処理中にエラーが発生しました。',
+        });
+      }
+    },
+  );
 
 export default app;
