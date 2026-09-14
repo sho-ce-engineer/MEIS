@@ -2,6 +2,8 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
+import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/item-delete/domain';
+import { deleteInspectionItem } from '~/server/v2/inspection/item-delete/service';
 import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/results-count/domain';
 import { countInspectionResults } from '~/server/v2/inspection/results-count/service';
 import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results-delete/domain';
@@ -74,6 +76,27 @@ app
         );
         throw new HTTPException(500, {
           message: '点検結果の削除処理中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .delete(
+    '/items',
+    zValidator('json', deleteInspectionItemRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { inspection_item_id: inspectionItemId } = c.req.valid('json');
+
+      try {
+        await deleteInspectionItem({ facilityCode, inspectionItemId });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/item-delete]Error occurred while deleting Inspection Result Data.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の削除処理中にエラーが発生しました。',
         });
       }
     },
