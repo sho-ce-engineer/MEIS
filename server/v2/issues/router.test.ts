@@ -3,9 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const deleteIssueMock = vi.fn();
+const getTodayIssuesCountMock = vi.fn();
 
 vi.mock('./delete/service', () => ({
   deleteIssue: (...args: unknown[]) => deleteIssueMock(...args),
+}));
+
+vi.mock('./count/service', () => ({
+  getTodayIssuesCount: (...args: unknown[]) => getTodayIssuesCountMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -20,6 +25,53 @@ async function buildAppWithFacilityCode(facilityCode: string) {
 
   return app;
 }
+
+describe('issues router: GET /count', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    getTodayIssuesCountMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・DB正常応答の場合、200でcountを返す', async () => {
+    getTodayIssuesCountMock.mockResolvedValue(3);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/count');
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ count: 3 });
+    expect(getTodayIssuesCountMock).toHaveBeenCalledWith('FAC001');
+  });
+
+  it('認証済み・DBエラーの場合、500になる', async () => {
+    getTodayIssuesCountMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/count');
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: issuesRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/issues', issuesRouter);
+
+    const res = await app.request('/issues/count');
+
+    expect(res.status).toBe(401);
+    expect(getTodayIssuesCountMock).not.toHaveBeenCalled();
+  });
+});
 
 describe('issues router: DELETE /', () => {
   const validBody = { issue_id: 'FAC001IssueId20260914000000R123456' };
