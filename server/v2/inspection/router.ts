@@ -4,6 +4,8 @@ import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
 import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/item-delete/domain';
 import { deleteInspectionItem } from '~/server/v2/inspection/item-delete/service';
+import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/item-details/domain';
+import { listInspectionItemDetails } from '~/server/v2/inspection/item-details/service';
 import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items-save-sorted/domain';
 import { saveSortedInspectionItems } from '~/server/v2/inspection/items-save-sorted/service';
 import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/results-count/domain';
@@ -122,6 +124,38 @@ app
           message: '点検項目の並び順の保存中にエラーが発生しました。',
         });
       }
+    },
+  )
+  .post(
+    '/items/details',
+    zValidator('json', listInspectionItemDetailsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { inspectionItemIds } = c.req.valid('json');
+
+      let rows: Awaited<ReturnType<typeof listInspectionItemDetails>>;
+      try {
+        rows = await listInspectionItemDetails({
+          facilityCode,
+          inspectionItemIds,
+        });
+      } catch (error) {
+        console.error(
+          '[inspection/item-details]Error occurred while fetching inspection item details:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の詳細の取得中にエラーが発生しました。',
+        });
+      }
+
+      if (rows.length === 0) {
+        throw new HTTPException(404, {
+          message: '該当するデータが見つかりませんでした。',
+        });
+      }
+
+      return c.json(rows);
     },
   );
 
