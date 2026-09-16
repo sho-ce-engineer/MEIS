@@ -6,6 +6,7 @@ const listInspectionTypesMock = vi.fn();
 const deleteInspectionResultsMock = vi.fn();
 const countInspectionResultsMock = vi.fn();
 const deleteInspectionItemMock = vi.fn();
+const saveSortedInspectionItemsMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
@@ -24,6 +25,11 @@ vi.mock('./results-count/service', () => ({
 vi.mock('./item-delete/service', () => ({
   deleteInspectionItem: (...args: unknown[]) =>
     deleteInspectionItemMock(...args),
+}));
+
+vi.mock('./items-save-sorted/service', () => ({
+  saveSortedInspectionItems: (...args: unknown[]) =>
+    saveSortedInspectionItemsMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -340,5 +346,86 @@ describe('inspection router: DELETE /items', () => {
 
     expect(res.status).toBe(400);
     expect(deleteInspectionItemMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('inspection router: POST /items/sorted', () => {
+  const validBody = {
+    updatedItems: {
+      外装点検: [{ inspection_item_id: 'ITEM-001' }],
+    },
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    saveSortedInspectionItemsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    saveSortedInspectionItemsMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/sorted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(saveSortedInspectionItemsMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      updatedItems: validBody.updatedItems,
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    saveSortedInspectionItemsMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/sorted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: inspectionRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/inspection', inspectionRouter);
+
+    const res = await app.request('/inspection/items/sorted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(saveSortedInspectionItemsMock).not.toHaveBeenCalled();
+  });
+
+  it('inspection_item_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/sorted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        updatedItems: { 外装点検: [{ inspection_item_id: '' }] },
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(saveSortedInspectionItemsMock).not.toHaveBeenCalled();
   });
 });

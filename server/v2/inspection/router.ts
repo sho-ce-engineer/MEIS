@@ -4,6 +4,8 @@ import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
 import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/item-delete/domain';
 import { deleteInspectionItem } from '~/server/v2/inspection/item-delete/service';
+import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items-save-sorted/domain';
+import { saveSortedInspectionItems } from '~/server/v2/inspection/items-save-sorted/service';
 import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/results-count/domain';
 import { countInspectionResults } from '~/server/v2/inspection/results-count/service';
 import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results-delete/domain';
@@ -97,6 +99,27 @@ app
         );
         throw new HTTPException(500, {
           message: '点検項目の削除処理中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/items/sorted',
+    zValidator('json', saveSortedInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { updatedItems } = c.req.valid('json');
+
+      try {
+        await saveSortedInspectionItems({ facilityCode, updatedItems });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/items-save-sorted]Transaction failed:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の並び順の保存中にエラーが発生しました。',
         });
       }
     },
