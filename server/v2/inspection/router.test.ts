@@ -7,6 +7,7 @@ const deleteInspectionResultsMock = vi.fn();
 const countInspectionResultsMock = vi.fn();
 const deleteInspectionItemMock = vi.fn();
 const saveSortedInspectionItemsMock = vi.fn();
+const listInspectionItemDetailsMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
@@ -30,6 +31,11 @@ vi.mock('./item-delete/service', () => ({
 vi.mock('./items-save-sorted/service', () => ({
   saveSortedInspectionItems: (...args: unknown[]) =>
     saveSortedInspectionItemsMock(...args),
+}));
+
+vi.mock('./item-details/service', () => ({
+  listInspectionItemDetails: (...args: unknown[]) =>
+    listInspectionItemDetailsMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -427,5 +433,96 @@ describe('inspection router: POST /items/sorted', () => {
 
     expect(res.status).toBe(400);
     expect(saveSortedInspectionItemsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('inspection router: POST /items/details', () => {
+  const validBody = { inspectionItemIds: ['ITEM-001', 'ITEM-002'] };
+
+  beforeEach(() => {
+    vi.resetModules();
+    listInspectionItemDetailsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200でlistInspectionItemDetailsの結果を返す', async () => {
+    listInspectionItemDetailsMock.mockResolvedValue([
+      { inspectionItemId: 'ITEM-001' },
+    ]);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([{ inspectionItemId: 'ITEM-001' }]);
+    expect(listInspectionItemDetailsMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      inspectionItemIds: validBody.inspectionItemIds,
+    });
+  });
+
+  it('該当データが0件の場合、404になる', async () => {
+    listInspectionItemDetailsMock.mockResolvedValue([]);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    listInspectionItemDetailsMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: inspectionRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/inspection', inspectionRouter);
+
+    const res = await app.request('/inspection/items/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(listInspectionItemDetailsMock).not.toHaveBeenCalled();
+  });
+
+  it('inspectionItemIdsが空配列の場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/inspection/items/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inspectionItemIds: [] }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(listInspectionItemDetailsMock).not.toHaveBeenCalled();
   });
 });
