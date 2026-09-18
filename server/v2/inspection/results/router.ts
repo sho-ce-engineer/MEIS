@@ -6,10 +6,45 @@ import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/resu
 import { countInspectionResults } from '~/server/v2/inspection/results/results-count/service';
 import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-delete/domain';
 import { deleteInspectionResults } from '~/server/v2/inspection/results/results-delete/service';
+import { saveInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-save/domain';
+import { saveInspectionResults } from '~/server/v2/inspection/results/results-save/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
 app
+  .post(
+    '/',
+    zValidator('json', saveInspectionResultsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { results } = c.req.valid('json');
+
+      try {
+        await saveInspectionResults({
+          facilityCode,
+          results: results.map((item) => ({
+            resultId: item.result_id,
+            userId: item.user_id,
+            inspectionItemId: item.inspection_item_id,
+            equipmentId: item.equipment_id,
+            equipmentSerialNumber: item.equipment_serial_number,
+            result: item.result,
+            notes: item.notes,
+            inspectionDate: item.inspection_date,
+          })),
+        });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/results/results-save]Transaction failed:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検結果の保存中にエラーが発生しました。',
+        });
+      }
+    },
+  )
   .post(
     '/count',
     zValidator('json', countInspectionResultsRequestSchema),
