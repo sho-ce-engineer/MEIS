@@ -6,6 +6,8 @@ import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/items/
 import { deleteInspectionItem } from '~/server/v2/inspection/items/item-delete/service';
 import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/items/item-details/domain';
 import { listInspectionItemDetails } from '~/server/v2/inspection/items/item-details/service';
+import { addInspectionItemRequestSchema } from '~/server/v2/inspection/items/items-add/domain';
+import { addInspectionItem } from '~/server/v2/inspection/items/items-add/service';
 import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-list/domain';
 import { listInspectionItems } from '~/server/v2/inspection/items/items-list/service';
 import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-save-sorted/domain';
@@ -16,6 +18,50 @@ import { listInspectionTypes } from '~/server/v2/inspection/items/types/service'
 const app = new Hono<{ Variables: Variables }>();
 
 app
+  .post('/', zValidator('json', addInspectionItemRequestSchema), async (c) => {
+    const facilityCode = c.get('facilityCode');
+    const {
+      inspection_type: inspectionType,
+      inspection_item_category: inspectionItemCategory,
+      inspection_item: inspectionItem,
+      inspection_item_description: inspectionItemDescription,
+      inspection_component_type: inspectionComponentType,
+      equipment_type: equipmentType,
+      equipment_model: equipmentModel,
+      min,
+      max,
+      suffix,
+      lowerlimit,
+      upperlimit,
+    } = c.req.valid('json');
+
+    try {
+      const row = await addInspectionItem({
+        facilityCode,
+        inspectionType,
+        inspectionItemCategory,
+        inspectionItem,
+        inspectionItemDescription,
+        inspectionComponentType,
+        equipmentType,
+        equipmentModel,
+        min,
+        max,
+        suffix,
+        lowerlimit,
+        upperlimit,
+      });
+      return c.json(row);
+    } catch (error) {
+      console.error(
+        '[inspection/items/items-add]Error occurred while adding inspection item.',
+        error,
+      );
+      throw new HTTPException(500, {
+        message: '点検項目の保存中にエラーが発生しました。',
+      });
+    }
+  })
   .post(
     '/types',
     zValidator('json', listInspectionTypesRequestSchema),

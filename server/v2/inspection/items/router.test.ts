@@ -7,9 +7,14 @@ const deleteInspectionItemMock = vi.fn();
 const saveSortedInspectionItemsMock = vi.fn();
 const listInspectionItemDetailsMock = vi.fn();
 const listInspectionItemsMock = vi.fn();
+const addInspectionItemMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
+}));
+
+vi.mock('./items-add/service', () => ({
+  addInspectionItem: (...args: unknown[]) => addInspectionItemMock(...args),
 }));
 
 vi.mock('./item-delete/service', () => ({
@@ -458,5 +463,99 @@ describe('inspection/items router: POST /list', () => {
 
     expect(res.status).toBe(400);
     expect(listInspectionItemsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('inspection/items router: POST /', () => {
+  const validBody = {
+    inspection_type: '日常点検',
+    inspection_item_category: '外装点検',
+    inspection_item: 'item-1',
+    inspection_component_type: 'InspectionCustomCheck',
+    equipment_type: 'Diagnostic',
+    equipment_model: 'CT200',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    addInspectionItemMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200でaddInspectionItemの結果を返す', async () => {
+    addInspectionItemMock.mockResolvedValue({ inspectionItemId: 'ITEM-NEW' });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ inspectionItemId: 'ITEM-NEW' });
+    expect(addInspectionItemMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      inspectionType: validBody.inspection_type,
+      inspectionItemCategory: validBody.inspection_item_category,
+      inspectionItem: validBody.inspection_item,
+      inspectionItemDescription: undefined,
+      inspectionComponentType: validBody.inspection_component_type,
+      equipmentType: validBody.equipment_type,
+      equipmentModel: validBody.equipment_model,
+      min: undefined,
+      max: undefined,
+      suffix: undefined,
+      lowerlimit: undefined,
+      upperlimit: undefined,
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    addInspectionItemMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: itemsRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/items', itemsRouter);
+
+    const res = await app.request('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(addInspectionItemMock).not.toHaveBeenCalled();
+  });
+
+  it('必須項目が欠落している場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, inspection_item: '' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(addInspectionItemMock).not.toHaveBeenCalled();
   });
 });
