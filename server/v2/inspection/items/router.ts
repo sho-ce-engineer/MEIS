@@ -14,6 +14,8 @@ import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/i
 import { listInspectionItems } from '~/server/v2/inspection/items/items-list/service';
 import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-save-sorted/domain';
 import { saveSortedInspectionItems } from '~/server/v2/inspection/items/items-save-sorted/service';
+import { updateInspectionItemRequestSchema } from '~/server/v2/inspection/items/items-update/domain';
+import { updateInspectionItem } from '~/server/v2/inspection/items/items-update/service';
 import { listInspectionTypesRequestSchema } from '~/server/v2/inspection/items/types/domain';
 import { listInspectionTypes } from '~/server/v2/inspection/items/types/service';
 
@@ -222,6 +224,62 @@ app
           message: '点検項目のコピー中にエラーが発生しました。',
         });
       }
+    },
+  )
+  .put(
+    '/',
+    zValidator('json', updateInspectionItemRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const {
+        inspection_item_id: inspectionItemId,
+        inspection_type: inspectionType,
+        inspection_item_category: inspectionItemCategory,
+        inspection_item: inspectionItem,
+        inspection_item_description: inspectionItemDescription,
+        inspection_component_type: inspectionComponentType,
+        inspection_sort_number: inspectionSortNumber,
+        min,
+        max,
+        suffix,
+        lowerlimit,
+        upperlimit,
+      } = c.req.valid('json');
+
+      let row: Awaited<ReturnType<typeof updateInspectionItem>>;
+      try {
+        row = await updateInspectionItem({
+          facilityCode,
+          inspectionItemId,
+          inspectionType,
+          inspectionItemCategory,
+          inspectionItem,
+          inspectionItemDescription,
+          inspectionComponentType,
+          inspectionSortNumber,
+          min,
+          max,
+          suffix,
+          lowerlimit,
+          upperlimit,
+        });
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-update]Error occurred while updating inspection item.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の保存中にエラーが発生しました。',
+        });
+      }
+
+      if (!row) {
+        throw new HTTPException(404, {
+          message: '点検項目が登録されていません。',
+        });
+      }
+
+      return c.json(row);
     },
   );
 
