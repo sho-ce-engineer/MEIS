@@ -6,6 +6,8 @@ import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/items/
 import { deleteInspectionItem } from '~/server/v2/inspection/items/item-delete/service';
 import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/items/item-details/domain';
 import { listInspectionItemDetails } from '~/server/v2/inspection/items/item-details/service';
+import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-list/domain';
+import { listInspectionItems } from '~/server/v2/inspection/items/items-list/service';
 import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-save-sorted/domain';
 import { saveSortedInspectionItems } from '~/server/v2/inspection/items/items-save-sorted/service';
 import { listInspectionTypesRequestSchema } from '~/server/v2/inspection/items/types/domain';
@@ -106,6 +108,39 @@ app
       if (rows.length === 0) {
         throw new HTTPException(404, {
           message: '該当するデータが見つかりませんでした。',
+        });
+      }
+
+      return c.json(rows);
+    },
+  )
+  .post(
+    '/list',
+    zValidator('json', listInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentModel, inspectionType } = c.req.valid('json');
+
+      let rows: Awaited<ReturnType<typeof listInspectionItems>>;
+      try {
+        rows = await listInspectionItems({
+          facilityCode,
+          equipmentModel,
+          inspectionType,
+        });
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-list]Database query error for',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の取得中にエラーが発生しました。',
+        });
+      }
+
+      if (rows.length === 0) {
+        throw new HTTPException(404, {
+          message: '点検項目が見つかりません。',
         });
       }
 
