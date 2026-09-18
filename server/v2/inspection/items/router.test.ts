@@ -3,24 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const listInspectionTypesMock = vi.fn();
-const deleteInspectionResultsMock = vi.fn();
-const countInspectionResultsMock = vi.fn();
 const deleteInspectionItemMock = vi.fn();
 const saveSortedInspectionItemsMock = vi.fn();
 const listInspectionItemDetailsMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
-}));
-
-vi.mock('./results-delete/service', () => ({
-  deleteInspectionResults: (...args: unknown[]) =>
-    deleteInspectionResultsMock(...args),
-}));
-
-vi.mock('./results-count/service', () => ({
-  countInspectionResults: (...args: unknown[]) =>
-    countInspectionResultsMock(...args),
 }));
 
 vi.mock('./item-delete/service', () => ({
@@ -39,19 +27,19 @@ vi.mock('./item-details/service', () => ({
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
-  const { default: inspectionRouter } = await import('./router');
+  const { default: itemsRouter } = await import('./router');
 
   const app = new Hono<{ Variables: Variables }>()
     .use('*', async (c, next) => {
       c.set('facilityCode', facilityCode);
       await next();
     })
-    .route('/inspection', inspectionRouter);
+    .route('/items', itemsRouter);
 
   return app;
 }
 
-describe('inspection router: POST /types', () => {
+describe('inspection/items router: POST /types', () => {
   const validBody = { equipmentModel: 'CT200' };
 
   beforeEach(() => {
@@ -67,7 +55,7 @@ describe('inspection router: POST /types', () => {
     listInspectionTypesMock.mockResolvedValue([{ inspectionType: '日常点検' }]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/types', {
+    const res = await app.request('/items/types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -85,7 +73,7 @@ describe('inspection router: POST /types', () => {
     listInspectionTypesMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/types', {
+    const res = await app.request('/items/types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -98,13 +86,13 @@ describe('inspection router: POST /types', () => {
     process.env.SECRET_KEY = 'test-secret-key';
 
     const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
+    const { default: itemsRouter } = await import('./router');
 
     const app = new Hono<{ Variables: Variables }>()
       .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
+      .route('/items', itemsRouter);
 
-    const res = await app.request('/inspection/types', {
+    const res = await app.request('/items/types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -116,7 +104,7 @@ describe('inspection router: POST /types', () => {
 
   it('equipmentModelが空文字の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/types', {
+    const res = await app.request('/items/types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ equipmentModel: '' }),
@@ -127,158 +115,7 @@ describe('inspection router: POST /types', () => {
   });
 });
 
-describe('inspection router: POST /results/count', () => {
-  const validBody = { jpyDate: '2026-09-14' };
-
-  beforeEach(() => {
-    vi.resetModules();
-    countInspectionResultsMock.mockReset();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('認証済み・バリデーション成功・DB正常応答の場合、200でcountを返す', async () => {
-    countInspectionResultsMock.mockResolvedValue(3);
-
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results/count', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ count: 3 });
-    expect(countInspectionResultsMock).toHaveBeenCalledWith({
-      facilityCode: 'FAC001',
-      jpyDate: '2026-09-14',
-    });
-  });
-
-  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
-    countInspectionResultsMock.mockRejectedValue(new Error('DB接続エラー'));
-
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results/count', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(500);
-  });
-
-  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
-    process.env.SECRET_KEY = 'test-secret-key';
-
-    const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
-
-    const app = new Hono<{ Variables: Variables }>()
-      .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
-
-    const res = await app.request('/inspection/results/count', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(401);
-    expect(countInspectionResultsMock).not.toHaveBeenCalled();
-  });
-
-  it('jpyDateが空文字の場合、400になる（zValidatorの配線確認）', async () => {
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results/count', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jpyDate: '' }),
-    });
-
-    expect(res.status).toBe(400);
-    expect(countInspectionResultsMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('inspection router: DELETE /results', () => {
-  const validBody = { result_ids: ['RESULT-001', 'RESULT-002'] };
-
-  beforeEach(() => {
-    vi.resetModules();
-    deleteInspectionResultsMock.mockReset();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
-    deleteInspectionResultsMock.mockResolvedValue(undefined);
-
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(204);
-    expect(deleteInspectionResultsMock).toHaveBeenCalledWith({
-      facilityCode: 'FAC001',
-      resultIds: validBody.result_ids,
-    });
-  });
-
-  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
-    deleteInspectionResultsMock.mockRejectedValue(new Error('DB接続エラー'));
-
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(500);
-  });
-
-  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
-    process.env.SECRET_KEY = 'test-secret-key';
-
-    const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
-
-    const app = new Hono<{ Variables: Variables }>()
-      .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
-
-    const res = await app.request('/inspection/results', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validBody),
-    });
-
-    expect(res.status).toBe(401);
-    expect(deleteInspectionResultsMock).not.toHaveBeenCalled();
-  });
-
-  it('result_idsが空配列の場合、400になる（zValidatorの配線確認）', async () => {
-    const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/results', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result_ids: [] }),
-    });
-
-    expect(res.status).toBe(400);
-    expect(deleteInspectionResultsMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('inspection router: DELETE /items', () => {
+describe('inspection/items router: DELETE /', () => {
   const validBody = {
     inspection_item_id: 'FAC001InspItemId20260914000000R123456',
   };
@@ -296,7 +133,7 @@ describe('inspection router: DELETE /items', () => {
     deleteInspectionItemMock.mockResolvedValue(undefined);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items', {
+    const res = await app.request('/items', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -313,7 +150,7 @@ describe('inspection router: DELETE /items', () => {
     deleteInspectionItemMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items', {
+    const res = await app.request('/items', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -326,13 +163,13 @@ describe('inspection router: DELETE /items', () => {
     process.env.SECRET_KEY = 'test-secret-key';
 
     const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
+    const { default: itemsRouter } = await import('./router');
 
     const app = new Hono<{ Variables: Variables }>()
       .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
+      .route('/items', itemsRouter);
 
-    const res = await app.request('/inspection/items', {
+    const res = await app.request('/items', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -344,7 +181,7 @@ describe('inspection router: DELETE /items', () => {
 
   it('inspection_item_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items', {
+    const res = await app.request('/items', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inspection_item_id: '' }),
@@ -355,7 +192,7 @@ describe('inspection router: DELETE /items', () => {
   });
 });
 
-describe('inspection router: POST /items/sorted', () => {
+describe('inspection/items router: POST /sorted', () => {
   const validBody = {
     updatedItems: {
       外装点検: [{ inspection_item_id: 'ITEM-001' }],
@@ -375,7 +212,7 @@ describe('inspection router: POST /items/sorted', () => {
     saveSortedInspectionItemsMock.mockResolvedValue(undefined);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/sorted', {
+    const res = await app.request('/items/sorted', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -392,7 +229,7 @@ describe('inspection router: POST /items/sorted', () => {
     saveSortedInspectionItemsMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/sorted', {
+    const res = await app.request('/items/sorted', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -405,13 +242,13 @@ describe('inspection router: POST /items/sorted', () => {
     process.env.SECRET_KEY = 'test-secret-key';
 
     const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
+    const { default: itemsRouter } = await import('./router');
 
     const app = new Hono<{ Variables: Variables }>()
       .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
+      .route('/items', itemsRouter);
 
-    const res = await app.request('/inspection/items/sorted', {
+    const res = await app.request('/items/sorted', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -423,7 +260,7 @@ describe('inspection router: POST /items/sorted', () => {
 
   it('inspection_item_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/sorted', {
+    const res = await app.request('/items/sorted', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -436,7 +273,7 @@ describe('inspection router: POST /items/sorted', () => {
   });
 });
 
-describe('inspection router: POST /items/details', () => {
+describe('inspection/items router: POST /details', () => {
   const validBody = { inspectionItemIds: ['ITEM-001', 'ITEM-002'] };
 
   beforeEach(() => {
@@ -454,7 +291,7 @@ describe('inspection router: POST /items/details', () => {
     ]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/details', {
+    const res = await app.request('/items/details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -472,7 +309,7 @@ describe('inspection router: POST /items/details', () => {
     listInspectionItemDetailsMock.mockResolvedValue([]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/details', {
+    const res = await app.request('/items/details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -485,7 +322,7 @@ describe('inspection router: POST /items/details', () => {
     listInspectionItemDetailsMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/details', {
+    const res = await app.request('/items/details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -498,13 +335,13 @@ describe('inspection router: POST /items/details', () => {
     process.env.SECRET_KEY = 'test-secret-key';
 
     const { authMiddleware } = await import('~/server/v2/auth');
-    const { default: inspectionRouter } = await import('./router');
+    const { default: itemsRouter } = await import('./router');
 
     const app = new Hono<{ Variables: Variables }>()
       .use('*', authMiddleware)
-      .route('/inspection', inspectionRouter);
+      .route('/items', itemsRouter);
 
-    const res = await app.request('/inspection/items/details', {
+    const res = await app.request('/items/details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -516,7 +353,7 @@ describe('inspection router: POST /items/details', () => {
 
   it('inspectionItemIdsが空配列の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/inspection/items/details', {
+    const res = await app.request('/items/details', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inspectionItemIds: [] }),
