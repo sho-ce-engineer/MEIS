@@ -1,7 +1,7 @@
-import { formatInTimeZone } from 'date-fns-tz';
 import { and, eq, max } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { inspectionItems } from '~/server/db/schema';
+import { generateInspectionItemId } from '~/server/v2/inspection/items/lib/generateInspectionItemId';
 
 export interface AddInspectionItemParams {
   facilityCode: string;
@@ -17,16 +17,6 @@ export interface AddInspectionItemParams {
   suffix?: string;
   lowerlimit?: number;
   upperlimit?: number;
-}
-
-function generateInspectionItemId(facilityCode: string): string {
-  const yyyymmddhhmmss = formatInTimeZone(
-    new Date(),
-    'Asia/Tokyo',
-    'yyyyMMddHHmmss',
-  );
-  const randomNumber = Math.floor(100000 + Math.random() * 900000);
-  return `${facilityCode}InspItemId${yyyymmddhhmmss}R${randomNumber}`;
 }
 
 export async function addInspectionItem({

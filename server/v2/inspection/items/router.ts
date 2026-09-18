@@ -8,6 +8,8 @@ import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/i
 import { listInspectionItemDetails } from '~/server/v2/inspection/items/item-details/service';
 import { addInspectionItemRequestSchema } from '~/server/v2/inspection/items/items-add/domain';
 import { addInspectionItem } from '~/server/v2/inspection/items/items-add/service';
+import { copyInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-copy/domain';
+import { copyInspectionItems } from '~/server/v2/inspection/items/items-copy/service';
 import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-list/domain';
 import { listInspectionItems } from '~/server/v2/inspection/items/items-list/service';
 import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-save-sorted/domain';
@@ -191,6 +193,35 @@ app
       }
 
       return c.json(rows);
+    },
+  )
+  .post(
+    '/copy',
+    zValidator('json', copyInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { baseInspectionData, targetInspectionData } = c.req.valid('json');
+
+      try {
+        await copyInspectionItems({
+          facilityCode,
+          baseEquipmentType: baseInspectionData.baseEquipmentType,
+          baseEquipmentModel: baseInspectionData.baseEquipmentModel,
+          baseInspectionType: baseInspectionData.baseInspectionType,
+          targetEquipmentType: targetInspectionData.targetEquipmentType,
+          targetEquipmentModel: targetInspectionData.targetEquipmentModel,
+          targetInspectionType: targetInspectionData.targetInspectionType,
+        });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-copy]Transaction failed:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目のコピー中にエラーが発生しました。',
+        });
+      }
     },
   );
 
