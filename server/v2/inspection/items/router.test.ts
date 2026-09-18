@@ -8,6 +8,7 @@ const saveSortedInspectionItemsMock = vi.fn();
 const listInspectionItemDetailsMock = vi.fn();
 const listInspectionItemsMock = vi.fn();
 const addInspectionItemMock = vi.fn();
+const copyInspectionItemsMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
@@ -34,6 +35,10 @@ vi.mock('./item-details/service', () => ({
 
 vi.mock('./items-list/service', () => ({
   listInspectionItems: (...args: unknown[]) => listInspectionItemsMock(...args),
+}));
+
+vi.mock('./items-copy/service', () => ({
+  copyInspectionItems: (...args: unknown[]) => copyInspectionItemsMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -557,5 +562,96 @@ describe('inspection/items router: POST /', () => {
 
     expect(res.status).toBe(400);
     expect(addInspectionItemMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('inspection/items router: POST /copy', () => {
+  const validBody = {
+    baseInspectionData: {
+      baseEquipmentType: 'Diagnostic',
+      baseEquipmentModel: 'CT200',
+      baseInspectionType: '日常点検',
+    },
+    targetInspectionData: {
+      targetEquipmentType: 'Diagnostic',
+      targetEquipmentModel: 'CT300',
+      targetInspectionType: '日常点検',
+    },
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    copyInspectionItemsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    copyInspectionItemsMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(copyInspectionItemsMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      baseEquipmentType: 'Diagnostic',
+      baseEquipmentModel: 'CT200',
+      baseInspectionType: '日常点検',
+      targetEquipmentType: 'Diagnostic',
+      targetEquipmentModel: 'CT300',
+      targetInspectionType: '日常点検',
+    });
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    copyInspectionItemsMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: itemsRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/items', itemsRouter);
+
+    const res = await app.request('/items/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(copyInspectionItemsMock).not.toHaveBeenCalled();
+  });
+
+  it('必須項目が欠落している場合、400になる（zValidatorの配線確認）', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items/copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(400);
+    expect(copyInspectionItemsMock).not.toHaveBeenCalled();
   });
 });
