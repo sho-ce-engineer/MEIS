@@ -6,6 +6,8 @@ import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/resu
 import { countInspectionResults } from '~/server/v2/inspection/results/results-count/service';
 import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-delete/domain';
 import { deleteInspectionResults } from '~/server/v2/inspection/results/results-delete/service';
+import { listInspectionHistoryRequestSchema } from '~/server/v2/inspection/results/results-history/domain';
+import { listInspectionHistory } from '~/server/v2/inspection/results/results-history/service';
 import { saveInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-save/domain';
 import { saveInspectionResults } from '~/server/v2/inspection/results/results-save/service';
 
@@ -83,6 +85,42 @@ app
         );
         throw new HTTPException(500, {
           message: '点検結果の削除処理中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/history',
+    zValidator('json', listInspectionHistoryRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const {
+        page,
+        itemsPerPage,
+        sortRow,
+        sortByOrder,
+        inspectionType,
+        filterCriteria,
+      } = c.req.valid('json');
+
+      try {
+        const result = await listInspectionHistory({
+          facilityCode,
+          page,
+          itemsPerPage,
+          sortRow,
+          sortByOrder,
+          inspectionType,
+          filterCriteria,
+        });
+        return c.json(result);
+      } catch (error) {
+        console.error(
+          '[inspection/results/results-history]Error occurred while fetching Inspection History.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検履歴の取得中にエラーが発生しました。',
         });
       }
     },
