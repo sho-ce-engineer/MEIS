@@ -4,11 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const listEquipmentTypesMock = vi.fn();
+const listEquipmentManufacturerMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listEquipmentTypes: (...args: unknown[]) => listEquipmentTypesMock(...args),
+}));
+
+vi.mock('./manufacturer/service', () => ({
+  listEquipmentManufacturer: (...args: unknown[]) =>
+    listEquipmentManufacturerMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -133,5 +139,62 @@ describe('equipment router: POST /types', () => {
 
     expect(res.status).toBe(401);
     expect(listEquipmentTypesMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: POST /manufacturer', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    listEquipmentManufacturerMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・DB正常応答の場合、200でlistEquipmentManufacturerの結果を返す', async () => {
+    listEquipmentManufacturerMock.mockResolvedValue([
+      { equipmentManufacturer: 'メーカーA' },
+    ]);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/manufacturer', {
+      method: 'POST',
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([{ equipmentManufacturer: 'メーカーA' }]);
+    expect(listEquipmentManufacturerMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+    });
+  });
+
+  it('認証済み・DBエラーの場合、500になる', async () => {
+    listEquipmentManufacturerMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/manufacturer', {
+      method: 'POST',
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/manufacturer', {
+      method: 'POST',
+    });
+
+    expect(res.status).toBe(401);
+    expect(listEquipmentManufacturerMock).not.toHaveBeenCalled();
   });
 });
