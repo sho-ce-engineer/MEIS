@@ -1,11 +1,19 @@
+import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const listEquipmentTypesMock = vi.fn();
+const sampleLedgerFileExistsMock = vi.fn();
+const createSampleLedgerReadStreamMock = vi.fn();
 
 vi.mock('./types/service', () => ({
   listEquipmentTypes: (...args: unknown[]) => listEquipmentTypesMock(...args),
+}));
+
+vi.mock('./download-sample-xlsx-ledger/service', () => ({
+  sampleLedgerFileExists: () => sampleLedgerFileExistsMock(),
+  createSampleLedgerReadStream: () => createSampleLedgerReadStreamMock(),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -21,6 +29,64 @@ async function buildAppWithFacilityCode(facilityCode: string) {
   return app;
 }
 
+describe('equipment router: GET /download-sample-xlsx-ledger', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    sampleLedgerFileExistsMock.mockReset();
+    createSampleLedgerReadStreamMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・ファイルが存在する場合、200でxlsxファイルを返す', async () => {
+    sampleLedgerFileExistsMock.mockReturnValue(true);
+    createSampleLedgerReadStreamMock.mockReturnValue(
+      Readable.from([Buffer.from('dummy xlsx content')]),
+    );
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/download-sample-xlsx-ledger');
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(res.headers.get('content-disposition')).toBe(
+      'attachment; filename="sample.xlsx"',
+    );
+
+    const body = new Uint8Array(await res.arrayBuffer());
+    expect(body.length).toBeGreaterThan(0);
+  });
+
+  it('サンプルファイルが存在しない場合、404になる', async () => {
+    sampleLedgerFileExistsMock.mockReturnValue(false);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/download-sample-xlsx-ledger');
+
+    expect(res.status).toBe(404);
+    expect(createSampleLedgerReadStreamMock).not.toHaveBeenCalled();
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/download-sample-xlsx-ledger');
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('equipment router: POST /types', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -32,9 +98,7 @@ describe('equipment router: POST /types', () => {
   });
 
   it('認証済み・DB正常応答の場合、200でlistEquipmentTypesの結果を返す', async () => {
-    listEquipmentTypesMock.mockResolvedValue([
-      { equipmentType: '人工呼吸器' },
-    ]);
+    listEquipmentTypesMock.mockResolvedValue([{ equipmentType: '人工呼吸器' }]);
 
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/equipment/types', { method: 'POST' });
