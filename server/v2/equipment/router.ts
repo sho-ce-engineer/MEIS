@@ -3,6 +3,8 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { stream } from 'hono/streaming';
 import type { Variables } from '~/server/v2/auth';
+import { listEquipmentDetailsRequestSchema } from './details/domain';
+import { getEquipmentDetails } from './details/service';
 import {
   createSampleLedgerReadStream,
   sampleLedgerFileExists,
@@ -123,6 +125,36 @@ const app = new Hono<{ Variables: Variables }>()
           message: '機器型番が見つかりません。登録を確認してください。',
         });
       }
+      return c.json(result);
+    },
+  )
+  .post(
+    '/details',
+    zValidator('json', listEquipmentDetailsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentId } = c.req.valid('json');
+
+      let result: Awaited<ReturnType<typeof getEquipmentDetails>>;
+
+      try {
+        result = await getEquipmentDetails({ facilityCode, equipmentId });
+      } catch (error) {
+        console.error(
+          '[equipment/details]Error fetching Equipment Details:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '機器詳細の取得中にサーバーエラーが発生しました。',
+        });
+      }
+
+      if (!result) {
+        throw new HTTPException(404, {
+          message: '該当するデータが見つかりませんでした。',
+        });
+      }
+
       return c.json(result);
     },
   );
