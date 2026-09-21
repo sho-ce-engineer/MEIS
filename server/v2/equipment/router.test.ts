@@ -7,6 +7,7 @@ const listEquipmentTypesMock = vi.fn();
 const listEquipmentManufacturerMock = vi.fn();
 const listEquipmentIdMock = vi.fn();
 const listEquipmentModelsMock = vi.fn();
+const getEquipmentDetailsMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
@@ -25,6 +26,10 @@ vi.mock('./id/service', () => ({
 
 vi.mock('./models/service', () => ({
   listEquipmentModels: (...args: unknown[]) => listEquipmentModelsMock(...args),
+}));
+
+vi.mock('./details/service', () => ({
+  getEquipmentDetails: (...args: unknown[]) => getEquipmentDetailsMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -356,5 +361,104 @@ describe('equipment router: POST /models', () => {
 
     expect(res.status).toBe(401);
     expect(listEquipmentModelsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: POST /details', () => {
+  const validBody = { equipmentId: 'EQ001' };
+
+  beforeEach(() => {
+    vi.resetModules();
+    getEquipmentDetailsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、200でgetEquipmentDetailsの結果を返す', async () => {
+    getEquipmentDetailsMock.mockResolvedValue({
+      equipmentName: '人工呼吸器A',
+      equipmentModel: 'VT100',
+      equipmentSerialNumber: 'SN-12345',
+      equipmentType: 'Diagnostic',
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      equipmentName: '人工呼吸器A',
+      equipmentModel: 'VT100',
+      equipmentSerialNumber: 'SN-12345',
+      equipmentType: 'Diagnostic',
+    });
+    expect(getEquipmentDetailsMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      equipmentId: 'EQ001',
+    });
+  });
+
+  it('該当する機器が無い場合、404になる', async () => {
+    getEquipmentDetailsMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    getEquipmentDetailsMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('equipmentIdが空文字の場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ equipmentId: '' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(getEquipmentDetailsMock).not.toHaveBeenCalled();
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(getEquipmentDetailsMock).not.toHaveBeenCalled();
   });
 });
