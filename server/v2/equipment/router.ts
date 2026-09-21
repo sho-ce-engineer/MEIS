@@ -6,6 +6,7 @@ import {
   createSampleLedgerReadStream,
   sampleLedgerFileExists,
 } from './download-sample-xlsx-ledger/service';
+import { listEquipmentId } from './id/service';
 import { listEquipmentManufacturer } from './manufacturer/service';
 import { listEquipmentTypes } from './types/service';
 
@@ -67,6 +68,28 @@ const app = new Hono<{ Variables: Variables }>()
         message: 'サーバーエラーが発生しました',
       });
     }
+  })
+  .post('/id', async (c) => {
+    const facilityCode = c.get('facilityCode');
+
+    let result: Awaited<ReturnType<typeof listEquipmentId>>;
+
+    try {
+      result = await listEquipmentId({ facilityCode });
+    } catch (error) {
+      console.error('[equipment/id]Error fetching Equipment Id:', error);
+      throw new HTTPException(500, {
+        message: 'サーバーエラーが発生しました',
+      });
+    }
+
+    if (result.length === 0) {
+      throw new HTTPException(404, {
+        message: '機器が見つかりません',
+      });
+    }
+
+    return c.json(result.map((row) => row.equipmentId));
   });
 
 export default app;
