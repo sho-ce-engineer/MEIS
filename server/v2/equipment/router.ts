@@ -1,3 +1,4 @@
+import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { stream } from 'hono/streaming';
@@ -8,6 +9,8 @@ import {
 } from './download-sample-xlsx-ledger/service';
 import { listEquipmentId } from './id/service';
 import { listEquipmentManufacturer } from './manufacturer/service';
+import { listEquipmentModelsRequestSchema } from './models/domain';
+import { listEquipmentModels } from './models/service';
 import { listEquipmentTypes } from './types/service';
 
 const app = new Hono<{ Variables: Variables }>()
@@ -90,6 +93,38 @@ const app = new Hono<{ Variables: Variables }>()
     }
 
     return c.json(result.map((row) => row.equipmentId));
-  });
+  })
+
+  .post(
+    '/models',
+    zValidator('json', listEquipmentModelsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentType } = c.req.valid('json');
+
+      let result: Awaited<ReturnType<typeof listEquipmentModels>>;
+
+      try {
+        result = await listEquipmentModels({
+          facilityCode,
+          equipmentType,
+        });
+      } catch (error) {
+        console.error(
+          '[equipment/models]Error fetching Equipment Models:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '機器型番の取得中にサーバーエラーが発生しました。',
+        });
+      }
+      if (result.length === 0) {
+        throw new HTTPException(404, {
+          message: '機器型番が見つかりません。登録を確認してください。',
+        });
+      }
+      return c.json(result);
+    },
+  );
 
 export default app;
