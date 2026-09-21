@@ -5,6 +5,7 @@ import type { Variables } from '~/server/v2/auth';
 
 const listEquipmentTypesMock = vi.fn();
 const listEquipmentManufacturerMock = vi.fn();
+const listEquipmentIdMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
@@ -15,6 +16,10 @@ vi.mock('./types/service', () => ({
 vi.mock('./manufacturer/service', () => ({
   listEquipmentManufacturer: (...args: unknown[]) =>
     listEquipmentManufacturerMock(...args),
+}));
+
+vi.mock('./id/service', () => ({
+  listEquipmentId: (...args: unknown[]) => listEquipmentIdMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -196,5 +201,66 @@ describe('equipment router: POST /manufacturer', () => {
 
     expect(res.status).toBe(401);
     expect(listEquipmentManufacturerMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: POST /id', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    listEquipmentIdMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・DB正常応答の場合、200でequipmentIdを平坦化した配列を返す', async () => {
+    listEquipmentIdMock.mockResolvedValue([
+      { equipmentId: 'EQ001' },
+      { equipmentId: 'EQ002' },
+    ]);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/id', { method: 'POST' });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(['EQ001', 'EQ002']);
+    expect(listEquipmentIdMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+    });
+  });
+
+  it('該当する機器が無い場合、404になる', async () => {
+    listEquipmentIdMock.mockResolvedValue([]);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/id', { method: 'POST' });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('認証済み・DBエラーの場合、500になる', async () => {
+    listEquipmentIdMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/id', { method: 'POST' });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/id', { method: 'POST' });
+
+    expect(res.status).toBe(401);
+    expect(listEquipmentIdMock).not.toHaveBeenCalled();
   });
 });
