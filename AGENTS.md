@@ -34,6 +34,7 @@ Vue側（frontend）のテストは現時点で未整備。
 - フォーマッター、リンター: **Biome** を使用（`npx biome check --write .` でソースコードを整形・import整理）
 - ブランチ名は <type>/<内容をkebab-case> とし、typeはConventional Commitsのtype語彙（feat/fix/chore/refactor/docsなど）から選ぶ。
     -  例: feat/add-login-form
+- `server/v2/`配下のコーディング規約は [server/v2/AGENTS.md](server/v2/AGENTS.md) を参照
 
 
 ## セキュリティ方針 / Security
