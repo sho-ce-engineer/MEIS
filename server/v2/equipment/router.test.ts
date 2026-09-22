@@ -10,6 +10,7 @@ const listEquipmentIdMock = vi.fn();
 const listEquipmentModelsMock = vi.fn();
 const getEquipmentDetailsMock = vi.fn();
 const addEquipmentMock = vi.fn();
+const updateEquipmentMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
@@ -36,6 +37,10 @@ vi.mock('./details/service', () => ({
 
 vi.mock('./add/service', () => ({
   addEquipment: (...args: unknown[]) => addEquipmentMock(...args),
+}));
+
+vi.mock('./update/service', () => ({
+  updateEquipment: (...args: unknown[]) => updateEquipmentMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -580,5 +585,120 @@ describe('equipment router: POST /add', () => {
 
     expect(res.status).toBe(401);
     expect(addEquipmentMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: PUT /update', () => {
+  const validBody = {
+    updatedItem: {
+      equipment_id: 'EQ001',
+      equipment_name: '人工呼吸器A',
+    },
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    updateEquipmentMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    updateEquipmentMock.mockResolvedValue({
+      equipmentId: 'EQ001',
+      equipmentName: '人工呼吸器A',
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(updateEquipmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        equipmentId: 'EQ001',
+        equipmentName: '人工呼吸器A',
+        facilityCode: 'FAC001',
+      }),
+    );
+  });
+
+  it('該当するレコードが無い場合、404になる', async () => {
+    updateEquipmentMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
+    updateEquipmentMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('updatedItem.equipment_idが無い場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        updatedItem: { equipment_name: '人工呼吸器A' },
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(updateEquipmentMock).not.toHaveBeenCalled();
+  });
+
+  it('updatedItem.equipment_nameが無い場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        updatedItem: { equipment_id: 'EQ001' },
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(updateEquipmentMock).not.toHaveBeenCalled();
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(updateEquipmentMock).not.toHaveBeenCalled();
   });
 });

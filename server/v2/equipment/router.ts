@@ -17,6 +17,8 @@ import { listEquipmentManufacturer } from './manufacturer/service';
 import { listEquipmentModelsRequestSchema } from './models/domain';
 import { listEquipmentModels } from './models/service';
 import { listEquipmentTypes } from './types/service';
+import { updateEquipmentRequestSchema } from './update/domain';
+import { updateEquipment } from './update/service';
 
 const app = new Hono<{ Variables: Variables }>()
   .get('/download-sample-xlsx-ledger', async (c) => {
@@ -212,6 +214,61 @@ const app = new Hono<{ Variables: Variables }>()
     }
 
     return c.body(null, 204);
-  });
+  })
+  .put(
+    '/update',
+    zValidator('json', updateEquipmentRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const {
+        equipment_id: equipmentId,
+        equipment_name: equipmentName,
+        equipment_model: equipmentModel,
+        equipment_manufacturer: equipmentManufacturer,
+        equipment_serial_number: equipmentSerialNumber,
+        equipment_type: equipmentType,
+        acquisition_date: acquisitionDate,
+        equipment_status: equipmentStatus,
+        equipment_notes: equipmentNotes,
+        equipment_maintenance_contract: equipmentMaintenanceContract,
+        equipment_storage_location: equipmentStorageLocation,
+      } = c.req.valid('json').updatedItem;
+
+      let result: Awaited<ReturnType<typeof updateEquipment>>;
+
+      try {
+        result = await updateEquipment({
+          equipmentId,
+          equipmentName,
+          equipmentModel,
+          equipmentManufacturer,
+          equipmentSerialNumber,
+          equipmentType,
+          facilityCode,
+          acquisitionDate,
+          equipmentStatus,
+          equipmentNotes,
+          equipmentMaintenanceContract,
+          equipmentStorageLocation,
+        });
+      } catch (error) {
+        console.error(
+          '[equipment/update]Error occurred while updating equipment:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました。',
+        });
+      }
+
+      if (!result) {
+        throw new HTTPException(404, {
+          message: 'Record not found or no changes made',
+        });
+      }
+
+      return c.body(null, 204);
+    },
+  );
 
 export default app;

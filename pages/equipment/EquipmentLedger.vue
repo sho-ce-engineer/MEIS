@@ -620,7 +620,7 @@ const updateRecord = async (
     const updatedItem = { ...item };
     await $fetch('/api/equipment/update-record', {
       method: 'PUT',
-      body: { equipment_id: item.equipment_id, updatedItem },
+      body: { updatedItem },
     });
     loadItems();
     isActive.value = false;
