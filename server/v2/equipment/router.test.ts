@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DatabaseError, DrizzleQueryError } from '~/server/db';
 import type { Variables } from '~/server/v2/auth';
 
 const listEquipmentTypesMock = vi.fn();
@@ -8,6 +9,7 @@ const listEquipmentManufacturerMock = vi.fn();
 const listEquipmentIdMock = vi.fn();
 const listEquipmentModelsMock = vi.fn();
 const getEquipmentDetailsMock = vi.fn();
+const addEquipmentMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
@@ -30,6 +32,10 @@ vi.mock('./models/service', () => ({
 
 vi.mock('./details/service', () => ({
   getEquipmentDetails: (...args: unknown[]) => getEquipmentDetailsMock(...args),
+}));
+
+vi.mock('./add/service', () => ({
+  addEquipment: (...args: unknown[]) => addEquipmentMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -460,5 +466,119 @@ describe('equipment router: POST /details', () => {
 
     expect(res.status).toBe(401);
     expect(getEquipmentDetailsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: POST /add', () => {
+  const validBody = {
+    equipment_id: 'EQ001',
+    equipment_name: '人工呼吸器A',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    addEquipmentMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    addEquipmentMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(addEquipmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        equipmentId: 'EQ001',
+        equipmentName: '人工呼吸器A',
+        facilityCode: 'FAC001',
+      }),
+    );
+  });
+
+  it('一意制約違反（23505）の場合、409になる', async () => {
+    const pgError = new DatabaseError(
+      'duplicate key value violates unique constraint',
+      0,
+      'error',
+    );
+    pgError.code = '23505';
+    addEquipmentMock.mockRejectedValue(
+      new DrizzleQueryError('insert into equipment_ledger...', [], pgError),
+    );
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('認証済み・バリデーション成功・その他のDBエラーの場合、500になる', async () => {
+    addEquipmentMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('equipment_idが無い場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ equipment_name: '人工呼吸器A' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(addEquipmentMock).not.toHaveBeenCalled();
+  });
+
+  it('equipment_nameが無い場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ equipment_id: 'EQ001' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(addEquipmentMock).not.toHaveBeenCalled();
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(401);
+    expect(addEquipmentMock).not.toHaveBeenCalled();
   });
 });
