@@ -15,12 +15,29 @@ import {
 import { listEquipmentId } from './id/service';
 import { importEquipmentRequestSchema } from './import/domain';
 import { importEquipment } from './import/service';
+import { listEquipmentLedgerRequestSchema } from './ledger/domain';
+import {
+  type FilterCriteria,
+  listEquipmentLedger,
+  type SortOrder,
+  type SortRow,
+} from './ledger/service';
 import { listEquipmentManufacturer } from './manufacturer/service';
 import { listEquipmentModelsRequestSchema } from './models/domain';
 import { listEquipmentModels } from './models/service';
 import { listEquipmentTypes } from './types/service';
 import { updateEquipmentRequestSchema } from './update/domain';
 import { updateEquipment } from './update/service';
+
+const ALLOWED_SORT_KEYS: SortRow[] = [
+  'equipment_id',
+  'equipment_type',
+  'equipment_manufacturer',
+  'equipment_name',
+  'equipment_model',
+  'equipment_serial_number',
+  'acquisition_date',
+];
 
 const app = new Hono<{ Variables: Variables }>()
   .get('/download-sample-xlsx-ledger', async (c) => {
@@ -304,6 +321,45 @@ const app = new Hono<{ Variables: Variables }>()
       }
 
       return c.body(null, 204);
+    },
+  )
+  .post(
+    '/ledger',
+    zValidator('json', listEquipmentLedgerRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const {
+        page = 1,
+        itemsPerPage = 10,
+        sortRow,
+        sortByOrder,
+        search,
+        filterCriteria = {},
+      } = c.req.valid('json');
+
+      const sortByKey = ALLOWED_SORT_KEYS.includes(sortRow as SortRow)
+        ? (sortRow as SortRow)
+        : 'equipment_id';
+      const sortOrderValue: SortOrder =
+        sortByOrder === 'asc' || sortByOrder === 'desc' ? sortByOrder : 'asc';
+
+      try {
+        const result = await listEquipmentLedger({
+          facilityCode,
+          page,
+          itemsPerPage,
+          sortRow: sortByKey,
+          sortByOrder: sortOrderValue,
+          search,
+          filterCriteria: filterCriteria as FilterCriteria,
+        });
+        return c.json(result);
+      } catch (error) {
+        console.error('[equipment/ledger]Error executing query:', error);
+        throw new HTTPException(500, {
+          message: 'データの取得に失敗しました。',
+        });
+      }
     },
   );
 
