@@ -2,7 +2,10 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { stream } from 'hono/streaming';
+import { DatabaseError, DrizzleQueryError } from '~/server/db';
 import type { Variables } from '~/server/v2/auth';
+import { addEquipmentRequestSchema } from './add/domain';
+import { addEquipment } from './add/service';
 import { listEquipmentDetailsRequestSchema } from './details/domain';
 import { getEquipmentDetails } from './details/service';
 import {
@@ -157,6 +160,58 @@ const app = new Hono<{ Variables: Variables }>()
 
       return c.json(result);
     },
-  );
+  )
+  .post('/add', zValidator('json', addEquipmentRequestSchema), async (c) => {
+    const facilityCode = c.get('facilityCode');
+    const {
+      equipment_id: equipmentId,
+      equipment_name: equipmentName,
+      equipment_model: equipmentModel,
+      equipment_manufacturer: equipmentManufacturer,
+      equipment_serial_number: equipmentSerialNumber,
+      equipment_type: equipmentType,
+      acquisition_date: acquisitionDate,
+      equipment_status: equipmentStatus,
+      equipment_notes: equipmentNotes,
+      equipment_maintenance_contract: equipmentMaintenanceContract,
+      equipment_storage_location: equipmentStorageLocation,
+    } = c.req.valid('json');
+
+    try {
+      await addEquipment({
+        equipmentId,
+        equipmentName,
+        equipmentModel,
+        equipmentManufacturer,
+        equipmentSerialNumber,
+        equipmentType,
+        facilityCode,
+        acquisitionDate,
+        equipmentStatus,
+        equipmentNotes,
+        equipmentMaintenanceContract,
+        equipmentStorageLocation,
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof DrizzleQueryError &&
+        error.cause instanceof DatabaseError &&
+        error.cause.code === '23505'
+      ) {
+        throw new HTTPException(409, {
+          message: '同じ院内管理IDがすでに登録されています。',
+        });
+      }
+      console.error(
+        '[equipment/add]Error occurred while adding equipment:',
+        error,
+      );
+      throw new HTTPException(500, {
+        message: 'サーバーエラーが発生しました。',
+      });
+    }
+
+    return c.body(null, 204);
+  });
 
 export default app;
