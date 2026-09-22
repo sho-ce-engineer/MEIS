@@ -12,6 +12,7 @@ const getEquipmentDetailsMock = vi.fn();
 const addEquipmentMock = vi.fn();
 const updateEquipmentMock = vi.fn();
 const importEquipmentMock = vi.fn();
+const listEquipmentLedgerMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
@@ -46,6 +47,10 @@ vi.mock('./update/service', () => ({
 
 vi.mock('./import/service', () => ({
   importEquipment: (...args: unknown[]) => importEquipmentMock(...args),
+}));
+
+vi.mock('./ledger/service', () => ({
+  listEquipmentLedger: (...args: unknown[]) => listEquipmentLedgerMock(...args),
 }));
 
 vi.mock('./download-sample-xlsx-ledger/service', () => ({
@@ -789,5 +794,124 @@ describe('equipment router: POST /import', () => {
 
     expect(res.status).toBe(401);
     expect(importEquipmentMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('equipment router: POST /ledger', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    listEquipmentLedgerMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('認証済み・パラメータ省略時、デフォルト値でlistEquipmentLedgerの結果を返す', async () => {
+    listEquipmentLedgerMock.mockResolvedValue({
+      items: [{ equipmentId: 'EQ001' }],
+      total: 1,
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      items: [{ equipmentId: 'EQ001' }],
+      total: 1,
+    });
+    expect(listEquipmentLedgerMock).toHaveBeenCalledWith({
+      facilityCode: 'FAC001',
+      page: 1,
+      itemsPerPage: 10,
+      sortRow: 'equipment_id',
+      sortByOrder: 'asc',
+      search: undefined,
+      filterCriteria: {},
+    });
+  });
+
+  it('不正なsortRow・sortByOrderが渡された場合、デフォルトにフォールバックする', async () => {
+    listEquipmentLedgerMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    await app.request('/equipment/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sortRow: 'malicious_column',
+        sortByOrder: 'invalid',
+      }),
+    });
+
+    expect(listEquipmentLedgerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortRow: 'equipment_id',
+        sortByOrder: 'asc',
+      }),
+    );
+  });
+
+  it('page・itemsPerPage・search・filterCriteriaが指定通り渡される', async () => {
+    listEquipmentLedgerMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    await app.request('/equipment/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: 2,
+        itemsPerPage: 5,
+        search: 'Pump',
+        filterCriteria: { equipment_type: 'Emergency' },
+      }),
+    });
+
+    expect(listEquipmentLedgerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        page: 2,
+        itemsPerPage: 5,
+        search: 'Pump',
+        filterCriteria: { equipment_type: 'Emergency' },
+      }),
+    );
+  });
+
+  it('DBエラーの場合、500になる', async () => {
+    listEquipmentLedgerMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('未認証の場合、401になる（authMiddlewareとの配線確認）', async () => {
+    process.env.SECRET_KEY = 'test-secret-key';
+
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { default: equipmentRouter } = await import('./router');
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', authMiddleware)
+      .route('/equipment', equipmentRouter);
+
+    const res = await app.request('/equipment/ledger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(401);
+    expect(listEquipmentLedgerMock).not.toHaveBeenCalled();
   });
 });
