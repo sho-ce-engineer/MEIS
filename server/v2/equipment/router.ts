@@ -13,6 +13,8 @@ import {
   sampleLedgerFileExists,
 } from './download-sample-xlsx-ledger/service';
 import { listEquipmentId } from './id/service';
+import { importEquipmentRequestSchema } from './import/domain';
+import { importEquipment } from './import/service';
 import { listEquipmentManufacturer } from './manufacturer/service';
 import { listEquipmentModelsRequestSchema } from './models/domain';
 import { listEquipmentModels } from './models/service';
@@ -264,6 +266,40 @@ const app = new Hono<{ Variables: Variables }>()
       if (!result) {
         throw new HTTPException(404, {
           message: 'Record not found or no changes made',
+        });
+      }
+
+      return c.body(null, 204);
+    },
+  )
+  .post(
+    '/import',
+    zValidator('json', importEquipmentRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { ledgerData } = c.req.valid('json');
+
+      try {
+        await importEquipment({
+          facilityCode,
+          ledgerData: ledgerData.map((item) => ({
+            equipmentId: item.equipment_id,
+            equipmentName: item.equipment_name,
+            equipmentModel: item.equipment_model,
+            equipmentManufacturer: item.equipment_manufacturer,
+            equipmentSerialNumber: item.equipment_serial_number,
+            equipmentType: item.equipment_type,
+            acquisitionDate: item.acquisition_date,
+            equipmentStatus: item.equipment_status,
+            equipmentNotes: item.equipment_notes,
+            equipmentMaintenanceContract: item.equipment_maintenance_contract,
+            equipmentStorageLocation: item.equipment_storage_location,
+          })),
+        });
+      } catch (error) {
+        console.error('[equipment/import]Transaction failed:', error);
+        throw new HTTPException(500, {
+          message: 'データのインポートに失敗しました。',
         });
       }
 
