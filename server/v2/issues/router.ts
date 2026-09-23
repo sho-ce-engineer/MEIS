@@ -35,6 +35,19 @@ app
       });
     }
   })
+  .get('/count', async (c) => {
+    const facilityCode = c.get('facilityCode');
+
+    try {
+      const count = await getTodayIssuesCount(facilityCode);
+      return c.json({ count });
+    } catch (error) {
+      console.error('[issues/count]Error fetching count:', error);
+      throw new HTTPException(500, {
+        message: '報告数の取得中にエラーが発生しました。',
+      });
+    }
+  })
   .post('/', zValidator('json', addIssueRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
     const {
@@ -59,19 +72,6 @@ app
       console.error('[issues/add]Error inserting issue:', error);
       throw new HTTPException(500, {
         message: 'サーバーエラーが発生しました。',
-      });
-    }
-  })
-  .get('/count', async (c) => {
-    const facilityCode = c.get('facilityCode');
-
-    try {
-      const count = await getTodayIssuesCount(facilityCode);
-      return c.json({ count });
-    } catch (error) {
-      console.error('[issues/count]Error fetching count:', error);
-      throw new HTTPException(500, {
-        message: '報告数の取得中にエラーが発生しました。',
       });
     }
   })
