@@ -22,6 +22,71 @@ import { listInspectionTypes } from '~/server/v2/inspection/items/types/service'
 const app = new Hono<{ Variables: Variables }>();
 
 app
+  .post(
+    '/list',
+    zValidator('json', listInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentModel, inspectionType } = c.req.valid('json');
+
+      let rows: Awaited<ReturnType<typeof listInspectionItems>>;
+      try {
+        rows = await listInspectionItems({
+          facilityCode,
+          equipmentModel,
+          inspectionType,
+        });
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-list]Database query error for',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の取得中にエラーが発生しました。',
+        });
+      }
+
+      if (rows.length === 0) {
+        throw new HTTPException(404, {
+          message: '点検項目が見つかりません。',
+        });
+      }
+
+      return c.json(rows);
+    },
+  )
+  .post(
+    '/details',
+    zValidator('json', listInspectionItemDetailsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { inspectionItemIds } = c.req.valid('json');
+
+      let rows: Awaited<ReturnType<typeof listInspectionItemDetails>>;
+      try {
+        rows = await listInspectionItemDetails({
+          facilityCode,
+          inspectionItemIds,
+        });
+      } catch (error) {
+        console.error(
+          '[inspection/items/item-details]Error occurred while fetching inspection item details:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の詳細の取得中にエラーが発生しました。',
+        });
+      }
+
+      if (rows.length === 0) {
+        throw new HTTPException(404, {
+          message: '該当するデータが見つかりませんでした。',
+        });
+      }
+
+      return c.json(rows);
+    },
+  )
   .post('/', zValidator('json', addInspectionItemRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
     const {
@@ -66,166 +131,6 @@ app
       });
     }
   })
-  .post(
-    '/types',
-    zValidator('json', listInspectionTypesRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { equipmentModel } = c.req.valid('json');
-
-      try {
-        const result = await listInspectionTypes({
-          facilityCode,
-          equipmentModel,
-        });
-        return c.json(result);
-      } catch (error) {
-        console.error(
-          '[inspection/items/types]Error fetching inspection types:',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: 'サーバーエラーが発生しました',
-        });
-      }
-    },
-  )
-  .delete(
-    '/',
-    zValidator('json', deleteInspectionItemRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { inspection_item_id: inspectionItemId } = c.req.valid('json');
-
-      try {
-        await deleteInspectionItem({ facilityCode, inspectionItemId });
-        return c.body(null, 204);
-      } catch (error) {
-        console.error(
-          '[inspection/items/item-delete]Error occurred while deleting Inspection Result Data.',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検項目の削除処理中にエラーが発生しました。',
-        });
-      }
-    },
-  )
-  .post(
-    '/sorted',
-    zValidator('json', saveSortedInspectionItemsRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { updatedItems } = c.req.valid('json');
-
-      try {
-        await saveSortedInspectionItems({ facilityCode, updatedItems });
-        return c.body(null, 204);
-      } catch (error) {
-        console.error(
-          '[inspection/items/items-save-sorted]Transaction failed:',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検項目の並び順の保存中にエラーが発生しました。',
-        });
-      }
-    },
-  )
-  .post(
-    '/details',
-    zValidator('json', listInspectionItemDetailsRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { inspectionItemIds } = c.req.valid('json');
-
-      let rows: Awaited<ReturnType<typeof listInspectionItemDetails>>;
-      try {
-        rows = await listInspectionItemDetails({
-          facilityCode,
-          inspectionItemIds,
-        });
-      } catch (error) {
-        console.error(
-          '[inspection/items/item-details]Error occurred while fetching inspection item details:',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検項目の詳細の取得中にエラーが発生しました。',
-        });
-      }
-
-      if (rows.length === 0) {
-        throw new HTTPException(404, {
-          message: '該当するデータが見つかりませんでした。',
-        });
-      }
-
-      return c.json(rows);
-    },
-  )
-  .post(
-    '/list',
-    zValidator('json', listInspectionItemsRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { equipmentModel, inspectionType } = c.req.valid('json');
-
-      let rows: Awaited<ReturnType<typeof listInspectionItems>>;
-      try {
-        rows = await listInspectionItems({
-          facilityCode,
-          equipmentModel,
-          inspectionType,
-        });
-      } catch (error) {
-        console.error(
-          '[inspection/items/items-list]Database query error for',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検項目の取得中にエラーが発生しました。',
-        });
-      }
-
-      if (rows.length === 0) {
-        throw new HTTPException(404, {
-          message: '点検項目が見つかりません。',
-        });
-      }
-
-      return c.json(rows);
-    },
-  )
-  .post(
-    '/copy',
-    zValidator('json', copyInspectionItemsRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { baseInspectionData, targetInspectionData } = c.req.valid('json');
-
-      try {
-        await copyInspectionItems({
-          facilityCode,
-          baseEquipmentType: baseInspectionData.baseEquipmentType,
-          baseEquipmentModel: baseInspectionData.baseEquipmentModel,
-          baseInspectionType: baseInspectionData.baseInspectionType,
-          targetEquipmentType: targetInspectionData.targetEquipmentType,
-          targetEquipmentModel: targetInspectionData.targetEquipmentModel,
-          targetInspectionType: targetInspectionData.targetInspectionType,
-        });
-        return c.body(null, 204);
-      } catch (error) {
-        console.error(
-          '[inspection/items/items-copy]Transaction failed:',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検項目のコピー中にエラーが発生しました。',
-        });
-      }
-    },
-  )
   .put(
     '/',
     zValidator('json', updateInspectionItemRequestSchema),
@@ -280,6 +185,101 @@ app
       }
 
       return c.json(row);
+    },
+  )
+  .delete(
+    '/',
+    zValidator('json', deleteInspectionItemRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { inspection_item_id: inspectionItemId } = c.req.valid('json');
+
+      try {
+        await deleteInspectionItem({ facilityCode, inspectionItemId });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/items/item-delete]Error occurred while deleting Inspection Result Data.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の削除処理中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/copy',
+    zValidator('json', copyInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { baseInspectionData, targetInspectionData } = c.req.valid('json');
+
+      try {
+        await copyInspectionItems({
+          facilityCode,
+          baseEquipmentType: baseInspectionData.baseEquipmentType,
+          baseEquipmentModel: baseInspectionData.baseEquipmentModel,
+          baseInspectionType: baseInspectionData.baseInspectionType,
+          targetEquipmentType: targetInspectionData.targetEquipmentType,
+          targetEquipmentModel: targetInspectionData.targetEquipmentModel,
+          targetInspectionType: targetInspectionData.targetInspectionType,
+        });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-copy]Transaction failed:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目のコピー中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/sorted',
+    zValidator('json', saveSortedInspectionItemsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { updatedItems } = c.req.valid('json');
+
+      try {
+        await saveSortedInspectionItems({ facilityCode, updatedItems });
+        return c.body(null, 204);
+      } catch (error) {
+        console.error(
+          '[inspection/items/items-save-sorted]Transaction failed:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検項目の並び順の保存中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/types',
+    zValidator('json', listInspectionTypesRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { equipmentModel } = c.req.valid('json');
+
+      try {
+        const result = await listInspectionTypes({
+          facilityCode,
+          equipmentModel,
+        });
+        return c.json(result);
+      } catch (error) {
+        console.error(
+          '[inspection/items/types]Error fetching inspection types:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました',
+        });
+      }
     },
   );
 

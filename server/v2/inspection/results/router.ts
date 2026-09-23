@@ -15,6 +15,63 @@ const app = new Hono<{ Variables: Variables }>();
 
 app
   .post(
+    '/history',
+    zValidator('json', listInspectionHistoryRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const {
+        page,
+        itemsPerPage,
+        sortRow,
+        sortByOrder,
+        inspectionType,
+        filterCriteria,
+      } = c.req.valid('json');
+
+      try {
+        const result = await listInspectionHistory({
+          facilityCode,
+          page,
+          itemsPerPage,
+          sortRow,
+          sortByOrder,
+          inspectionType,
+          filterCriteria,
+        });
+        return c.json(result);
+      } catch (error) {
+        console.error(
+          '[inspection/results/results-history]Error occurred while fetching Inspection History.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検履歴の取得中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
+    '/count',
+    zValidator('json', countInspectionResultsRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const { jpyDate } = c.req.valid('json');
+
+      try {
+        const count = await countInspectionResults({ facilityCode, jpyDate });
+        return c.json({ count });
+      } catch (error) {
+        console.error(
+          '[inspection/results/results-count]Error occurred while fetching Inspection Result.',
+          error,
+        );
+        throw new HTTPException(500, {
+          message: '点検結果のカウント処理中にエラーが発生しました。',
+        });
+      }
+    },
+  )
+  .post(
     '/',
     zValidator('json', saveInspectionResultsRequestSchema),
     async (c) => {
@@ -47,27 +104,6 @@ app
       }
     },
   )
-  .post(
-    '/count',
-    zValidator('json', countInspectionResultsRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { jpyDate } = c.req.valid('json');
-
-      try {
-        const count = await countInspectionResults({ facilityCode, jpyDate });
-        return c.json({ count });
-      } catch (error) {
-        console.error(
-          '[inspection/results/results-count]Error occurred while fetching Inspection Result.',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検結果のカウント処理中にエラーが発生しました。',
-        });
-      }
-    },
-  )
   .delete(
     '/',
     zValidator('json', deleteInspectionResultsRequestSchema),
@@ -85,42 +121,6 @@ app
         );
         throw new HTTPException(500, {
           message: '点検結果の削除処理中にエラーが発生しました。',
-        });
-      }
-    },
-  )
-  .post(
-    '/history',
-    zValidator('json', listInspectionHistoryRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const {
-        page,
-        itemsPerPage,
-        sortRow,
-        sortByOrder,
-        inspectionType,
-        filterCriteria,
-      } = c.req.valid('json');
-
-      try {
-        const result = await listInspectionHistory({
-          facilityCode,
-          page,
-          itemsPerPage,
-          sortRow,
-          sortByOrder,
-          inspectionType,
-          filterCriteria,
-        });
-        return c.json(result);
-      } catch (error) {
-        console.error(
-          '[inspection/results/results-history]Error occurred while fetching Inspection History.',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: '点検履歴の取得中にエラーが発生しました。',
         });
       }
     },
