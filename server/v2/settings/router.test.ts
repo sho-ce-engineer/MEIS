@@ -6,6 +6,7 @@ import { DatabaseError, DrizzleQueryError } from '~/server/db';
 const updateUserRoleMock = vi.fn();
 const deleteUserMock = vi.fn();
 const updateUserDataMock = vi.fn();
+const listUsersMock = vi.fn();
 
 vi.mock('./admin/role-change/service', () => ({
   updateUserRole: (...args: unknown[]) => updateUserRoleMock(...args),
@@ -17,6 +18,10 @@ vi.mock('./admin/user-delete/service', () => ({
 
 vi.mock('./users/edit-userdata/service', () => ({
   updateUserData: (...args: unknown[]) => updateUserDataMock(...args),
+}));
+
+vi.mock('./admin/list-users/service', () => ({
+  listUsers: (...args: unknown[]) => listUsersMock(...args),
 }));
 
 async function buildAppWithFacilityCode(
@@ -308,5 +313,77 @@ describe('settings router: PATCH /edit-userdata', () => {
 
     expect(res.status).toBe(400);
     expect(updateUserDataMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('settings router: POST /users', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    listUsersMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('バリデーション成功・DB正常応答の場合、200でitems・totalを返す', async () => {
+    listUsersMock.mockResolvedValue({
+      items: [{ userId: 'user-1', userName: '山田太郎', userRole: 'admin' }],
+      total: 1,
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: 1, itemsPerPage: 10 }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      items: [{ userId: 'user-1', userName: '山田太郎', userRole: 'admin' }],
+      total: 1,
+    });
+    expect(listUsersMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        facilityCode: 'FAC001',
+        page: 1,
+        itemsPerPage: 10,
+        sortRow: 'userName',
+        sortByOrder: 'asc',
+      }),
+    );
+  });
+
+  it('不正なsortRow・sortByOrderの場合、デフォルト値にフォールバックする', async () => {
+    listUsersMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sortRow: 'invalidKey', sortByOrder: 'invalid' }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(listUsersMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sortRow: 'userName',
+        sortByOrder: 'asc',
+      }),
+    );
+  });
+
+  it('DBエラーの場合、500になる', async () => {
+    listUsersMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(500);
   });
 });

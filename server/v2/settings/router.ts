@@ -3,15 +3,55 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
 import type { Variables } from '~/server/v2/auth';
+import {
+  listUsers,
+  type SortOrder,
+  type SortRow,
+} from '~/server/v2/settings/admin/list-users/service';
 import { updateUserRole } from '~/server/v2/settings/admin/role-change/service';
+import { listUsersRequestSchema } from './admin/list-users/domain';
 import { updateUserRoleRequestSchema } from './admin/role-change/domain';
 import { deleteUserRequestSchema } from './admin/user-delete/domain';
 import { deleteUser } from './admin/user-delete/service';
 import { updateUserDataRequestSchema } from './users/edit-userdata/domain';
 import { updateUserData } from './users/edit-userdata/service';
 
+const ALLOWED_SORT_KEYS: SortRow[] = ['userName', 'userRole'];
+
 const app = new Hono<{ Variables: Variables }>()
   //admin
+  .post('/users', zValidator('json', listUsersRequestSchema), async (c) => {
+    const facilityCode = c.get('facilityCode');
+    const {
+      page = 1,
+      itemsPerPage = 10,
+      sortRow,
+      sortByOrder,
+    } = c.req.valid('json');
+
+    const sortByKey = ALLOWED_SORT_KEYS.includes(sortRow as SortRow)
+      ? (sortRow as SortRow)
+      : 'userName';
+    const sortOrderValue: SortOrder =
+      sortByOrder === 'asc' || sortByOrder === 'desc' ? sortByOrder : 'asc';
+
+    try {
+      const result = await listUsers({
+        facilityCode,
+        page,
+        itemsPerPage,
+        sortRow: sortByKey,
+        sortByOrder: sortOrderValue,
+      });
+
+      return c.json(result);
+    } catch (error) {
+      console.error('[settings/users]Error executing query:', error);
+      throw new HTTPException(500, {
+        message: 'データの取得に失敗しました。',
+      });
+    }
+  })
   .put(
     '/role-change',
     zValidator('json', updateUserRoleRequestSchema),
