@@ -57,8 +57,6 @@ describe('listAnnouncements', () => {
 
     const { listAnnouncements } = await import('./service');
 
-    await expect(listAnnouncements(baseParams)).rejects.toThrow(
-      'DB接続エラー',
-    );
+    await expect(listAnnouncements(baseParams)).rejects.toThrow('DB接続エラー');
   });
 });

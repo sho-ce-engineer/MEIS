@@ -52,9 +52,7 @@ describe('markAsRead', () => {
   });
 
   it('DBクエリが失敗した場合、エラーをそのまま伝播する', async () => {
-    const returningMock = vi
-      .fn()
-      .mockRejectedValue(new Error('DB接続エラー'));
+    const returningMock = vi.fn().mockRejectedValue(new Error('DB接続エラー'));
     const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
     const setMock = vi.fn().mockReturnValue({ where: whereMock });
     updateMock.mockReturnValue({ set: setMock });
