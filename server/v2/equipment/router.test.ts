@@ -16,40 +16,40 @@ const listEquipmentLedgerMock = vi.fn();
 const sampleLedgerFileExistsMock = vi.fn();
 const createSampleLedgerReadStreamMock = vi.fn();
 
-vi.mock('./types/service', () => ({
+vi.mock('~/server/v2/equipment/list-equipment-types/service', () => ({
   listEquipmentTypes: (...args: unknown[]) => listEquipmentTypesMock(...args),
 }));
 
-vi.mock('./manufacturer/service', () => ({
+vi.mock('~/server/v2/equipment/list-equipment-manufacturer/service', () => ({
   listEquipmentManufacturer: (...args: unknown[]) =>
     listEquipmentManufacturerMock(...args),
 }));
 
-vi.mock('./id/service', () => ({
+vi.mock('~/server/v2/equipment/list-equipment-id/service', () => ({
   listEquipmentId: (...args: unknown[]) => listEquipmentIdMock(...args),
 }));
 
-vi.mock('./models/service', () => ({
+vi.mock('~/server/v2/equipment/list-equipment-models/service', () => ({
   listEquipmentModels: (...args: unknown[]) => listEquipmentModelsMock(...args),
 }));
 
-vi.mock('./details/service', () => ({
+vi.mock('~/server/v2/equipment/get-equipment-details/service', () => ({
   getEquipmentDetails: (...args: unknown[]) => getEquipmentDetailsMock(...args),
 }));
 
-vi.mock('./add/service', () => ({
+vi.mock('~/server/v2/equipment/add-equipment/service', () => ({
   addEquipment: (...args: unknown[]) => addEquipmentMock(...args),
 }));
 
-vi.mock('./update/service', () => ({
+vi.mock('~/server/v2/equipment/update-equipment/service', () => ({
   updateEquipment: (...args: unknown[]) => updateEquipmentMock(...args),
 }));
 
-vi.mock('./import/service', () => ({
+vi.mock('~/server/v2/equipment/import-equipment/service', () => ({
   importEquipment: (...args: unknown[]) => importEquipmentMock(...args),
 }));
 
-vi.mock('./ledger/service', () => ({
+vi.mock('~/server/v2/equipment/list-equipment-ledger/service', () => ({
   listEquipmentLedger: (...args: unknown[]) => listEquipmentLedgerMock(...args),
 }));
 
