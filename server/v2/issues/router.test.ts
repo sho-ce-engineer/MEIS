@@ -7,19 +7,19 @@ const deleteIssueMock = vi.fn();
 const getTodayIssuesCountMock = vi.fn();
 const listIssuesMock = vi.fn();
 
-vi.mock('./add/service', () => ({
+vi.mock('./add-issue/service', () => ({
   addIssue: (...args: unknown[]) => addIssueMock(...args),
 }));
 
-vi.mock('./delete/service', () => ({
+vi.mock('./delete-issue/service', () => ({
   deleteIssue: (...args: unknown[]) => deleteIssueMock(...args),
 }));
 
-vi.mock('./count/service', () => ({
+vi.mock('./count-today-issues/service', () => ({
   getTodayIssuesCount: (...args: unknown[]) => getTodayIssuesCountMock(...args),
 }));
 
-vi.mock('./list/service', () => ({
+vi.mock('./list-issues/service', () => ({
   listIssues: (...args: unknown[]) => listIssuesMock(...args),
 }));
 

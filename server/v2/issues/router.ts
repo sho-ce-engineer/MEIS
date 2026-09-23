@@ -2,13 +2,13 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
-import { addIssueRequestSchema } from '~/server/v2/issues/add/domain';
-import { addIssue } from '~/server/v2/issues/add/service';
-import { getTodayIssuesCount } from '~/server/v2/issues/count/service';
-import { deleteIssueRequestSchema } from '~/server/v2/issues/delete/domain';
-import { deleteIssue } from '~/server/v2/issues/delete/service';
-import { listIssuesRequestSchema } from '~/server/v2/issues/list/domain';
-import { listIssues } from '~/server/v2/issues/list/service';
+import { addIssueRequestSchema } from '~/server/v2/issues/add-issue/domain';
+import { addIssue } from '~/server/v2/issues/add-issue/service';
+import { getTodayIssuesCount } from '~/server/v2/issues/count-today-issues/service';
+import { deleteIssueRequestSchema } from '~/server/v2/issues/delete-issue/domain';
+import { deleteIssue } from '~/server/v2/issues/delete-issue/service';
+import { listIssuesRequestSchema } from '~/server/v2/issues/list-issues/domain';
+import { listIssues } from '~/server/v2/issues/list-issues/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
