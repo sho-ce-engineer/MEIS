@@ -31,9 +31,11 @@ describe('updateUserData', () => {
 
   it('passwordを指定した場合、ハッシュ化してSET句に含める', async () => {
     hashMock.mockResolvedValue('hashed-password');
-    const returningMock = vi.fn().mockResolvedValue([
-      { userName: '山田太郎', userEmail: 'yamada@example.com' },
-    ]);
+    const returningMock = vi
+      .fn()
+      .mockResolvedValue([
+        { userName: '山田太郎', userEmail: 'yamada@example.com' },
+      ]);
     const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
     const setMock = vi.fn().mockReturnValue({ where: whereMock });
     updateMock.mockReturnValue({ set: setMock });
@@ -54,9 +56,11 @@ describe('updateUserData', () => {
   });
 
   it('passwordを指定しない場合、SET句にpasswordを含めない', async () => {
-    const returningMock = vi.fn().mockResolvedValue([
-      { userName: '山田太郎', userEmail: 'yamada@example.com' },
-    ]);
+    const returningMock = vi
+      .fn()
+      .mockResolvedValue([
+        { userName: '山田太郎', userEmail: 'yamada@example.com' },
+      ]);
     const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
     const setMock = vi.fn().mockReturnValue({ where: whereMock });
     updateMock.mockReturnValue({ set: setMock });

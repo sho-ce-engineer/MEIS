@@ -8,13 +8,13 @@ import {
   type SortOrder,
   type SortRow,
 } from '~/server/v2/settings/admin/list-users/service';
-import { updateUserRole } from '~/server/v2/settings/admin/role-change/service';
+import { updateUserRole } from '~/server/v2/settings/admin/update-role/service';
+import { deleteUserRequestSchema } from './admin/delete-user/domain';
+import { deleteUser } from './admin/delete-user/service';
 import { listUsersRequestSchema } from './admin/list-users/domain';
-import { updateUserRoleRequestSchema } from './admin/role-change/domain';
-import { deleteUserRequestSchema } from './admin/user-delete/domain';
-import { deleteUser } from './admin/user-delete/service';
-import { updateUserDataRequestSchema } from './users/edit-userdata/domain';
-import { updateUserData } from './users/edit-userdata/service';
+import { updateUserRoleRequestSchema } from './admin/update-role/domain';
+import { updateUserDataRequestSchema } from './users/update-user-data/domain';
+import { updateUserData } from './users/update-user-data/service';
 
 const ALLOWED_SORT_KEYS: SortRow[] = ['userName', 'userRole'];
 
@@ -52,41 +52,37 @@ const app = new Hono<{ Variables: Variables }>()
       });
     }
   })
-  .put(
-    '/role-change',
-    zValidator('json', updateUserRoleRequestSchema),
-    async (c) => {
-      const facilityCode = c.get('facilityCode');
-      const { newUserRole, targetUserId } = c.req.valid('json');
+  .put('/role', zValidator('json', updateUserRoleRequestSchema), async (c) => {
+    const facilityCode = c.get('facilityCode');
+    const { newUserRole, targetUserId } = c.req.valid('json');
 
-      let result: Awaited<ReturnType<typeof updateUserRole>>;
+    let result: Awaited<ReturnType<typeof updateUserRole>>;
 
-      try {
-        result = await updateUserRole({
-          facilityCode,
-          newUserRole,
-          targetUserId,
-        });
-      } catch (error) {
-        console.error(
-          '[settings/role-change]Error occurred while changing User Role:',
-          error,
-        );
-        throw new HTTPException(500, {
-          message: 'サーバーエラーが発生しました。',
-        });
-      }
+    try {
+      result = await updateUserRole({
+        facilityCode,
+        newUserRole,
+        targetUserId,
+      });
+    } catch (error) {
+      console.error(
+        '[settings/role]Error occurred while changing User Role:',
+        error,
+      );
+      throw new HTTPException(500, {
+        message: 'サーバーエラーが発生しました。',
+      });
+    }
 
-      if (!result) {
-        throw new HTTPException(404, {
-          message: 'Record not found or no changes made',
-        });
-      }
+    if (!result) {
+      throw new HTTPException(404, {
+        message: 'Record not found or no changes made',
+      });
+    }
 
-      return c.body(null, 204);
-    },
-  )
-  .delete('/', zValidator('json', deleteUserRequestSchema), async (c) => {
+    return c.body(null, 204);
+  })
+  .delete('/user', zValidator('json', deleteUserRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
     const { targetUserId } = c.req.valid('json');
 
@@ -111,7 +107,7 @@ const app = new Hono<{ Variables: Variables }>()
   })
   //general
   .patch(
-    '/edit-userdata',
+    '/user-data',
     zValidator('json', updateUserDataRequestSchema),
     async (c) => {
       const facilityCode = c.get('facilityCode');
