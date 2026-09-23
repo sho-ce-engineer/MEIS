@@ -4,30 +4,30 @@ import { HTTPException } from 'hono/http-exception';
 import { stream } from 'hono/streaming';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
 import type { Variables } from '~/server/v2/auth';
-import { addEquipmentRequestSchema } from './add/domain';
-import { addEquipment } from './add/service';
-import { listEquipmentDetailsRequestSchema } from './details/domain';
-import { getEquipmentDetails } from './details/service';
+import { addEquipmentRequestSchema } from './add-equipment/domain';
+import { addEquipment } from './add-equipment/service';
 import {
   createSampleLedgerReadStream,
   sampleLedgerFileExists,
 } from './download-sample-xlsx-ledger/service';
-import { listEquipmentId } from './id/service';
-import { importEquipmentRequestSchema } from './import/domain';
-import { importEquipment } from './import/service';
-import { listEquipmentLedgerRequestSchema } from './ledger/domain';
+import { listEquipmentDetailsRequestSchema } from './get-equipment-details/domain';
+import { getEquipmentDetails } from './get-equipment-details/service';
+import { importEquipmentRequestSchema } from './import-equipment/domain';
+import { importEquipment } from './import-equipment/service';
+import { listEquipmentId } from './list-equipment-id/service';
+import { listEquipmentLedgerRequestSchema } from './list-equipment-ledger/domain';
 import {
   type FilterCriteria,
   listEquipmentLedger,
   type SortOrder,
   type SortRow,
-} from './ledger/service';
-import { listEquipmentManufacturer } from './manufacturer/service';
-import { listEquipmentModelsRequestSchema } from './models/domain';
-import { listEquipmentModels } from './models/service';
-import { listEquipmentTypes } from './types/service';
-import { updateEquipmentRequestSchema } from './update/domain';
-import { updateEquipment } from './update/service';
+} from './list-equipment-ledger/service';
+import { listEquipmentManufacturer } from './list-equipment-manufacturer/service';
+import { listEquipmentModelsRequestSchema } from './list-equipment-models/domain';
+import { listEquipmentModels } from './list-equipment-models/service';
+import { listEquipmentTypes } from './list-equipment-types/service';
+import { updateEquipmentRequestSchema } from './update-equipment/domain';
+import { updateEquipment } from './update-equipment/service';
 
 const ALLOWED_SORT_KEYS: SortRow[] = [
   'equipment_id',
@@ -72,7 +72,10 @@ const app = new Hono<{ Variables: Variables }>()
         });
         return c.json(result);
       } catch (error) {
-        console.error('[equipment/ledger]Error executing query:', error);
+        console.error(
+          '[equipment/list-equipment-ledger]Error executing query:',
+          error,
+        );
         throw new HTTPException(500, {
           message: 'データの取得に失敗しました。',
         });
@@ -92,7 +95,7 @@ const app = new Hono<{ Variables: Variables }>()
         result = await getEquipmentDetails({ facilityCode, equipmentId });
       } catch (error) {
         console.error(
-          '[equipment/details]Error fetching Equipment Details:',
+          '[equipment/get-equipment-details]Error fetching Equipment Details:',
           error,
         );
         throw new HTTPException(500, {
@@ -151,7 +154,7 @@ const app = new Hono<{ Variables: Variables }>()
         });
       }
       console.error(
-        '[equipment/add]Error occurred while adding equipment:',
+        '[equipment/add-equipment]Error occurred while adding equipment:',
         error,
       );
       throw new HTTPException(500, {
@@ -199,7 +202,7 @@ const app = new Hono<{ Variables: Variables }>()
         });
       } catch (error) {
         console.error(
-          '[equipment/update]Error occurred while updating equipment:',
+          '[equipment/update-equipment]Error occurred while updating equipment:',
           error,
         );
         throw new HTTPException(500, {
@@ -241,7 +244,7 @@ const app = new Hono<{ Variables: Variables }>()
           })),
         });
       } catch (error) {
-        console.error('[equipment/import]Transaction failed:', error);
+        console.error('[equipment/import-equipment]Transaction failed:', error);
         throw new HTTPException(500, {
           message: 'データのインポートに失敗しました。',
         });
@@ -259,7 +262,10 @@ const app = new Hono<{ Variables: Variables }>()
       });
       return c.json(result);
     } catch (error) {
-      console.error('[equipment/types]Error fetching Equipment Types:', error);
+      console.error(
+        '[equipment/list-equipment-types]Error fetching Equipment Types:',
+        error,
+      );
       throw new HTTPException(500, {
         message: 'サーバーエラーが発生しました',
       });
@@ -273,7 +279,7 @@ const app = new Hono<{ Variables: Variables }>()
       return c.json(result);
     } catch (error) {
       console.error(
-        '[equipment/manufacturer]Error fetching Equipment Manufacturer:',
+        '[equipment/list-equipment-manufacturer]Error fetching Equipment Manufacturer:',
         error,
       );
       throw new HTTPException(500, {
@@ -297,7 +303,7 @@ const app = new Hono<{ Variables: Variables }>()
         });
       } catch (error) {
         console.error(
-          '[equipment/models]Error fetching Equipment Models:',
+          '[equipment/list-equipment-models]Error fetching Equipment Models:',
           error,
         );
         throw new HTTPException(500, {
@@ -320,7 +326,10 @@ const app = new Hono<{ Variables: Variables }>()
     try {
       result = await listEquipmentId({ facilityCode });
     } catch (error) {
-      console.error('[equipment/id]Error fetching Equipment Id:', error);
+      console.error(
+        '[equipment/list-equipment-id]Error fetching Equipment Id:',
+        error,
+      );
       throw new HTTPException(500, {
         message: 'サーバーエラーが発生しました',
       });
