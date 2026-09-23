@@ -3,9 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Variables } from '~/server/v2/auth';
 
 const updateUserRoleMock = vi.fn();
+const deleteUserMock = vi.fn();
 
 vi.mock('./admin/role-change/service', () => ({
   updateUserRole: (...args: unknown[]) => updateUserRoleMock(...args),
+}));
+
+vi.mock('./admin/user-delete/service', () => ({
+  deleteUser: (...args: unknown[]) => deleteUserMock(...args),
 }));
 
 async function buildAppWithFacilityCode(facilityCode: string) {
@@ -107,5 +112,80 @@ describe('settings router: PUT /role-change', () => {
 
     expect(res.status).toBe(400);
     expect(updateUserRoleMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('settings router: DELETE /', () => {
+  const validBody = {
+    targetUserId: 'user-1',
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    deleteUserMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('バリデーション成功・DB正常応答の場合、204を返す', async () => {
+    deleteUserMock.mockResolvedValue({
+      userId: 'user-1',
+      facilityCode: 'FAC001',
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(deleteUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetUserId: 'user-1',
+        facilityCode: 'FAC001',
+      }),
+    );
+  });
+
+  it('該当するレコードが無い場合、404になる', async () => {
+    deleteUserMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('DBエラーの場合、500になる', async () => {
+    deleteUserMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('targetUserIdが無い場合、400になる', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(400);
+    expect(deleteUserMock).not.toHaveBeenCalled();
   });
 });
