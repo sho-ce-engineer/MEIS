@@ -11,38 +11,44 @@ const addInspectionItemMock = vi.fn();
 const copyInspectionItemsMock = vi.fn();
 const updateInspectionItemMock = vi.fn();
 
-vi.mock('./types/service', () => ({
+vi.mock('~/server/v2/inspection/items/list-inspection-types/service', () => ({
   listInspectionTypes: (...args: unknown[]) => listInspectionTypesMock(...args),
 }));
 
-vi.mock('./items-add/service', () => ({
+vi.mock('~/server/v2/inspection/items/add-inspection-item/service', () => ({
   addInspectionItem: (...args: unknown[]) => addInspectionItemMock(...args),
 }));
 
-vi.mock('./item-delete/service', () => ({
+vi.mock('~/server/v2/inspection/items/delete-inspection-item/service', () => ({
   deleteInspectionItem: (...args: unknown[]) =>
     deleteInspectionItemMock(...args),
 }));
 
-vi.mock('./items-save-sorted/service', () => ({
-  saveSortedInspectionItems: (...args: unknown[]) =>
-    saveSortedInspectionItemsMock(...args),
-}));
+vi.mock(
+  '~/server/v2/inspection/items/save-sorted-inspection-items/service',
+  () => ({
+    saveSortedInspectionItems: (...args: unknown[]) =>
+      saveSortedInspectionItemsMock(...args),
+  }),
+);
 
-vi.mock('./item-details/service', () => ({
-  listInspectionItemDetails: (...args: unknown[]) =>
-    listInspectionItemDetailsMock(...args),
-}));
+vi.mock(
+  '~/server/v2/inspection/items/list-inspection-item-details/service',
+  () => ({
+    listInspectionItemDetails: (...args: unknown[]) =>
+      listInspectionItemDetailsMock(...args),
+  }),
+);
 
-vi.mock('./items-list/service', () => ({
+vi.mock('~/server/v2/inspection/items/list-inspection-items/service', () => ({
   listInspectionItems: (...args: unknown[]) => listInspectionItemsMock(...args),
 }));
 
-vi.mock('./items-copy/service', () => ({
+vi.mock('~/server/v2/inspection/items/copy-inspection-items/service', () => ({
   copyInspectionItems: (...args: unknown[]) => copyInspectionItemsMock(...args),
 }));
 
-vi.mock('./items-update/service', () => ({
+vi.mock('~/server/v2/inspection/items/update-inspection-item/service', () => ({
   updateInspectionItem: (...args: unknown[]) =>
     updateInspectionItemMock(...args),
 }));

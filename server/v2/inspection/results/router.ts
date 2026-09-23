@@ -2,14 +2,14 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
-import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-count/domain';
-import { countInspectionResults } from '~/server/v2/inspection/results/results-count/service';
-import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-delete/domain';
-import { deleteInspectionResults } from '~/server/v2/inspection/results/results-delete/service';
-import { listInspectionHistoryRequestSchema } from '~/server/v2/inspection/results/results-history/domain';
-import { listInspectionHistory } from '~/server/v2/inspection/results/results-history/service';
-import { saveInspectionResultsRequestSchema } from '~/server/v2/inspection/results/results-save/domain';
-import { saveInspectionResults } from '~/server/v2/inspection/results/results-save/service';
+import { countInspectionResultsRequestSchema } from '~/server/v2/inspection/results/count-inspection-results/domain';
+import { countInspectionResults } from '~/server/v2/inspection/results/count-inspection-results/service';
+import { deleteInspectionResultsRequestSchema } from '~/server/v2/inspection/results/delete-inspection-results/domain';
+import { deleteInspectionResults } from '~/server/v2/inspection/results/delete-inspection-results/service';
+import { listInspectionHistoryRequestSchema } from '~/server/v2/inspection/results/list-inspection-history/domain';
+import { listInspectionHistory } from '~/server/v2/inspection/results/list-inspection-history/service';
+import { saveInspectionResultsRequestSchema } from '~/server/v2/inspection/results/save-inspection-results/domain';
+import { saveInspectionResults } from '~/server/v2/inspection/results/save-inspection-results/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -41,7 +41,7 @@ app
         return c.json(result);
       } catch (error) {
         console.error(
-          '[inspection/results/results-history]Error occurred while fetching Inspection History.',
+          '[inspection/results/list-inspection-history]Error occurred while fetching Inspection History.',
           error,
         );
         throw new HTTPException(500, {
@@ -62,7 +62,7 @@ app
         return c.json({ count });
       } catch (error) {
         console.error(
-          '[inspection/results/results-count]Error occurred while fetching Inspection Result.',
+          '[inspection/results/count-inspection-results]Error occurred while fetching Inspection Result.',
           error,
         );
         throw new HTTPException(500, {
@@ -95,7 +95,7 @@ app
         return c.body(null, 204);
       } catch (error) {
         console.error(
-          '[inspection/results/results-save]Transaction failed:',
+          '[inspection/results/save-inspection-results]Transaction failed:',
           error,
         );
         throw new HTTPException(500, {
@@ -116,7 +116,7 @@ app
         return c.body(null, 204);
       } catch (error) {
         console.error(
-          '[inspection/results/results-delete]Error occurred while deleting Inspection Result Data.',
+          '[inspection/results/delete-inspection-results]Error occurred while deleting Inspection Result Data.',
           error,
         );
         throw new HTTPException(500, {
