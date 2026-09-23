@@ -18,8 +18,12 @@
 
 ## ファイル構成
 - 1エンドポイント1ディレクトリ、中身は`service.ts`（必須）・`domain.ts`（入力検証が必要な場合のみ）
+- ディレクトリ名は `動詞 + 対象`（kebab-case）
+  - 例：`list-users`、`update-role`、`delete-user`
 - ルーティング定義（`router.ts`）は機能ドメイン単位の親ディレクトリに集約し、エンドポイントごとに個別の`router.ts`は作らない
   - 例：`equipment/router.ts`が`/types`・`/manufacturer`・`/id`をまとめて持つ。`equipment/types/router.ts`のような分散は作らない
+- URLパス（`router.ts`で定義するパス）は対象を表す名詞のみとし、動詞を含めない。動詞の意味合いはHTTPメソッドが担う
+  - 例：`GET /users`（一覧取得だがパスは名詞）
 - テストは実装と同じ階層に`xxx.test.ts`
   - `service.ts` → `service.test.ts`（DB層のモック、`vi.mock('~/server/db', ...)`）
   - 親`router.ts` → `router.test.ts`（service層のモック、`app.request()`でHTTP経由のテスト）
