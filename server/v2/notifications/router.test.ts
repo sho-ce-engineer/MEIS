@@ -6,15 +6,15 @@ const getUnreadCountMock = vi.fn();
 const listAnnouncementsMock = vi.fn();
 const markAsReadMock = vi.fn();
 
-vi.mock('./unread-count/service', () => ({
+vi.mock('~/server/v2/notifications/get-unread-count/service', () => ({
   getUnreadCount: (...args: unknown[]) => getUnreadCountMock(...args),
 }));
 
-vi.mock('./announcements/service', () => ({
+vi.mock('~/server/v2/notifications/list-announcements/service', () => ({
   listAnnouncements: (...args: unknown[]) => listAnnouncementsMock(...args),
 }));
 
-vi.mock('./already-read/service', () => ({
+vi.mock('~/server/v2/notifications/mark-as-read/service', () => ({
   markAsRead: (...args: unknown[]) => markAsReadMock(...args),
 }));
 
