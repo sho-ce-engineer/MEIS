@@ -163,3 +163,86 @@ describe('facilityMiddleware', () => {
     expect(nextSpy).toHaveBeenCalledOnce();
   });
 });
+
+describe('adminUserOnlyMiddleware', () => {
+  beforeEach(() => {
+    process.env.SECRET_KEY = TEST_SECRET;
+    vi.resetModules();
+  });
+
+  async function buildAppWithJwtPayload(userId: string) {
+    const { adminUserOnlyMiddleware } = await import('~/server/v2/auth');
+    const nextSpy = vi.fn(async () => {});
+
+    const app = new Hono<{ Variables: Variables }>()
+      .use('*', async (c, next) => {
+        c.set('jwtPayload', { user_id: userId });
+        await next();
+      })
+      .use('*', async (c, next) => {
+        await adminUserOnlyMiddleware(c, async () => {
+          await nextSpy();
+          await next();
+        });
+      })
+      .get('/', (c) => c.json({ userRole: c.get('userRole') }));
+
+    return { app, nextSpy };
+  }
+
+  it('ユーザー権限情報が見つからない場合は404になり、next()が呼ばれない', async () => {
+    const dbModule = await import('~/server/config/db');
+    vi.mocked(dbModule.default.query).mockResolvedValueOnce({
+      rowCount: 0,
+      rows: [],
+    } as never);
+
+    const { app, nextSpy } = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/');
+
+    expect(res.status).toBe(404);
+    expect(nextSpy).not.toHaveBeenCalled();
+  });
+
+  it('DBクエリが失敗した場合は500になり、next()が呼ばれない', async () => {
+    const dbModule = await import('~/server/config/db');
+    vi.mocked(dbModule.default.query).mockRejectedValueOnce(
+      new Error('DB接続エラー'),
+    );
+
+    const { app, nextSpy } = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/');
+
+    expect(res.status).toBe(500);
+    expect(nextSpy).not.toHaveBeenCalled();
+  });
+
+  it('user_roleがadmin以外の場合は403になり、next()が呼ばれない', async () => {
+    const dbModule = await import('~/server/config/db');
+    vi.mocked(dbModule.default.query).mockResolvedValueOnce({
+      rowCount: 1,
+      rows: [{ user_role: 'general' }],
+    } as never);
+
+    const { app, nextSpy } = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/');
+
+    expect(res.status).toBe(403);
+    expect(nextSpy).not.toHaveBeenCalled();
+  });
+
+  it('正常系ではuserRoleがセットされ、next()が呼ばれる', async () => {
+    const dbModule = await import('~/server/config/db');
+    vi.mocked(dbModule.default.query).mockResolvedValueOnce({
+      rowCount: 1,
+      rows: [{ user_role: 'admin' }],
+    } as never);
+
+    const { app, nextSpy } = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/');
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ userRole: 'admin' });
+    expect(nextSpy).toHaveBeenCalledOnce();
+  });
+});
