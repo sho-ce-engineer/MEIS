@@ -2,22 +2,22 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
-import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/items/item-delete/domain';
-import { deleteInspectionItem } from '~/server/v2/inspection/items/item-delete/service';
-import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/items/item-details/domain';
-import { listInspectionItemDetails } from '~/server/v2/inspection/items/item-details/service';
-import { addInspectionItemRequestSchema } from '~/server/v2/inspection/items/items-add/domain';
-import { addInspectionItem } from '~/server/v2/inspection/items/items-add/service';
-import { copyInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-copy/domain';
-import { copyInspectionItems } from '~/server/v2/inspection/items/items-copy/service';
-import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-list/domain';
-import { listInspectionItems } from '~/server/v2/inspection/items/items-list/service';
-import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/items-save-sorted/domain';
-import { saveSortedInspectionItems } from '~/server/v2/inspection/items/items-save-sorted/service';
-import { updateInspectionItemRequestSchema } from '~/server/v2/inspection/items/items-update/domain';
-import { updateInspectionItem } from '~/server/v2/inspection/items/items-update/service';
-import { listInspectionTypesRequestSchema } from '~/server/v2/inspection/items/types/domain';
-import { listInspectionTypes } from '~/server/v2/inspection/items/types/service';
+import { addInspectionItemRequestSchema } from '~/server/v2/inspection/items/add-inspection-item/domain';
+import { addInspectionItem } from '~/server/v2/inspection/items/add-inspection-item/service';
+import { copyInspectionItemsRequestSchema } from '~/server/v2/inspection/items/copy-inspection-items/domain';
+import { copyInspectionItems } from '~/server/v2/inspection/items/copy-inspection-items/service';
+import { deleteInspectionItemRequestSchema } from '~/server/v2/inspection/items/delete-inspection-item/domain';
+import { deleteInspectionItem } from '~/server/v2/inspection/items/delete-inspection-item/service';
+import { listInspectionItemDetailsRequestSchema } from '~/server/v2/inspection/items/list-inspection-item-details/domain';
+import { listInspectionItemDetails } from '~/server/v2/inspection/items/list-inspection-item-details/service';
+import { listInspectionItemsRequestSchema } from '~/server/v2/inspection/items/list-inspection-items/domain';
+import { listInspectionItems } from '~/server/v2/inspection/items/list-inspection-items/service';
+import { listInspectionTypesRequestSchema } from '~/server/v2/inspection/items/list-inspection-types/domain';
+import { listInspectionTypes } from '~/server/v2/inspection/items/list-inspection-types/service';
+import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/items/save-sorted-inspection-items/domain';
+import { saveSortedInspectionItems } from '~/server/v2/inspection/items/save-sorted-inspection-items/service';
+import { updateInspectionItemRequestSchema } from '~/server/v2/inspection/items/update-inspection-item/domain';
+import { updateInspectionItem } from '~/server/v2/inspection/items/update-inspection-item/service';
 
 const app = new Hono<{ Variables: Variables }>();
 
@@ -38,7 +38,7 @@ app
         });
       } catch (error) {
         console.error(
-          '[inspection/items/items-list]Database query error for',
+          '[inspection/items/list-inspection-items]Database query error for',
           error,
         );
         throw new HTTPException(500, {
@@ -70,7 +70,7 @@ app
         });
       } catch (error) {
         console.error(
-          '[inspection/items/item-details]Error occurred while fetching inspection item details:',
+          '[inspection/items/list-inspection-item-details]Error occurred while fetching inspection item details:',
           error,
         );
         throw new HTTPException(500, {
@@ -123,7 +123,7 @@ app
       return c.json(row);
     } catch (error) {
       console.error(
-        '[inspection/items/items-add]Error occurred while adding inspection item.',
+        '[inspection/items/add-inspection-item]Error occurred while adding inspection item.',
         error,
       );
       throw new HTTPException(500, {
@@ -170,7 +170,7 @@ app
         });
       } catch (error) {
         console.error(
-          '[inspection/items/items-update]Error occurred while updating inspection item.',
+          '[inspection/items/update-inspection-item]Error occurred while updating inspection item.',
           error,
         );
         throw new HTTPException(500, {
@@ -199,7 +199,7 @@ app
         return c.body(null, 204);
       } catch (error) {
         console.error(
-          '[inspection/items/item-delete]Error occurred while deleting Inspection Result Data.',
+          '[inspection/items/delete-inspection-item]Error occurred while deleting Inspection Result Data.',
           error,
         );
         throw new HTTPException(500, {
@@ -228,7 +228,7 @@ app
         return c.body(null, 204);
       } catch (error) {
         console.error(
-          '[inspection/items/items-copy]Transaction failed:',
+          '[inspection/items/copy-inspection-items]Transaction failed:',
           error,
         );
         throw new HTTPException(500, {
@@ -249,7 +249,7 @@ app
         return c.body(null, 204);
       } catch (error) {
         console.error(
-          '[inspection/items/items-save-sorted]Transaction failed:',
+          '[inspection/items/save-sorted-inspection-items]Transaction failed:',
           error,
         );
         throw new HTTPException(500, {
@@ -273,7 +273,7 @@ app
         return c.json(result);
       } catch (error) {
         console.error(
-          '[inspection/items/types]Error fetching inspection types:',
+          '[inspection/items/list-inspection-types]Error fetching inspection types:',
           error,
         );
         throw new HTTPException(500, {

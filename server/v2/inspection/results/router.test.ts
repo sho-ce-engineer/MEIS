@@ -6,20 +6,29 @@ const deleteInspectionResultsMock = vi.fn();
 const countInspectionResultsMock = vi.fn();
 const saveInspectionResultsMock = vi.fn();
 
-vi.mock('./results-delete/service', () => ({
-  deleteInspectionResults: (...args: unknown[]) =>
-    deleteInspectionResultsMock(...args),
-}));
+vi.mock(
+  '~/server/v2/inspection/results/delete-inspection-results/service',
+  () => ({
+    deleteInspectionResults: (...args: unknown[]) =>
+      deleteInspectionResultsMock(...args),
+  }),
+);
 
-vi.mock('./results-count/service', () => ({
-  countInspectionResults: (...args: unknown[]) =>
-    countInspectionResultsMock(...args),
-}));
+vi.mock(
+  '~/server/v2/inspection/results/count-inspection-results/service',
+  () => ({
+    countInspectionResults: (...args: unknown[]) =>
+      countInspectionResultsMock(...args),
+  }),
+);
 
-vi.mock('./results-save/service', () => ({
-  saveInspectionResults: (...args: unknown[]) =>
-    saveInspectionResultsMock(...args),
-}));
+vi.mock(
+  '~/server/v2/inspection/results/save-inspection-results/service',
+  () => ({
+    saveInspectionResults: (...args: unknown[]) =>
+      saveInspectionResultsMock(...args),
+  }),
+);
 
 async function buildAppWithFacilityCode(facilityCode: string) {
   const { default: resultsRouter } = await import('./router');
