@@ -1,22 +1,22 @@
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Variables } from '~/server/v2/auth';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
+import type { Variables } from '~/server/v2/auth';
 
 const updateUserRoleMock = vi.fn();
 const deleteUserMock = vi.fn();
 const updateUserDataMock = vi.fn();
 const listUsersMock = vi.fn();
 
-vi.mock('./admin/role-change/service', () => ({
+vi.mock('./admin/update-role/service', () => ({
   updateUserRole: (...args: unknown[]) => updateUserRoleMock(...args),
 }));
 
-vi.mock('./admin/user-delete/service', () => ({
+vi.mock('./admin/delete-user/service', () => ({
   deleteUser: (...args: unknown[]) => deleteUserMock(...args),
 }));
 
-vi.mock('./users/edit-userdata/service', () => ({
+vi.mock('./users/update-user-data/service', () => ({
   updateUserData: (...args: unknown[]) => updateUserDataMock(...args),
 }));
 
@@ -41,7 +41,7 @@ async function buildAppWithFacilityCode(
   return app;
 }
 
-describe('settings router: PUT /role-change', () => {
+describe('settings router: PUT /role', () => {
   const validBody = {
     targetUserId: 'user-1',
     newUserRole: 'admin',
@@ -63,7 +63,7 @@ describe('settings router: PUT /role-change', () => {
     });
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/role-change', {
+    const res = await app.request('/settings/role', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -83,7 +83,7 @@ describe('settings router: PUT /role-change', () => {
     updateUserRoleMock.mockResolvedValue(undefined);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/role-change', {
+    const res = await app.request('/settings/role', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -96,7 +96,7 @@ describe('settings router: PUT /role-change', () => {
     updateUserRoleMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/role-change', {
+    const res = await app.request('/settings/role', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -107,7 +107,7 @@ describe('settings router: PUT /role-change', () => {
 
   it('targetUserIdが無い場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/role-change', {
+    const res = await app.request('/settings/role', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newUserRole: 'admin' }),
@@ -119,7 +119,7 @@ describe('settings router: PUT /role-change', () => {
 
   it('newUserRoleが許可された値でない場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/role-change', {
+    const res = await app.request('/settings/role', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetUserId: 'user-1', newUserRole: 'owner' }),
@@ -130,7 +130,7 @@ describe('settings router: PUT /role-change', () => {
   });
 });
 
-describe('settings router: DELETE /', () => {
+describe('settings router: DELETE /user', () => {
   const validBody = {
     targetUserId: 'user-1',
   };
@@ -151,7 +151,7 @@ describe('settings router: DELETE /', () => {
     });
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings', {
+    const res = await app.request('/settings/user', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -170,7 +170,7 @@ describe('settings router: DELETE /', () => {
     deleteUserMock.mockResolvedValue(undefined);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings', {
+    const res = await app.request('/settings/user', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -183,7 +183,7 @@ describe('settings router: DELETE /', () => {
     deleteUserMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings', {
+    const res = await app.request('/settings/user', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -194,7 +194,7 @@ describe('settings router: DELETE /', () => {
 
   it('targetUserIdが無い場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings', {
+    const res = await app.request('/settings/user', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -205,7 +205,7 @@ describe('settings router: DELETE /', () => {
   });
 });
 
-describe('settings router: PATCH /edit-userdata', () => {
+describe('settings router: PATCH /user-data', () => {
   const validBody = {
     userName: '山田太郎',
     userEmail: 'yamada@example.com',
@@ -227,7 +227,7 @@ describe('settings router: PATCH /edit-userdata', () => {
     });
 
     const app = await buildAppWithFacilityCode('FAC001', 'user-1');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -248,7 +248,7 @@ describe('settings router: PATCH /edit-userdata', () => {
     updateUserDataMock.mockResolvedValue(undefined);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -269,7 +269,7 @@ describe('settings router: PATCH /edit-userdata', () => {
     );
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -282,7 +282,7 @@ describe('settings router: PATCH /edit-userdata', () => {
     updateUserDataMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
@@ -293,7 +293,7 @@ describe('settings router: PATCH /edit-userdata', () => {
 
   it('userNameが無い場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userEmail: 'yamada@example.com' }),
@@ -305,7 +305,7 @@ describe('settings router: PATCH /edit-userdata', () => {
 
   it('userEmailが無い場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/settings/edit-userdata', {
+    const res = await app.request('/settings/user-data', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userName: '山田太郎' }),
