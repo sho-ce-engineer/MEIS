@@ -36,7 +36,9 @@ describe('authMiddleware', () => {
 
   it('トークンが存在しないと401になる', async () => {
     const { authMiddleware } = await import('~/server/v2/auth');
-    const app = new Hono().use('*', authMiddleware).get('/', (c) => c.text('ok'));
+    const app = new Hono()
+      .use('*', authMiddleware)
+      .get('/', (c) => c.text('ok'));
 
     const res = await app.request('/');
 
@@ -45,7 +47,9 @@ describe('authMiddleware', () => {
 
   it('不正なトークンだと401になる', async () => {
     const { authMiddleware } = await import('~/server/v2/auth');
-    const app = new Hono().use('*', authMiddleware).get('/', (c) => c.text('ok'));
+    const app = new Hono()
+      .use('*', authMiddleware)
+      .get('/', (c) => c.text('ok'));
 
     const res = await app.request('/', {
       headers: { Cookie: 'auth.token=invalid-token' },
@@ -56,7 +60,9 @@ describe('authMiddleware', () => {
 
   it('期限切れのトークンだと401になる', async () => {
     const { authMiddleware } = await import('~/server/v2/auth');
-    const app = new Hono().use('*', authMiddleware).get('/', (c) => c.text('ok'));
+    const app = new Hono()
+      .use('*', authMiddleware)
+      .get('/', (c) => c.text('ok'));
 
     const expiredToken = await sign(
       { user_id: 'user-1', exp: Math.floor(Date.now() / 1000) - 60 },
@@ -116,7 +122,12 @@ describe('facilityMiddleware', () => {
           await next();
         });
       })
-      .get('/', (c) => c.json({ facilityCode: c.get('facilityCode') }));
+      .get('/', (c) =>
+        c.json({
+          facilityCode: c.get('facilityCode'),
+          facilityName: c.get('facilityName'),
+        }),
+      );
 
     return { app, nextSpy };
   }
@@ -148,18 +159,21 @@ describe('facilityMiddleware', () => {
     expect(nextSpy).not.toHaveBeenCalled();
   });
 
-  it('正常系ではfacilityCodeがセットされ、next()が呼ばれる', async () => {
+  it('正常系ではfacilityCode・facilityNameがセットされ、next()が呼ばれる', async () => {
     const dbModule = await import('~/server/config/db');
     vi.mocked(dbModule.default.query).mockResolvedValueOnce({
       rowCount: 1,
-      rows: [{ facility_code: 'FAC-001' }],
+      rows: [{ facility_code: 'FAC-001', facility_name: 'テスト病院' }],
     } as never);
 
     const { app, nextSpy } = await buildAppWithJwtPayload('user-1');
     const res = await app.request('/');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ facilityCode: 'FAC-001' });
+    expect(await res.json()).toEqual({
+      facilityCode: 'FAC-001',
+      facilityName: 'テスト病院',
+    });
     expect(nextSpy).toHaveBeenCalledOnce();
   });
 });
