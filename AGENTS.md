@@ -30,6 +30,12 @@ npm run test
 ```
 Vue側（frontend）のテストは現時点で未整備。
 
+## テストユーザー
+| 項目           | メールアドレス   |パスワード|
+| -------        | ------------ |------|
+| generalユーザー | test@test.jp  | test123  |
+| adminユーザー   | test@test.com | password |
+
 ## コードスタイル / Code Style
 - フォーマッター、リンター: **Biome** を使用（`npx biome check --write .` でソースコードを整形・import整理）
 - ブランチ名は <type>/<内容をkebab-case> とし、typeはConventional Commitsのtype語彙（feat/fix/chore/refactor/docsなど）から選ぶ。
@@ -39,6 +45,7 @@ Vue側（frontend）のテストは現時点で未整備。
 
 ## セキュリティ方針 / Security
 - **秘密情報は厳重に管理**: APIキーやパスワードなど秘密情報は`.env`や環境変数から読み込み、絶対にGitに含めない
+- **ローカル開発でのメール送信（Resend）**:開発時に招待メール等の送信を動作確認する際は、実在アドレス宛に送らず、必ず`to`をResend予約のテストアドレス（例: `delivered@resend.dev`）に差し替えて実行する
 
 ## Commit & Push
 - 指示もなく勝手にCommitやPushをしない。明示的に「Commitして」と言われた時のみ実行する。
