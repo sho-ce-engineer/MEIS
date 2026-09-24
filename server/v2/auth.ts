@@ -7,6 +7,7 @@ import pool from '~/server/config/db';
 
 export type Variables = JwtVariables<{ user_id: string }> & {
   facilityCode: string;
+  facilityName: string;
   userRole: string;
 };
 
@@ -28,8 +29,12 @@ export const facilityMiddleware: MiddlewareHandler<{
   const authenticatedUser = c.get('jwtPayload');
 
   const authenticatedUserQuery = `
-    SELECT facility_code FROM users
-    WHERE user_id = $1
+    SELECT
+      u.facility_code,
+      f.facility_name
+    FROM users u
+    LEFT JOIN facilities f ON u.facility_code = f.facility_code
+    WHERE u.user_id = $1
   `;
 
   let AuthenticatedUserFacilityResult: QueryResult;
@@ -56,8 +61,10 @@ export const facilityMiddleware: MiddlewareHandler<{
   }
 
   const facilityCode = AuthenticatedUserFacilityResult.rows[0].facility_code;
+  const facilityName = AuthenticatedUserFacilityResult.rows[0].facility_name;
 
   c.set('facilityCode', facilityCode);
+  c.set('facilityName', facilityName);
 
   await next();
 };

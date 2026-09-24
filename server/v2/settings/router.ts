@@ -2,6 +2,9 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
+import { sendMail } from '~/server/mail/send-mail';
+import { generateInviteCode } from '~/server/utils/generateInviteCode';
+import { makeInvitationMailTxt } from '~/server/utils/makeInviteMailText';
 import type { Variables } from '~/server/v2/auth';
 import {
   listUsers,
@@ -11,6 +14,8 @@ import {
 import { updateUserRole } from '~/server/v2/settings/admin/update-role/service';
 import { deleteUserRequestSchema } from './admin/delete-user/domain';
 import { deleteUser } from './admin/delete-user/service';
+import { inviteUserRequestSchema } from './admin/invite-user/domain';
+import { addInvitation } from './admin/invite-user/service';
 import { listUsersRequestSchema } from './admin/list-users/domain';
 import { updateUserRoleRequestSchema } from './admin/update-role/domain';
 import { updateUserDataRequestSchema } from './users/update-user-data/domain';
@@ -105,6 +110,60 @@ const app = new Hono<{ Variables: Variables }>()
 
     return c.body(null, 204);
   })
+  .post(
+    '/invitations',
+    zValidator('json', inviteUserRequestSchema),
+    async (c) => {
+      const facilityCode = c.get('facilityCode');
+      const facilityName = c.get('facilityName');
+
+      const { invitedByUserId, invitedByUserName, email } = c.req.valid('json');
+
+      const inviteCode = generateInviteCode();
+
+      try {
+        await addInvitation({
+          email,
+          facilityCode,
+          userRole: 'admin',
+          invitedByUserId,
+          inviteCode,
+        });
+      } catch (error) {
+        console.error('[settings/invite]Error invite User:', error);
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました。',
+        });
+      }
+
+      const inviteMailOption = makeInvitationMailTxt({
+        facilityName,
+        invitedByUserName,
+        inviteCode,
+      });
+
+      const subject =
+        'クラウド医療機器管理M.E.I.S｜施設から招待状が届きました！';
+      try {
+        await sendMail(
+          email,
+          subject,
+          inviteMailOption.text,
+          inviteMailOption.html,
+        );
+      } catch (error) {
+        console.error(
+          '[settings/sendMail]Error send invite mail to User:',
+          error,
+        );
+        throw new HTTPException(500, {
+          message:
+            '招待メールの送信に失敗しました。招待情報は保存されています。管理者に連絡してください。',
+        });
+      }
+      return c.body(null, 204);
+    },
+  )
   //general
   .patch(
     '/user-data',
