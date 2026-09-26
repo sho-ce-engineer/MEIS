@@ -108,9 +108,12 @@ const updateShowAlert = (value: boolean) => {
 //サンプルファイルのDL
 const downloadSampleXlsxLedger = async () => {
   try {
-    const response = await fetch('/api/equipment/download-sample-xlsx-ledger', {
-      method: 'GET',
-    });
+    const response = await fetch(
+      '/api/v2/equipment/download-sample-xlsx-ledger',
+      {
+        method: 'GET',
+      },
+    );
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -156,33 +159,35 @@ const handleFileUpload = async () => {
 };
 
 const headers = [
-  { title: '院内管理ID', sortable: false, key: 'equipment_id' },
-  { title: '機器種別', sortable: false, key: 'equipment_type' },
-  { title: 'メーカー', sortable: false, key: 'equipment_manufacturer' },
-  { title: '機器名称', sortable: false, key: 'equipment_name' },
-  { title: '型番', sortable: false, key: 'equipment_model' },
-  { title: 'シリアル番号', sortable: false, key: 'equipment_serial_number' },
-  { title: '購入日', sortable: false, key: 'acquisition_date' },
-  { title: '備考', sortable: false, key: 'equipment_notes' },
+  { title: '院内管理ID', sortable: false, key: 'equipmentId' },
+  { title: '機器種別', sortable: false, key: 'equipmentType' },
+  { title: 'メーカー', sortable: false, key: 'equipmentManufacturer' },
+  { title: '機器名称', sortable: false, key: 'equipmentName' },
+  { title: '型番', sortable: false, key: 'equipmentModel' },
+  { title: 'シリアル番号', sortable: false, key: 'equipmentSerialNumber' },
+  { title: '購入日', sortable: false, key: 'acquisitionDate' },
+  { title: '備考', sortable: false, key: 'equipmentNotes' },
 ];
 
 const submitImportData = async () => {
   loading.value = true;
   disabled.value = true;
   const rawData = toRaw(jsonData.value);
+  const toText = (value: unknown) =>
+    value === undefined || value === null ? value : String(value);
   const filteredData = rawData.map((item) => ({
-    equipment_id: item['院内管理ID'],
-    equipment_type: item['機器種別'],
-    equipment_manufacturer: item['メーカー'],
-    equipment_name: item['機器名称'],
-    equipment_model: item['型番'],
-    equipment_serial_number: item['シリアル番号'],
-    acquisition_date: item['購入年月日'],
-    equipment_notes: item['備考'],
+    equipmentId: toText(item['院内管理ID']),
+    equipmentType: toText(item['機器種別']),
+    equipmentManufacturer: toText(item['メーカー']),
+    equipmentName: toText(item['機器名称']),
+    equipmentModel: toText(item['型番']),
+    equipmentSerialNumber: toText(item['シリアル番号']),
+    acquisitionDate: toText(item['購入年月日']),
+    equipmentNotes: toText(item['備考']),
   }));
 
   try {
-    await $fetch('/api/equipment/equipment-import', {
+    await $fetch('/api/v2/equipment/import', {
       method: 'POST',
       body: { ledgerData: filteredData },
     });
@@ -192,9 +197,10 @@ const submitImportData = async () => {
     showAlert.value = true;
     file.value = null;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器の新規登録に問題が発生しました。内容を確認した上で再度「保存」してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器の新規登録に問題が発生しました。内容を確認した上で再度「保存」してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-import]New add error:', error);

@@ -32,10 +32,10 @@
                   label="院内管理ID"
                   prepend-icon="mdi-barcode-scan"
                   variant="underlined"
-                  v-model="filterCriteria.equipment_id"
+                  v-model="filterCriteria.equipmentId"
                   @click:prepend="scanEquipmentDialog = true"
                   clearable
-                  @click:clear="filterCriteria.equipment_id = undefined"
+                  @click:clear="filterCriteria.equipmentId = undefined"
                   :items="equipmentIdItems"
                   :loading="loading"
                   no-data-text="該当データがありません。機器台帳から登録してください。"
@@ -52,7 +52,7 @@
                       <p class="mt-4 text-caption">
                         ※読み込めない場合、ピントが合う位置までゆっくり前後させてください。
                       </p>
-                      {{ filterCriteria.equipment_id }}
+                      {{ filterCriteria.equipmentId }}
                       <QrcodeStream
                         @detect="onDetect"
                         :formats="['qr_code', 'linear_codes']"
@@ -69,63 +69,63 @@
                 </v-dialog>
                 <v-select
                   label="機器種別"
-                  v-model="filterCriteria.equipment_type"
-                  :items="select_equiment_type_items"
+                  v-model="filterCriteria.equipmentType"
+                  :items="equipmentTypeItems"
                   @update:focused="fetchEquipmentTypes()"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_type = undefined"
+                  @click:clear="filterCriteria.equipmentType = undefined"
                 ></v-select>
                 <v-select
                   label="メーカー"
-                  v-model="filterCriteria.equipment_manufacturer"
-                  :items="select_equiment_manufacturer_items"
+                  v-model="filterCriteria.equipmentManufacturer"
+                  :items="equipmentManufacturerItems"
                   @update:focused="fetchEquipmentManufacture()"
                   variant="underlined"
                   clearable
                   @click:clear="
-                    filterCriteria.equipment_manufacturer = undefined
+                    filterCriteria.equipmentManufacturer = undefined
                   "
                 ></v-select>
                 <v-text-field
                   label="機器名称"
-                  v-model="filterCriteria.equipment_name"
+                  v-model="filterCriteria.equipmentName"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_name = undefined"
+                  @click:clear="filterCriteria.equipmentName = undefined"
                 ></v-text-field>
                 <v-text-field
                   label="型番"
-                  v-model="filterCriteria.equipment_model"
+                  v-model="filterCriteria.equipmentModel"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_model = undefined"
+                  @click:clear="filterCriteria.equipmentModel = undefined"
                 ></v-text-field>
                 <v-text-field
                   label="シリアル番号"
-                  v-model="filterCriteria.equipment_serial_number"
+                  v-model="filterCriteria.equipmentSerialNumber"
                   variant="underlined"
                   clearable
                   @click:clear="
-                    filterCriteria.equipment_serial_number = undefined
+                    filterCriteria.equipmentSerialNumber = undefined
                   "
                 ></v-text-field>
                 <v-select
                   label="稼働状況"
                   :items="['active', 'inactive']"
-                  v-model="filterCriteria.equipment_status"
+                  v-model="filterCriteria.equipmentStatus"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_status = undefined"
+                  @click:clear="filterCriteria.equipmentStatus = undefined"
                 ></v-select>
                 <v-select
                   label="保守契約加入状況"
                   :items="['加入', '未加入']"
-                  v-model="filterCriteria.equipment_maintenance_contract"
+                  v-model="filterCriteria.equipmentMaintenanceContract"
                   variant="underlined"
                   clearable
                   @click:clear="
-                    filterCriteria.equipment_maintenance_contract = undefined
+                    filterCriteria.equipmentMaintenanceContract = undefined
                   "
                 ></v-select>
               </form>
@@ -176,59 +176,59 @@
               <form>
                 <v-text-field
                   label="院内管理ID"
-                  v-model="newItem.equipment_id"
+                  v-model="newItem.equipmentId"
                   :rules="[rules.idreg]"
                   hint="【注意】院内管理IDは、一度登録すると変更することができません。"
                 ></v-text-field>
                 <v-text-field
                   label="機器種別"
-                  v-model="newItem.equipment_type"
+                  v-model="newItem.equipmentType"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="メーカー"
-                  v-model="newItem.equipment_manufacturer"
+                  v-model="newItem.equipmentManufacturer"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="機器名称"
-                  v-model="newItem.equipment_name"
+                  v-model="newItem.equipmentName"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="型番"
-                  v-model="newItem.equipment_model"
+                  v-model="newItem.equipmentModel"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="シリアル番号"
-                  v-model="newItem.equipment_serial_number"
+                  v-model="newItem.equipmentSerialNumber"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="設置保管場所"
-                  v-model="newItem.equipment_storage_location"
+                  v-model="newItem.equipmentStorageLocation"
                 ></v-text-field>
                 <v-select
                   label="稼働状況"
                   :items="['active', 'inactive']"
-                  v-model="newItem.equipment_status"
+                  v-model="newItem.equipmentStatus"
                   :rules="[rules.required]"
                 ></v-select>
                 <v-select
                   label="保守契約加入状況"
                   :items="['加入', '未加入']"
-                  v-model="newItem.equipment_maintenance_contract"
+                  v-model="newItem.equipmentMaintenanceContract"
                   :rules="[rules.required]"
                 ></v-select>
                 <v-date-input
                   label="購入日"
-                  v-model="newItem.acquisition_date"
+                  v-model="newItem.acquisitionDate"
                   :rules="[rules.required]"
                 ></v-date-input>
                 <v-textarea
                   label="備考"
-                  v-model="newItem.equipment_notes"
+                  v-model="newItem.equipmentNotes"
                 ></v-textarea>
               </form>
             </v-card-text>
@@ -250,7 +250,7 @@
         :headers="headers"
         :items="equipmentLedgerItems"
         :items-length="totalItems"
-        item-key="equipment_id"
+        item-value="equipmentId"
         class="elevation-1"
         :loading="loading"
         items-per-page="10"
@@ -272,14 +272,14 @@
                 v-bind="EquipmentEditActivaterProps"
                 class="clickable-table-row"
               >
-                <td>{{ item.equipment_id }}</td>
-                <td>{{ item.equipment_type }}</td>
-                <td>{{ item.equipment_manufacturer }}</td>
-                <td>{{ item.equipment_name }}</td>
-                <td>{{ item.equipment_model }}</td>
-                <td>{{ item.equipment_serial_number }}</td>
+                <td>{{ item.equipmentId }}</td>
+                <td>{{ item.equipmentType }}</td>
+                <td>{{ item.equipmentManufacturer }}</td>
+                <td>{{ item.equipmentName }}</td>
+                <td>{{ item.equipmentModel }}</td>
+                <td>{{ item.equipmentSerialNumber }}</td>
                 <td>
-                  {{ item.acquisition_date }}
+                  {{ item.acquisitionDate }}
                 </td>
               </tr></template
             >
@@ -294,60 +294,60 @@
                   <v-card-text>
                     <v-text-field
                       label="院内管理ID"
-                      v-model="item.equipment_id"
+                      v-model="item.equipmentId"
                       :rules="[rules.idreg]"
                       disabled
                     ></v-text-field>
                     <v-text-field
                       label="機器種別"
-                      v-model="item.equipment_type"
+                      v-model="item.equipmentType"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="メーカー"
-                      v-model="item.equipment_manufacturer"
+                      v-model="item.equipmentManufacturer"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="機器名称"
-                      v-model="item.equipment_name"
+                      v-model="item.equipmentName"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="型番"
-                      v-model="item.equipment_model"
+                      v-model="item.equipmentModel"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="シリアル番号"
-                      v-model="item.equipment_serial_number"
+                      v-model="item.equipmentSerialNumber"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="設置保管場所"
-                      v-model="item.equipment_storage_location"
+                      v-model="item.equipmentStorageLocation"
                     ></v-text-field>
                     <v-select
                       label="稼働状況"
                       :items="['active', 'inactive']"
-                      v-model="item.equipment_status"
+                      v-model="item.equipmentStatus"
                       :rules="[rules.required]"
                     ></v-select>
                     <v-select
                       label="保守契約加入状況"
                       :items="['加入', '未加入']"
-                      v-model="item.equipment_maintenance_contract"
+                      v-model="item.equipmentMaintenanceContract"
                       :rules="[rules.required]"
                     ></v-select>
                     <v-text-field
                       label="購入日"
-                      v-model="item.acquisition_date"
+                      v-model="item.acquisitionDate"
                       hint="yyyy-mm-ddの形式で入力してください。"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-textarea
                       label="備考"
-                      v-model="item.equipment_notes"
+                      v-model="item.equipmentNotes"
                     ></v-textarea>
                   </v-card-text>
                   <v-divider></v-divider>
@@ -384,28 +384,28 @@
 import { reactive, ref } from 'vue';
 
 interface EquipmentLedgerItem {
-  equipment_id: string;
-  equipment_type: string;
-  equipment_manufacturer: string;
-  equipment_name: string;
-  equipment_model: string;
-  equipment_serial_number: string;
-  equipment_status: string;
-  acquisition_date: string | null;
-  equipment_storage_location?: string;
-  equipment_notes?: string;
-  equipment_maintenance_contract: string;
+  equipmentId: string;
+  equipmentType: string;
+  equipmentManufacturer: string;
+  equipmentName: string;
+  equipmentModel: string;
+  equipmentSerialNumber: string;
+  equipmentStatus: string;
+  acquisitionDate: string | null;
+  equipmentStorageLocation?: string;
+  equipmentNotes?: string;
+  equipmentMaintenanceContract: string;
 }
 
 interface EquipmentFilterCriteria {
-  equipment_id?: string;
-  equipment_type?: string;
-  equipment_manufacturer?: string;
-  equipment_name?: string;
-  equipment_model?: string;
-  equipment_serial_number?: string;
-  equipment_status?: string;
-  equipment_maintenance_contract?: string;
+  equipmentId?: string;
+  equipmentType?: string;
+  equipmentManufacturer?: string;
+  equipmentName?: string;
+  equipmentModel?: string;
+  equipmentSerialNumber?: string;
+  equipmentStatus?: string;
+  equipmentMaintenanceContract?: string;
 }
 
 interface SortOption {
@@ -414,17 +414,17 @@ interface SortOption {
 }
 
 interface NewEquipmentPayload {
-  equipment_id: string;
-  equipment_type: string;
-  equipment_manufacturer: string;
-  equipment_name: string;
-  equipment_model: string;
-  equipment_serial_number: string;
-  equipment_storage_location?: string;
-  equipment_status: string;
-  equipment_maintenance_contract: string;
-  acquisition_date: string | null;
-  equipment_notes?: string;
+  equipmentId: string;
+  equipmentType: string;
+  equipmentManufacturer: string;
+  equipmentName: string;
+  equipmentModel: string;
+  equipmentSerialNumber: string;
+  equipmentStorageLocation?: string;
+  equipmentStatus: string;
+  equipmentMaintenanceContract: string;
+  acquisitionDate: string | null;
+  equipmentNotes?: string;
 }
 
 const loading = ref(true);
@@ -446,26 +446,26 @@ const rules = reactive({
 });
 
 const headers = [
-  { title: '院内管理ID', sortable: true, key: 'equipment_id' },
-  { title: '機器種別', sortable: true, key: 'equipment_type' },
-  { title: 'メーカー', sortable: true, key: 'equipment_manufacturer' },
-  { title: '機器名称', sortable: true, key: 'equipment_name' },
-  { title: '型番', sortable: true, key: 'equipment_model' },
-  { title: 'シリアル番号', sortable: true, key: 'equipment_serial_number' },
-  { title: '購入日', key: 'acquisition_date' },
+  { title: '院内管理ID', sortable: true, key: 'equipmentId' },
+  { title: '機器種別', sortable: true, key: 'equipmentType' },
+  { title: 'メーカー', sortable: true, key: 'equipmentManufacturer' },
+  { title: '機器名称', sortable: true, key: 'equipmentName' },
+  { title: '型番', sortable: true, key: 'equipmentModel' },
+  { title: 'シリアル番号', sortable: true, key: 'equipmentSerialNumber' },
+  { title: '購入日', key: 'acquisitionDate' },
 ];
 
 // //フィルター機能
 const filterCriteriaDialog = ref(false);
 const filterCriteria = reactive<EquipmentFilterCriteria>({
-  equipment_id: '',
-  equipment_type: '',
-  equipment_manufacturer: '',
-  equipment_name: '',
-  equipment_model: '',
-  equipment_serial_number: '',
-  equipment_status: 'active',
-  equipment_maintenance_contract: '',
+  equipmentId: '',
+  equipmentType: '',
+  equipmentManufacturer: '',
+  equipmentName: '',
+  equipmentModel: '',
+  equipmentSerialNumber: '',
+  equipmentStatus: 'active',
+  equipmentMaintenanceContract: '',
 });
 
 //機器IDのオートコンプリート
@@ -473,14 +473,15 @@ const equipmentIdItems = ref<string[]>([]);
 const fetchEquipmentIdItems = async () => {
   loading.value = true;
   try {
-    const response = await $fetch<string[]>('/api/equipment/equipment-id', {
+    const response = await $fetch<string[]>('/api/v2/equipment/id', {
       method: 'GET',
     });
     equipmentIdItems.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器IDの取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器IDの取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-id]Load error:', error);
@@ -490,20 +491,20 @@ const fetchEquipmentIdItems = async () => {
 };
 
 //機器種別の取得
-const select_equiment_type_items = ref<string[]>([]);
+const equipmentTypeItems = ref<string[]>([]);
 const fetchEquipmentTypes = async () => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/equipment/equipment-types', {
-      method: 'GET',
-    });
-    select_equiment_type_items.value = response.map(
-      (item) => item.equipment_type,
+    const response = await $fetch<{ equipmentType: string }[]>(
+      '/api/v2/equipment/types',
+      { method: 'GET' },
     );
+    equipmentTypeItems.value = response.map((item) => item.equipmentType);
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器種別の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器種別の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-types]Load error:', error);
@@ -513,20 +514,22 @@ const fetchEquipmentTypes = async () => {
 };
 
 //メーカーの取得
-const select_equiment_manufacturer_items = ref<string[]>([]);
+const equipmentManufacturerItems = ref<string[]>([]);
 const fetchEquipmentManufacture = async () => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/equipment/equipment-manufacturer', {
-      method: 'GET',
-    });
-    select_equiment_manufacturer_items.value = response.map(
-      (item) => item.equipment_manufacturer,
+    const response = await $fetch<{ equipmentManufacturer: string }[]>(
+      '/api/v2/equipment/manufacturer',
+      { method: 'GET' },
+    );
+    equipmentManufacturerItems.value = response.map(
+      (item) => item.equipmentManufacturer,
     );
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'メーカーの取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'メーカーの取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-manufacturer]Load error:', error);
@@ -541,7 +544,7 @@ import { QrcodeStream } from 'vue-qrcode-reader';
 
 const scanEquipmentDialog = ref(false);
 const onDetect = (detectedCodes: any[]) => {
-  filterCriteria.equipment_id = detectedCodes[0].rawValue;
+  filterCriteria.equipmentId = detectedCodes[0].rawValue;
   scanEquipmentDialog.value = false;
 };
 
@@ -560,7 +563,7 @@ const clearFilter = () => {
 
 const equipmentLedgerItems = ref<EquipmentLedgerItem[]>([]);
 const totalItems = ref(0);
-const sortBy = ref<SortOption[]>([{ key: 'equipment_id', order: 'asc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'equipmentId', order: 'asc' }]);
 const loadItems = async (
   page: number = 1,
   itemsPerPage: number = 10,
@@ -569,26 +572,27 @@ const loadItems = async (
 ) => {
   loading.value = true;
   try {
-    const { sortKey, sortByOrder } = getSortOptions(sortBy);
+    const { sortKey, sortOrder } = getSortOptions(sortBy);
     const response = await $fetch<{
       items: EquipmentLedgerItem[];
       total: number;
-    }>('/api/equipment/equipment-ledger', {
+    }>('/api/v2/equipment/ledger', {
       method: 'POST',
       body: {
         page,
         itemsPerPage,
         sortRow: sortKey,
-        sortByOrder,
+        sortOrder,
         filterCriteria: filterCriteria,
       },
     });
     equipmentLedgerItems.value = response.items;
     totalItems.value = response.total;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'データ取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'データ取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-ledger]Load error:', error);
@@ -598,9 +602,9 @@ const loadItems = async (
 };
 
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'equipment_id';
+  const sortKey = sortBy.length ? sortBy[0].key : 'equipmentId';
   const sortOrder = sortBy.length ? sortBy[0].order : 'asc';
-  return { sortKey, sortByOrder: sortOrder };
+  return { sortKey, sortOrder };
 };
 
 const handleUpdateOptions = (options: {
@@ -619,7 +623,7 @@ const updateRecord = async (
 ) => {
   try {
     const updatedItem = { ...item };
-    await $fetch('/api/equipment/update-record', {
+    await $fetch('/api/v2/equipment/update', {
       method: 'PUT',
       body: { updatedItem },
     });
@@ -629,49 +633,50 @@ const updateRecord = async (
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '変更に問題が発生しました。データは保存されていません。内容を確認した上で再度「保存」してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '変更に問題が発生しました。データは保存されていません。内容を確認した上で再度「保存」してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error(
-      '[update-record]Update error for equipment_id: ' + item.equipment_id,
+      '[update-record]Update error for equipmentId: ' + item.equipmentId,
       error,
     );
   }
 };
 
 const newItem = ref<NewEquipmentPayload>({
-  equipment_id: '',
-  equipment_type: '',
-  equipment_manufacturer: '',
-  equipment_name: '',
-  equipment_model: '',
-  equipment_serial_number: '',
-  equipment_storage_location: '',
-  equipment_status: 'active',
-  equipment_maintenance_contract: '',
-  acquisition_date: null,
-  equipment_notes: '',
+  equipmentId: '',
+  equipmentType: '',
+  equipmentManufacturer: '',
+  equipmentName: '',
+  equipmentModel: '',
+  equipmentSerialNumber: '',
+  equipmentStorageLocation: '',
+  equipmentStatus: 'active',
+  equipmentMaintenanceContract: '',
+  acquisitionDate: null,
+  equipmentNotes: '',
 });
 const resetForm = () => {
   newItem.value = {
-    equipment_id: '',
-    equipment_type: '',
-    equipment_manufacturer: '',
-    equipment_name: '',
-    equipment_model: '',
-    equipment_serial_number: '',
-    equipment_storage_location: '',
-    equipment_status: 'active',
-    equipment_maintenance_contract: '',
-    acquisition_date: null,
-    equipment_notes: '',
+    equipmentId: '',
+    equipmentType: '',
+    equipmentManufacturer: '',
+    equipmentName: '',
+    equipmentModel: '',
+    equipmentSerialNumber: '',
+    equipmentStorageLocation: '',
+    equipmentStatus: 'active',
+    equipmentMaintenanceContract: '',
+    acquisitionDate: null,
+    equipmentNotes: '',
   };
 };
 const newAddRecord = async (newItem: NewEquipmentPayload) => {
   try {
-    await $fetch('/api/equipment/newAdd', {
+    await $fetch('/api/v2/equipment/add', {
       method: 'POST',
       body: { ...newItem },
     });
@@ -682,9 +687,10 @@ const newAddRecord = async (newItem: NewEquipmentPayload) => {
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器の新規登録に問題が発生しました。内容を確認した上で再度「保存」してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器の新規登録に問題が発生しました。内容を確認した上で再度「保存」してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[newAdd]New add error:', error);

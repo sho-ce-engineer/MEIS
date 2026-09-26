@@ -129,7 +129,7 @@ describe('equipment router: GET /download-sample-xlsx-ledger', () => {
   });
 });
 
-describe('equipment router: POST /types', () => {
+describe('equipment router: GET /types', () => {
   beforeEach(() => {
     vi.resetModules();
     listEquipmentTypesMock.mockReset();
@@ -143,7 +143,7 @@ describe('equipment router: POST /types', () => {
     listEquipmentTypesMock.mockResolvedValue([{ equipmentType: '人工呼吸器' }]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/types', { method: 'POST' });
+    const res = await app.request('/equipment/types');
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([{ equipmentType: '人工呼吸器' }]);
@@ -156,7 +156,7 @@ describe('equipment router: POST /types', () => {
     listEquipmentTypesMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/types', { method: 'POST' });
+    const res = await app.request('/equipment/types');
 
     expect(res.status).toBe(500);
   });
@@ -171,14 +171,27 @@ describe('equipment router: POST /types', () => {
       .use('*', authMiddleware)
       .route('/equipment', equipmentRouter);
 
-    const res = await app.request('/equipment/types', { method: 'POST' });
+    const res = await app.request('/equipment/types');
 
     expect(res.status).toBe(401);
     expect(listEquipmentTypesMock).not.toHaveBeenCalled();
   });
 });
 
-describe('equipment router: POST /manufacturer', () => {
+describe('equipment router: 取得系のHTTPメソッド', () => {
+  it.each([
+    '/equipment/types',
+    '/equipment/manufacturer',
+    '/equipment/id',
+  ])('%sはGETで定義されており、POSTでは404になる', async (path) => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request(path, { method: 'POST' });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('equipment router: GET /manufacturer', () => {
   beforeEach(() => {
     vi.resetModules();
     listEquipmentManufacturerMock.mockReset();
@@ -194,9 +207,7 @@ describe('equipment router: POST /manufacturer', () => {
     ]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/manufacturer', {
-      method: 'POST',
-    });
+    const res = await app.request('/equipment/manufacturer');
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([{ equipmentManufacturer: 'メーカーA' }]);
@@ -209,9 +220,7 @@ describe('equipment router: POST /manufacturer', () => {
     listEquipmentManufacturerMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/manufacturer', {
-      method: 'POST',
-    });
+    const res = await app.request('/equipment/manufacturer');
 
     expect(res.status).toBe(500);
   });
@@ -226,16 +235,14 @@ describe('equipment router: POST /manufacturer', () => {
       .use('*', authMiddleware)
       .route('/equipment', equipmentRouter);
 
-    const res = await app.request('/equipment/manufacturer', {
-      method: 'POST',
-    });
+    const res = await app.request('/equipment/manufacturer');
 
     expect(res.status).toBe(401);
     expect(listEquipmentManufacturerMock).not.toHaveBeenCalled();
   });
 });
 
-describe('equipment router: POST /id', () => {
+describe('equipment router: GET /id', () => {
   beforeEach(() => {
     vi.resetModules();
     listEquipmentIdMock.mockReset();
@@ -252,7 +259,7 @@ describe('equipment router: POST /id', () => {
     ]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/id', { method: 'POST' });
+    const res = await app.request('/equipment/id');
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(['EQ001', 'EQ002']);
@@ -265,7 +272,7 @@ describe('equipment router: POST /id', () => {
     listEquipmentIdMock.mockResolvedValue([]);
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/id', { method: 'POST' });
+    const res = await app.request('/equipment/id');
 
     expect(res.status).toBe(404);
   });
@@ -274,7 +281,7 @@ describe('equipment router: POST /id', () => {
     listEquipmentIdMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildAppWithFacilityCode('FAC001');
-    const res = await app.request('/equipment/id', { method: 'POST' });
+    const res = await app.request('/equipment/id');
 
     expect(res.status).toBe(500);
   });
@@ -289,7 +296,7 @@ describe('equipment router: POST /id', () => {
       .use('*', authMiddleware)
       .route('/equipment', equipmentRouter);
 
-    const res = await app.request('/equipment/id', { method: 'POST' });
+    const res = await app.request('/equipment/id');
 
     expect(res.status).toBe(401);
     expect(listEquipmentIdMock).not.toHaveBeenCalled();
@@ -486,8 +493,8 @@ describe('equipment router: POST /details', () => {
 
 describe('equipment router: POST /add', () => {
   const validBody = {
-    equipment_id: 'EQ001',
-    equipment_name: '人工呼吸器A',
+    equipmentId: 'EQ001',
+    equipmentName: '人工呼吸器A',
   };
 
   beforeEach(() => {
@@ -558,7 +565,7 @@ describe('equipment router: POST /add', () => {
     const res = await app.request('/equipment/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ equipment_name: '人工呼吸器A' }),
+      body: JSON.stringify({ equipmentName: '人工呼吸器A' }),
     });
 
     expect(res.status).toBe(400);
@@ -570,7 +577,7 @@ describe('equipment router: POST /add', () => {
     const res = await app.request('/equipment/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ equipment_id: 'EQ001' }),
+      body: JSON.stringify({ equipmentId: 'EQ001' }),
     });
 
     expect(res.status).toBe(400);
@@ -601,8 +608,8 @@ describe('equipment router: POST /add', () => {
 describe('equipment router: PUT /update', () => {
   const validBody = {
     updatedItem: {
-      equipment_id: 'EQ001',
-      equipment_name: '人工呼吸器A',
+      equipmentId: 'EQ001',
+      equipmentName: '人工呼吸器A',
     },
   };
 
@@ -634,6 +641,34 @@ describe('equipment router: PUT /update', () => {
         equipmentId: 'EQ001',
         equipmentName: '人工呼吸器A',
         facilityCode: 'FAC001',
+      }),
+    );
+  });
+
+  it('任意項目がnull（台帳で未入力の項目）の場合も、204でそのままupdateEquipmentへ渡す', async () => {
+    updateEquipmentMock.mockResolvedValue({ equipmentId: 'EQ001' });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        updatedItem: {
+          equipmentId: 'EQ001',
+          equipmentName: '人工呼吸器A',
+          equipmentSerialNumber: null,
+          equipmentMaintenanceContract: null,
+          acquisitionDate: null,
+        },
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(updateEquipmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        equipmentSerialNumber: null,
+        equipmentMaintenanceContract: null,
+        acquisitionDate: null,
       }),
     );
   });
@@ -670,7 +705,7 @@ describe('equipment router: PUT /update', () => {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        updatedItem: { equipment_name: '人工呼吸器A' },
+        updatedItem: { equipmentName: '人工呼吸器A' },
       }),
     });
 
@@ -684,7 +719,7 @@ describe('equipment router: PUT /update', () => {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        updatedItem: { equipment_id: 'EQ001' },
+        updatedItem: { equipmentId: 'EQ001' },
       }),
     });
 
@@ -715,7 +750,7 @@ describe('equipment router: PUT /update', () => {
 
 describe('equipment router: POST /import', () => {
   const validBody = {
-    ledgerData: [{ equipment_id: 'EQ001', equipment_name: '人工呼吸器A' }],
+    ledgerData: [{ equipmentId: 'EQ001', equipmentName: '人工呼吸器A' }],
   };
 
   beforeEach(() => {
@@ -768,7 +803,7 @@ describe('equipment router: POST /import', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ledgerData: [{ equipment_name: '人工呼吸器A' }],
+        ledgerData: [{ equipmentName: '人工呼吸器A' }],
       }),
     });
 
@@ -829,14 +864,14 @@ describe('equipment router: POST /ledger', () => {
       facilityCode: 'FAC001',
       page: 1,
       itemsPerPage: 10,
-      sortRow: 'equipment_id',
-      sortByOrder: 'asc',
+      sortRow: 'equipmentId',
+      sortOrder: 'asc',
       search: undefined,
       filterCriteria: {},
     });
   });
 
-  it('不正なsortRow・sortByOrderが渡された場合、デフォルトにフォールバックする', async () => {
+  it('不正なsortRow・sortOrderが渡された場合、デフォルトにフォールバックする', async () => {
     listEquipmentLedgerMock.mockResolvedValue({ items: [], total: 0 });
 
     const app = await buildAppWithFacilityCode('FAC001');
@@ -845,14 +880,14 @@ describe('equipment router: POST /ledger', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sortRow: 'malicious_column',
-        sortByOrder: 'invalid',
+        sortOrder: 'invalid',
       }),
     });
 
     expect(listEquipmentLedgerMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        sortRow: 'equipment_id',
-        sortByOrder: 'asc',
+        sortRow: 'equipmentId',
+        sortOrder: 'asc',
       }),
     );
   });
@@ -868,7 +903,7 @@ describe('equipment router: POST /ledger', () => {
         page: 2,
         itemsPerPage: 5,
         search: 'Pump',
-        filterCriteria: { equipment_type: 'Emergency' },
+        filterCriteria: { equipmentType: 'Emergency' },
       }),
     });
 
@@ -877,7 +912,7 @@ describe('equipment router: POST /ledger', () => {
         page: 2,
         itemsPerPage: 5,
         search: 'Pump',
-        filterCriteria: { equipment_type: 'Emergency' },
+        filterCriteria: { equipmentType: 'Emergency' },
       }),
     );
   });

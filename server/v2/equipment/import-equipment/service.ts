@@ -4,15 +4,15 @@ import { equipmentLedger } from '~/server/db/schema';
 export interface ImportEquipmentItem {
   equipmentId: string;
   equipmentName: string;
-  equipmentModel?: string;
-  equipmentManufacturer?: string;
-  equipmentSerialNumber?: string;
-  equipmentType?: string;
+  equipmentModel?: string | null;
+  equipmentManufacturer?: string | null;
+  equipmentSerialNumber?: string | null;
+  equipmentType?: string | null;
   acquisitionDate?: string | null;
-  equipmentStatus?: string;
-  equipmentNotes?: string;
-  equipmentMaintenanceContract?: string;
-  equipmentStorageLocation?: string;
+  equipmentStatus?: string | null;
+  equipmentNotes?: string | null;
+  equipmentMaintenanceContract?: string | null;
+  equipmentStorageLocation?: string | null;
 }
 
 export interface ImportEquipmentParams {

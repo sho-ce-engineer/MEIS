@@ -28,8 +28,8 @@
               v-model="selectedEquipmentType"
               :items="equipmentTypes"
               label="機器の種類を選択してください。"
-              item-title="equipment_type"
-              item-value="equipment_type"
+              item-title="equipmentType"
+              item-value="equipmentType"
               @update:modelValue="fetchEquipmentModels"
               hint="台帳に登録されている機器種別をもとに表示されます。"
               persistent-hint
@@ -41,8 +41,8 @@
               v-model="selectedEquipmentModel"
               :items="equipmentModel"
               label="機器の型番を選択してください。"
-              item-title="equipment_model"
-              item-value="equipment_model"
+              item-title="equipmentModel"
+              item-value="equipmentModel"
               @update:modelValue="fetchInspectionTypes"
               hint="ここは機器台帳に登録されている機器の型番が表示されます。"
               persistent-hint
@@ -137,8 +137,8 @@
               v-model="selectedTargetEquipmentType"
               :items="targetEquipmentTypes"
               label="機器の種類を選択してください。"
-              item-title="equipment_type"
-              item-value="equipment_type"
+              item-title="equipmentType"
+              item-value="equipmentType"
               @update:modelValue="fetchTargetEquipmentModels"
               hint="台帳に登録されている機器種別をもとに表示されます。"
               persistent-hint
@@ -150,8 +150,8 @@
               v-model="selectedTargetEquipmentModel"
               :items="targetEquipmentModel"
               label="機器の型番を選択してください。"
-              item-title="equipment_model"
-              item-value="equipment_model"
+              item-title="equipmentModel"
+              item-value="equipmentModel"
               @update:modelValue="
                 {
                   targetInspectionType_disabled = false;
@@ -196,19 +196,23 @@ const updateShowAlert = (value: boolean) => {
 ////既に登録されている機器・点検情報の取得
 
 // 機器種類の取得
-const equipmentTypes = ref<string[]>([]);
+const equipmentTypes = ref<{ equipmentType: string }[]>([]);
 const equipmentTypesDisabled = ref(false);
 const selectedEquipmentType = ref<string>('');
 const fetchEquipmentTypes = async () => {
   try {
-    const response = await $fetch('/api/equipment/equipment-types', {
-      method: 'GET',
-    });
+    const response = await $fetch<{ equipmentType: string }[]>(
+      '/api/v2/equipment/types',
+      {
+        method: 'GET',
+      },
+    );
     equipmentTypes.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器種類の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器種類の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-types]Load error:', error);
@@ -216,28 +220,32 @@ const fetchEquipmentTypes = async () => {
 };
 
 // 機器型番の取得
-const equipmentModel = ref<{ equipment_model: string }[]>([]);
+const equipmentModel = ref<{ equipmentModel: string }[]>([]);
 const equipmentModelDisabled = ref(true);
 const selectedEquipmentModel = ref<string>('');
 const fetchEquipmentModels = async () => {
   if (!selectedEquipmentType.value) return;
 
   try {
-    const response = await $fetch('/api/equipment/equipment-models', {
-      method: 'POST',
-      body: {
-        equipmentType: selectedEquipmentType.value,
+    const response = await $fetch<{ equipmentModel: string }[]>(
+      '/api/v2/equipment/models',
+      {
+        method: 'POST',
+        body: {
+          equipmentType: selectedEquipmentType.value,
+        },
       },
-    });
+    );
     equipmentModel.value = response.map((model) => ({
-      equipment_model: model.equipment_model,
+      equipmentModel: model.equipmentModel,
     }));
     equipmentModelDisabled.value = false;
     equipmentTypesDisabled.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器型番の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器型番の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error(
@@ -284,19 +292,23 @@ const selectedTargetInspectionType = ref<string>('');
 const targetInspectionType_disabled = ref(true);
 
 // 機器種類の取得
-const targetEquipmentTypes = ref<string[]>([]);
+const targetEquipmentTypes = ref<{ equipmentType: string }[]>([]);
 const selectedTargetEquipmentType = ref<string>('');
 const targetEquipmentTypes_disabled = ref(false);
 const fetchTargetEquipmentTypes = async () => {
   try {
-    const response = await $fetch('/api/equipment/equipment-types', {
-      method: 'GET',
-    });
+    const response = await $fetch<{ equipmentType: string }[]>(
+      '/api/v2/equipment/types',
+      {
+        method: 'GET',
+      },
+    );
     targetEquipmentTypes.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器種類の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器種類の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-types]Load error:', error);
@@ -304,28 +316,32 @@ const fetchTargetEquipmentTypes = async () => {
 };
 
 // 機器型番の取得
-const targetEquipmentModel = ref<{ equipment_model: string }[]>([]);
+const targetEquipmentModel = ref<{ equipmentModel: string }[]>([]);
 const selectedTargetEquipmentModel = ref<string>('');
 const targetEquipmentModel_disabled = ref(true);
 const fetchTargetEquipmentModels = async () => {
   if (!selectedTargetEquipmentType.value) return;
 
   try {
-    const response = await $fetch('/api/equipment/equipment-models', {
-      method: 'POST',
-      body: {
-        equipmentType: selectedTargetEquipmentType.value,
+    const response = await $fetch<{ equipmentModel: string }[]>(
+      '/api/v2/equipment/models',
+      {
+        method: 'POST',
+        body: {
+          equipmentType: selectedTargetEquipmentType.value,
+        },
       },
-    });
+    );
     targetEquipmentModel.value = response.map((model) => ({
-      equipment_model: model.equipment_model,
+      equipmentModel: model.equipmentModel,
     }));
     targetEquipmentModel_disabled.value = false;
     targetEquipmentTypes_disabled.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器型番の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器型番の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error(

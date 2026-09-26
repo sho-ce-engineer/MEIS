@@ -23,8 +23,8 @@
           v-model="selectedEquipmentType"
           :items="equipmentTypes"
           label="点検内容を作成する機器の種類を選択してください。"
-          item-title="equipment_type"
-          item-value="equipment_type"
+          item-title="equipmentType"
+          item-value="equipmentType"
           @update:modelValue="fetchEquipmentModels"
           hint="台帳に登録されている機器種別をもとに表示されます。"
           persistent-hint
@@ -37,8 +37,8 @@
           v-model="selectedEquipmentModel"
           :items="equipmentModel"
           label="点検内容を作成する機器の型番を選択してください。"
-          item-title="equipment_model"
-          item-value="equipment_model"
+          item-title="equipmentModel"
+          item-value="equipmentModel"
           @update:modelValue="fetchInspectionTypes"
           hint="ここは機器台帳に登録されている機器の型番が表示されます。"
           persistent-hint
@@ -296,18 +296,22 @@ const updateShowAlert = (value: boolean) => {
 };
 
 // 機器種類の取得
-const equipmentTypes = ref<string[]>([]);
+const equipmentTypes = ref<{ equipmentType: string }[]>([]);
 const equipmentTypesDisabled = ref(false);
 const fetchEquipmentTypes = async () => {
   try {
-    const response = await $fetch('/api/equipment/equipment-types', {
-      method: 'GET',
-    });
+    const response = await $fetch<{ equipmentType: string }[]>(
+      '/api/v2/equipment/types',
+      {
+        method: 'GET',
+      },
+    );
     equipmentTypes.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器種類の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器種類の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-types]Load error:', error);
@@ -315,7 +319,7 @@ const fetchEquipmentTypes = async () => {
 };
 
 // 機器型番の取得
-const equipmentModel = ref<{ equipment_model: string }[]>([]);
+const equipmentModel = ref<{ equipmentModel: string }[]>([]);
 const equipmentModelDisabled = ref(true);
 const selectedEquipmentType = ref<string>('');
 const fetchEquipmentModels = async () => {
@@ -326,19 +330,23 @@ const fetchEquipmentModels = async () => {
     return;
   }
   try {
-    const response = await $fetch('/api/equipment/equipment-models', {
-      method: 'POST',
-      body: {
-        equipmentType: selectedEquipmentType.value,
+    const response = await $fetch<{ equipmentModel: string }[]>(
+      '/api/v2/equipment/models',
+      {
+        method: 'POST',
+        body: {
+          equipmentType: selectedEquipmentType.value,
+        },
       },
-    });
+    );
     equipmentModel.value = response;
     equipmentModelDisabled.value = false;
     equipmentTypesDisabled.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器型番の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器型番の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error(

@@ -313,15 +313,15 @@
                     <v-row>
                       <v-col cols="12" md="6">
                         <h4>機器種別</h4>
-                        <p>{{ equipmentDetail.equipment_type }}</p>
+                        <p>{{ equipmentDetail.equipmentType }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>機器名称</h4>
-                        <p>{{ equipmentDetail.equipment_name }}</p>
+                        <p>{{ equipmentDetail.equipmentName }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>型番</h4>
-                        <p>{{ equipmentDetail.equipment_model }}</p>
+                        <p>{{ equipmentDetail.equipmentModel }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>院内機器ID</h4>
@@ -329,7 +329,7 @@
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>シリアルナンバー</h4>
-                        <p>{{ equipmentDetail.equipment_serial_number }}</p>
+                        <p>{{ equipmentDetail.equipmentSerialNumber }}</p>
                       </v-col></v-row
                     >
                     <v-divider class="my-4"></v-divider>
@@ -439,10 +439,10 @@ interface SortOption {
 }
 
 interface EquipmentDetails {
-  equipment_name: string;
-  equipment_model: string;
-  equipment_serial_number: string;
-  equipment_type: string;
+  equipmentName: string;
+  equipmentModel: string;
+  equipmentSerialNumber: string;
+  equipmentType: string;
 }
 
 interface NewIssueItem {
@@ -503,14 +503,15 @@ const equipmentIdItems = ref<string[]>([]);
 const fetchEquipmentIdItems = async () => {
   loading.value = true;
   try {
-    const response = await $fetch<string[]>('/api/equipment/equipment-id', {
+    const response = await $fetch<string[]>('/api/v2/equipment/id', {
       method: 'GET',
     });
     equipmentIdItems.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器IDの取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器IDの取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-id]Load error:', error);
@@ -525,19 +526,20 @@ const fetchEquipmentDetail = async (equipmentId: string) => {
   loading.value = true;
   try {
     const response = await $fetch<EquipmentDetails>(
-      '/api/equipment/equipment-details',
+      '/api/v2/equipment/details',
       {
         method: 'POST',
         body: {
-          equipment_id: equipmentId,
+          equipmentId: equipmentId,
         },
       },
     );
     equipmentDetail.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器の詳細データの取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器の詳細データの取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-details] DB Error:', error);

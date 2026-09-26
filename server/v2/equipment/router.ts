@@ -30,13 +30,13 @@ import { updateEquipmentRequestSchema } from './update-equipment/domain';
 import { updateEquipment } from './update-equipment/service';
 
 const ALLOWED_SORT_KEYS: SortRow[] = [
-  'equipment_id',
-  'equipment_type',
-  'equipment_manufacturer',
-  'equipment_name',
-  'equipment_model',
-  'equipment_serial_number',
-  'acquisition_date',
+  'equipmentId',
+  'equipmentType',
+  'equipmentManufacturer',
+  'equipmentName',
+  'equipmentModel',
+  'equipmentSerialNumber',
+  'acquisitionDate',
 ];
 
 const app = new Hono<{ Variables: Variables }>()
@@ -49,16 +49,16 @@ const app = new Hono<{ Variables: Variables }>()
         page = 1,
         itemsPerPage = 10,
         sortRow,
-        sortByOrder,
+        sortOrder,
         search,
         filterCriteria = {},
       } = c.req.valid('json');
 
       const sortByKey = ALLOWED_SORT_KEYS.includes(sortRow as SortRow)
         ? (sortRow as SortRow)
-        : 'equipment_id';
+        : 'equipmentId';
       const sortOrderValue: SortOrder =
-        sortByOrder === 'asc' || sortByOrder === 'desc' ? sortByOrder : 'asc';
+        sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc';
 
       try {
         const result = await listEquipmentLedger({
@@ -66,7 +66,7 @@ const app = new Hono<{ Variables: Variables }>()
           page,
           itemsPerPage,
           sortRow: sortByKey,
-          sortByOrder: sortOrderValue,
+          sortOrder: sortOrderValue,
           search,
           filterCriteria: filterCriteria as FilterCriteria,
         });
@@ -114,35 +114,10 @@ const app = new Hono<{ Variables: Variables }>()
   )
   .post('/add', zValidator('json', addEquipmentRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
-    const {
-      equipment_id: equipmentId,
-      equipment_name: equipmentName,
-      equipment_model: equipmentModel,
-      equipment_manufacturer: equipmentManufacturer,
-      equipment_serial_number: equipmentSerialNumber,
-      equipment_type: equipmentType,
-      acquisition_date: acquisitionDate,
-      equipment_status: equipmentStatus,
-      equipment_notes: equipmentNotes,
-      equipment_maintenance_contract: equipmentMaintenanceContract,
-      equipment_storage_location: equipmentStorageLocation,
-    } = c.req.valid('json');
+    const equipment = c.req.valid('json');
 
     try {
-      await addEquipment({
-        equipmentId,
-        equipmentName,
-        equipmentModel,
-        equipmentManufacturer,
-        equipmentSerialNumber,
-        equipmentType,
-        facilityCode,
-        acquisitionDate,
-        equipmentStatus,
-        equipmentNotes,
-        equipmentMaintenanceContract,
-        equipmentStorageLocation,
-      });
+      await addEquipment({ ...equipment, facilityCode });
     } catch (error: unknown) {
       if (
         error instanceof DrizzleQueryError &&
@@ -169,37 +144,12 @@ const app = new Hono<{ Variables: Variables }>()
     zValidator('json', updateEquipmentRequestSchema),
     async (c) => {
       const facilityCode = c.get('facilityCode');
-      const {
-        equipment_id: equipmentId,
-        equipment_name: equipmentName,
-        equipment_model: equipmentModel,
-        equipment_manufacturer: equipmentManufacturer,
-        equipment_serial_number: equipmentSerialNumber,
-        equipment_type: equipmentType,
-        acquisition_date: acquisitionDate,
-        equipment_status: equipmentStatus,
-        equipment_notes: equipmentNotes,
-        equipment_maintenance_contract: equipmentMaintenanceContract,
-        equipment_storage_location: equipmentStorageLocation,
-      } = c.req.valid('json').updatedItem;
+      const { updatedItem } = c.req.valid('json');
 
       let result: Awaited<ReturnType<typeof updateEquipment>>;
 
       try {
-        result = await updateEquipment({
-          equipmentId,
-          equipmentName,
-          equipmentModel,
-          equipmentManufacturer,
-          equipmentSerialNumber,
-          equipmentType,
-          facilityCode,
-          acquisitionDate,
-          equipmentStatus,
-          equipmentNotes,
-          equipmentMaintenanceContract,
-          equipmentStorageLocation,
-        });
+        result = await updateEquipment({ ...updatedItem, facilityCode });
       } catch (error) {
         console.error(
           '[equipment/update-equipment]Error occurred while updating equipment:',
@@ -227,22 +177,7 @@ const app = new Hono<{ Variables: Variables }>()
       const { ledgerData } = c.req.valid('json');
 
       try {
-        await importEquipment({
-          facilityCode,
-          ledgerData: ledgerData.map((item) => ({
-            equipmentId: item.equipment_id,
-            equipmentName: item.equipment_name,
-            equipmentModel: item.equipment_model,
-            equipmentManufacturer: item.equipment_manufacturer,
-            equipmentSerialNumber: item.equipment_serial_number,
-            equipmentType: item.equipment_type,
-            acquisitionDate: item.acquisition_date,
-            equipmentStatus: item.equipment_status,
-            equipmentNotes: item.equipment_notes,
-            equipmentMaintenanceContract: item.equipment_maintenance_contract,
-            equipmentStorageLocation: item.equipment_storage_location,
-          })),
-        });
+        await importEquipment({ facilityCode, ledgerData });
       } catch (error) {
         console.error('[equipment/import-equipment]Transaction failed:', error);
         throw new HTTPException(500, {
@@ -253,7 +188,7 @@ const app = new Hono<{ Variables: Variables }>()
       return c.body(null, 204);
     },
   )
-  .post('/types', async (c) => {
+  .get('/types', async (c) => {
     const facilityCode = c.get('facilityCode');
 
     try {
@@ -271,7 +206,7 @@ const app = new Hono<{ Variables: Variables }>()
       });
     }
   })
-  .post('/manufacturer', async (c) => {
+  .get('/manufacturer', async (c) => {
     const facilityCode = c.get('facilityCode');
 
     try {
@@ -318,7 +253,7 @@ const app = new Hono<{ Variables: Variables }>()
       return c.json(result);
     },
   )
-  .post('/id', async (c) => {
+  .get('/id', async (c) => {
     const facilityCode = c.get('facilityCode');
 
     let result: Awaited<ReturnType<typeof listEquipmentId>>;
