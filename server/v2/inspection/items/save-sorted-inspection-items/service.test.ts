@@ -12,10 +12,10 @@ const baseParams = {
   facilityCode: 'FAC001',
   updatedItems: {
     外装点検: [
-      { inspection_item_id: 'ITEM-001' },
-      { inspection_item_id: 'ITEM-002' },
+      { inspectionItemId: 'ITEM-001' },
+      { inspectionItemId: 'ITEM-002' },
     ],
-    機能点検: [{ inspection_item_id: 'ITEM-003' }],
+    機能点検: [{ inspectionItemId: 'ITEM-003' }],
   },
 };
 

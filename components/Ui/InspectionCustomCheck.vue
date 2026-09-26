@@ -3,12 +3,12 @@
     <v-checkbox
       v-model="checked"
       @change="handleChange()"
-      :label="inspection_item"
+      :label="inspectionItem"
       append-icon="mdi-pencil-plus"
       @click:append="toggleNotesField()"
     ></v-checkbox>
     <p class="inspection-item-description text-body-2 text-grey-darken-2">
-      {{ inspection_item_description }}
+      {{ inspectionItemDescription }}
     </p>
     <v-text-field
       v-if="showNotesField"
@@ -28,11 +28,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  inspection_item: {
+  inspectionItem: {
     type: String,
     default: '初期値が表示されています。点検項目が登録されていません。',
   },
-  inspection_item_description: {
+  inspectionItemDescription: {
     type: String,
     default: null,
   },

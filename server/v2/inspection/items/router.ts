@@ -90,18 +90,18 @@ app
   .post('/', zValidator('json', addInspectionItemRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
     const {
-      inspection_type: inspectionType,
-      inspection_item_category: inspectionItemCategory,
-      inspection_item: inspectionItem,
-      inspection_item_description: inspectionItemDescription,
-      inspection_component_type: inspectionComponentType,
-      equipment_type: equipmentType,
-      equipment_model: equipmentModel,
+      inspectionType,
+      inspectionItemCategory,
+      inspectionItem,
+      inspectionItemDescription,
+      inspectionComponentType,
+      equipmentType,
+      equipmentModel,
       min,
       max,
       suffix,
-      lowerlimit,
-      upperlimit,
+      lowerLimit,
+      upperLimit,
     } = c.req.valid('json');
 
     try {
@@ -117,8 +117,8 @@ app
         min,
         max,
         suffix,
-        lowerlimit,
-        upperlimit,
+        lowerLimit,
+        upperLimit,
       });
       return c.json(row);
     } catch (error) {
@@ -137,18 +137,18 @@ app
     async (c) => {
       const facilityCode = c.get('facilityCode');
       const {
-        inspection_item_id: inspectionItemId,
-        inspection_type: inspectionType,
-        inspection_item_category: inspectionItemCategory,
-        inspection_item: inspectionItem,
-        inspection_item_description: inspectionItemDescription,
-        inspection_component_type: inspectionComponentType,
-        inspection_sort_number: inspectionSortNumber,
+        inspectionItemId,
+        inspectionType,
+        inspectionItemCategory,
+        inspectionItem,
+        inspectionItemDescription,
+        inspectionComponentType,
+        inspectionSortNumber,
         min,
         max,
         suffix,
-        lowerlimit,
-        upperlimit,
+        lowerLimit,
+        upperLimit,
       } = c.req.valid('json');
 
       let row: Awaited<ReturnType<typeof updateInspectionItem>>;
@@ -165,8 +165,8 @@ app
           min,
           max,
           suffix,
-          lowerlimit,
-          upperlimit,
+          lowerLimit,
+          upperLimit,
         });
       } catch (error) {
         console.error(
@@ -192,7 +192,7 @@ app
     zValidator('json', deleteInspectionItemRequestSchema),
     async (c) => {
       const facilityCode = c.get('facilityCode');
-      const { inspection_item_id: inspectionItemId } = c.req.valid('json');
+      const { inspectionItemId } = c.req.valid('json');
 
       try {
         await deleteInspectionItem({ facilityCode, inspectionItemId });
@@ -237,7 +237,7 @@ app
       }
     },
   )
-  .post(
+  .put(
     '/sorted',
     zValidator('json', saveSortedInspectionItemsRequestSchema),
     async (c) => {

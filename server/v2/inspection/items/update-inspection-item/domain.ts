@@ -1,18 +1,23 @@
 import { z } from 'zod';
 
+const numericValueSchema = z
+  .union([z.number(), z.string()])
+  .nullable()
+  .optional();
+
 export const updateInspectionItemRequestSchema = z.object({
-  inspection_item_id: z.string().min(1),
-  inspection_type: z.string().min(1),
-  inspection_item_category: z.string().min(1),
-  inspection_item: z.string().min(1),
-  inspection_item_description: z.string().optional(),
-  inspection_component_type: z.string().min(1),
-  equipment_type: z.string().min(1),
-  equipment_model: z.string().min(1),
-  inspection_sort_number: z.number(),
-  min: z.number().optional(),
-  max: z.number().optional(),
+  inspectionItemId: z.string().min(1),
+  inspectionType: z.string().min(1),
+  inspectionItemCategory: z.string().min(1),
+  inspectionItem: z.string().min(1),
+  inspectionItemDescription: z.string().optional(),
+  inspectionComponentType: z.string().min(1),
+  equipmentType: z.string().min(1),
+  equipmentModel: z.string().min(1),
+  inspectionSortNumber: z.number(),
+  min: numericValueSchema,
+  max: numericValueSchema,
   suffix: z.string().optional(),
-  lowerlimit: z.number().optional(),
-  upperlimit: z.number().optional(),
+  lowerLimit: numericValueSchema,
+  upperLimit: numericValueSchema,
 });

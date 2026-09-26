@@ -9,23 +9,23 @@ import {
 } from '~/server/db/schema';
 
 const sortColumnMap = {
-  inspection_date: inspectionResults.inspectionDate,
-  inspection_type: inspectionItems.inspectionType,
-  user_id: inspectionResults.userId,
-  equipment_id: inspectionResults.equipmentId,
-  equipment_name: equipmentLedger.equipmentName,
-  equipment_model: equipmentLedger.equipmentModel,
+  inspectionDate: inspectionResults.inspectionDate,
+  inspectionType: inspectionItems.inspectionType,
+  userId: inspectionResults.userId,
+  equipmentId: inspectionResults.equipmentId,
+  equipmentName: equipmentLedger.equipmentName,
+  equipmentModel: equipmentLedger.equipmentModel,
 } as const;
 
 export type SortRow = keyof typeof sortColumnMap;
 export type SortOrder = 'asc' | 'desc';
 
 export interface FilterCriteria {
-  equipment_id?: string;
-  equipment_type?: string;
-  equipment_name?: string;
-  equipment_model?: string;
-  equipment_serial_number?: string;
+  equipmentId?: string;
+  equipmentType?: string;
+  equipmentName?: string;
+  equipmentModel?: string;
+  equipmentSerialNumber?: string;
 }
 
 export interface ListInspectionHistoryParams {
@@ -33,7 +33,7 @@ export interface ListInspectionHistoryParams {
   page: number;
   itemsPerPage: number;
   sortRow: SortRow;
-  sortByOrder: SortOrder;
+  sortOrder: SortOrder;
   inspectionType?: string;
   filterCriteria: FilterCriteria;
 }
@@ -41,40 +41,34 @@ export interface ListInspectionHistoryParams {
 function buildFilterConditions(filterCriteria: FilterCriteria): SQL[] {
   const conditions: SQL[] = [];
 
-  if (filterCriteria.equipment_id) {
+  if (filterCriteria.equipmentId) {
     conditions.push(
-      ilike(equipmentLedger.equipmentId, `%${filterCriteria.equipment_id}%`),
+      ilike(equipmentLedger.equipmentId, `%${filterCriteria.equipmentId}%`),
     );
   }
-  if (filterCriteria.equipment_type) {
+  if (filterCriteria.equipmentType) {
     conditions.push(
-      ilike(
-        equipmentLedger.equipmentType,
-        `%${filterCriteria.equipment_type}%`,
-      ),
+      ilike(equipmentLedger.equipmentType, `%${filterCriteria.equipmentType}%`),
     );
   }
-  if (filterCriteria.equipment_name) {
+  if (filterCriteria.equipmentName) {
     conditions.push(
-      ilike(
-        equipmentLedger.equipmentName,
-        `%${filterCriteria.equipment_name}%`,
-      ),
+      ilike(equipmentLedger.equipmentName, `%${filterCriteria.equipmentName}%`),
     );
   }
-  if (filterCriteria.equipment_model) {
+  if (filterCriteria.equipmentModel) {
     conditions.push(
       ilike(
         equipmentLedger.equipmentModel,
-        `%${filterCriteria.equipment_model}%`,
+        `%${filterCriteria.equipmentModel}%`,
       ),
     );
   }
-  if (filterCriteria.equipment_serial_number) {
+  if (filterCriteria.equipmentSerialNumber) {
     conditions.push(
       ilike(
         equipmentLedger.equipmentSerialNumber,
-        `%${filterCriteria.equipment_serial_number}%`,
+        `%${filterCriteria.equipmentSerialNumber}%`,
       ),
     );
   }
@@ -87,11 +81,11 @@ export async function listInspectionHistory({
   page,
   itemsPerPage,
   sortRow,
-  sortByOrder,
+  sortOrder,
   inspectionType,
   filterCriteria,
 }: ListInspectionHistoryParams) {
-  const orderFn = sortByOrder === 'asc' ? asc : desc;
+  const orderFn = sortOrder === 'asc' ? asc : desc;
 
   const whereCondition = and(
     eq(inspectionResults.facilityCode, facilityCode),

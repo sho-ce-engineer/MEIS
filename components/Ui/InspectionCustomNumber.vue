@@ -1,12 +1,12 @@
 <template>
   <div class="inspection-number__label-wrapper">
     <v-icon>mdi-numeric</v-icon>
-    <v-label>{{ inspection_item }}</v-label>
+    <v-label>{{ inspectionItem }}</v-label>
   </div>
   <div class="inspection-number-wrapper">
     <!-- 点検項目の説明 -->
     <p class="inspection-item-description text-body-2 text-grey-darken-2">
-      {{ inspection_item_description }}
+      {{ inspectionItemDescription }}
     </p>
 
     <!-- 数値入力フィールド -->
@@ -55,11 +55,11 @@ const props = defineProps({
     type: [Number, String],
     default: '',
   },
-  inspection_item: {
+  inspectionItem: {
     type: String,
     default: '初期値が表示されています。正しく点検項目が入力されていません。',
   },
-  inspection_item_description: {
+  inspectionItemDescription: {
     type: String,
     default: '',
   },

@@ -71,7 +71,7 @@ const getInspectionCount = async () => {
   const jpyDate = format(new Date(), 'yyyy-MM-dd');
   try {
     const response = await $fetch<{ count: number }>(
-      '/api/inspection/inspection-results-count',
+      '/api/v2/inspection/results/count',
       {
         method: 'POST',
         body: {
@@ -86,9 +86,10 @@ const getInspectionCount = async () => {
       '[inspection-results-count]:Error fetching inspection count',
       error,
     );
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検結果のカウント中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検結果のカウント中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     disabled.value = true;

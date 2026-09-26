@@ -4,7 +4,7 @@ import { inspectionItems } from '~/server/db/schema';
 
 export interface SaveSortedInspectionItemsParams {
   facilityCode: string;
-  updatedItems: Record<string, { inspection_item_id: string }[]>;
+  updatedItems: Record<string, { inspectionItemId: string }[]>;
 }
 
 export async function saveSortedInspectionItems({
@@ -14,7 +14,7 @@ export async function saveSortedInspectionItems({
   await db.transaction(async (tx) => {
     for (const items of Object.values(updatedItems)) {
       for (let i = 0; i < items.length; i++) {
-        const { inspection_item_id: inspectionItemId } = items[i];
+        const { inspectionItemId } = items[i];
 
         await tx
           .update(inspectionItems)

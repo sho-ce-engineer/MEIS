@@ -120,20 +120,20 @@
     >
       <v-divider></v-divider>
       <v-list>
-        <v-list-item v-for="item in items" :key="item.inspection_item_id">
+        <v-list-item v-for="item in items" :key="item.inspectionItemId">
           <component
-            :is="getComponent(item.inspection_component_type)"
-            :inspection_item="item.inspection_item"
-            :inspection_item_description="item.inspection_item_description"
+            :is="getComponent(item.inspectionComponentType)"
+            :inspection-item="item.inspectionItem"
+            :inspection-item-description="item.inspectionItemDescription"
             :suffix="item.suffix"
             :min="item.min"
             :max="item.max"
-            :lowerLimit="Number(item.lowerlimit)"
-            :upperLimit="Number(item.upperlimit)"
-            v-model="input_result[item.inspection_item_id]"
+            :lowerLimit="Number(item.lowerLimit)"
+            :upperLimit="Number(item.upperLimit)"
+            v-model="inputResult[item.inspectionItemId]"
             @update:notesFieldValue="
               (value: string) =>
-                handleNotesFieldValue(item.inspection_item_id, value)
+                handleNotesFieldValue(item.inspectionItemId, value)
             "
           ></component>
         </v-list-item>
@@ -214,16 +214,16 @@ interface equipmentDetails {
 }
 
 interface InspectionItem {
-  inspection_item_id: string;
-  inspection_item: string;
-  inspection_item_description: string;
-  inspection_component_type: string;
+  inspectionItemId: string;
+  inspectionItem: string;
+  inspectionItemDescription: string;
+  inspectionComponentType: string;
   suffix?: string;
   min?: number;
   max?: number;
-  lowerlimit?: number;
-  upperlimit?: number;
-  inspection_item_category?: string;
+  lowerLimit?: number;
+  upperLimit?: number;
+  inspectionItemCategory?: string;
 }
 
 // Props
@@ -247,7 +247,7 @@ const Alert = defineEmits(['alert']);
 const inputEquipmentId = ref('');
 const equipment = ref<equipmentDetails | null>(null);
 const inspectionItems = ref<InspectionItem[] | null>(null);
-const input_result = ref<Record<string, any>>({});
+const inputResult = ref<Record<string, any>>({});
 const userId = ref(props.users[0].id);
 const userName = ref(props.users[0].name);
 const loading = ref(false);
@@ -256,7 +256,7 @@ const confirmationDialog = ref(false);
 
 //点検日取得
 const date = ref(new Date());
-const inspection_date = () => date.value.toISOString();
+const getInspectionDate = () => date.value.toISOString();
 
 // Form validation rules
 const rules = {
@@ -337,20 +337,23 @@ const fetchInspectionItems = async () => {
 
   loading.value = true;
   try {
-    const response = await $fetch('/api/inspection/inspection-items', {
-      method: 'POST',
-      body: {
-        equipmentModel: equipment.value?.equipment_model,
-        inspectionType: props.inspectionType,
+    const response = await $fetch<InspectionItem[]>(
+      '/api/v2/inspection/items/list',
+      {
+        method: 'POST',
+        body: {
+          equipmentModel: equipment.value?.equipment_model,
+          inspectionType: props.inspectionType,
+        },
       },
-    });
+    );
 
     inspectionItems.value = response;
   } catch (error) {
     console.error('[InspectionForm] Error fetching inspection items:', error);
     Alert(
       'alert',
-      (error as any).data?.data?.message || '点検項目が見つかりません。',
+      getApiErrorMessage(error, '点検項目が見つかりません。'),
       'error',
     );
   } finally {
@@ -363,7 +366,7 @@ const groupedInspectionItems = computed(() => {
   if (!inspectionItems.value) return {};
   return inspectionItems.value.reduce(
     (group, item) => {
-      const category = item.inspection_item_category || 'その他';
+      const category = item.inspectionItemCategory || 'その他';
       if (!group[category]) group[category] = [];
       group[category].push(item);
       return group;
@@ -388,34 +391,34 @@ const getComponent = (type: string) => {
 
 //点検結果IDの生成
 const generateInspectionResultId = (inspectionItemId: string) => {
-  const inspectionDate = inspection_date().replace(/[-:T]/g, '');
+  const inspectionDate = getInspectionDate().replace(/[-:T]/g, '');
   const randomNumber = Math.floor(100000 + Math.random() * 900000);
   return `${inspectionItemId}Result${inspectionDate}R${randomNumber}`;
 };
 
 //Notesの読み取り
-const input_notes = ref<Record<string, { notes: string }>>({});
+const inputNotes = ref<Record<string, { notes: string }>>({});
 
 // 初期化時に各点検項目IDに対する備考を空のオブジェクトで初期化
 if (inspectionItems.value) {
   for (const item of inspectionItems.value) {
-    input_notes.value[item.inspection_item_id] = { notes: '' };
+    inputNotes.value[item.inspectionItemId] = { notes: '' };
   }
 }
 
 const handleNotesFieldValue = (inspectionItemId: string, value: string) => {
   // 初期化されていない場合に備えて確認
-  if (!input_notes.value[inspectionItemId]) {
-    input_notes.value[inspectionItemId] = { notes: '' };
+  if (!inputNotes.value[inspectionItemId]) {
+    inputNotes.value[inspectionItemId] = { notes: '' };
   }
-  input_notes.value[inspectionItemId].notes = value;
+  inputNotes.value[inspectionItemId].notes = value;
 };
 
 const setAllItemsTrue = () => {
   Object.values(groupedInspectionItems.value).forEach((items) => {
     items.forEach((item) => {
-      if (item.inspection_component_type === 'InspectionCustomCheck') {
-        input_result.value[item.inspection_item_id] = true;
+      if (item.inspectionComponentType === 'InspectionCustomCheck') {
+        inputResult.value[item.inspectionItemId] = true;
       }
     });
   });
@@ -423,13 +426,11 @@ const setAllItemsTrue = () => {
 
 //点検結果のデータを生成
 const generateResultData = (item: InspectionItem) => {
-  const inspectionResultId = generateInspectionResultId(
-    item.inspection_item_id,
-  );
+  const inspectionResultId = generateInspectionResultId(item.inspectionItemId);
 
   // 点検結果を判定（OK/NG/日付/未入力）
   let result;
-  const value = input_result.value[item.inspection_item_id];
+  const value = inputResult.value[item.inspectionItemId];
   if (value === true) {
     result = 'OK';
   } else if (value === undefined || value === false) {
@@ -440,18 +441,18 @@ const generateResultData = (item: InspectionItem) => {
     result = value;
   }
 
-  const notes = input_notes.value[item.inspection_item_id]?.notes || '';
+  const notes = inputNotes.value[item.inspectionItemId]?.notes || '';
 
   // 送信するデータを整形
   return {
-    result_id: inspectionResultId,
-    user_id: userId.value,
-    inspection_item_id: item.inspection_item_id,
-    equipment_id: inputEquipmentId.value,
-    equipment_serial_number: equipment.value?.equipment_serial_number,
+    resultId: inspectionResultId,
+    userId: userId.value,
+    inspectionItemId: item.inspectionItemId,
+    equipmentId: inputEquipmentId.value,
+    equipmentSerialNumber: equipment.value?.equipment_serial_number,
     result: result,
     notes: notes,
-    inspection_date: inspection_date(),
+    inspectionDate: getInspectionDate(),
   };
 };
 
@@ -465,7 +466,7 @@ const saveInspectionResults = async () => {
   }
   try {
     const resultDataList = inspectionItems.value.map(generateResultData);
-    await $fetch('/api/inspection/inspection-items-save-result', {
+    await $fetch('/api/v2/inspection/results', {
       method: 'POST',
       body: { results: resultDataList },
     });
@@ -492,7 +493,7 @@ const formDataReset = () => {
   inputEquipmentId.value = '';
   equipment.value = null;
   inspectionItems.value = null;
-  input_result.value = {};
+  inputResult.value = {};
   disabled.value = true;
 };
 onMounted(() => {

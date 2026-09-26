@@ -1,6 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { inspectionItems } from '~/server/db/schema';
+import {
+  type NumericValue,
+  toNumericColumn,
+} from '~/server/v2/inspection/items/lib/toNumericColumn';
 
 export interface UpdateInspectionItemParams {
   facilityCode: string;
@@ -11,11 +15,11 @@ export interface UpdateInspectionItemParams {
   inspectionItemDescription?: string;
   inspectionComponentType: string;
   inspectionSortNumber: number;
-  min?: number;
-  max?: number;
+  min?: NumericValue;
+  max?: NumericValue;
   suffix?: string;
-  lowerlimit?: number;
-  upperlimit?: number;
+  lowerLimit?: NumericValue;
+  upperLimit?: NumericValue;
 }
 
 export async function updateInspectionItem({
@@ -30,8 +34,8 @@ export async function updateInspectionItem({
   min,
   max,
   suffix,
-  lowerlimit,
-  upperlimit,
+  lowerLimit,
+  upperLimit,
 }: UpdateInspectionItemParams) {
   const [row] = await db
     .update(inspectionItems)
@@ -42,11 +46,11 @@ export async function updateInspectionItem({
       inspectionItemDescription,
       inspectionComponentType,
       inspectionSortNumber,
-      min: min?.toString(),
-      max: max?.toString(),
+      min: toNumericColumn(min),
+      max: toNumericColumn(max),
       suffix,
-      lowerlimit: lowerlimit?.toString(),
-      upperlimit: upperlimit?.toString(),
+      lowerlimit: toNumericColumn(lowerLimit),
+      upperlimit: toNumericColumn(upperLimit),
     })
     .where(
       and(

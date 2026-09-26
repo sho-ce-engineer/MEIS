@@ -120,7 +120,7 @@ describe('inspection/results router: POST /count', () => {
 });
 
 describe('inspection/results router: DELETE /', () => {
-  const validBody = { result_ids: ['RESULT-001', 'RESULT-002'] };
+  const validBody = { resultIds: ['RESULT-001', 'RESULT-002'] };
 
   beforeEach(() => {
     vi.resetModules();
@@ -144,7 +144,7 @@ describe('inspection/results router: DELETE /', () => {
     expect(res.status).toBe(204);
     expect(deleteInspectionResultsMock).toHaveBeenCalledWith({
       facilityCode: 'FAC001',
-      resultIds: validBody.result_ids,
+      resultIds: validBody.resultIds,
     });
   });
 
@@ -186,7 +186,7 @@ describe('inspection/results router: DELETE /', () => {
     const res = await app.request('/results', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result_ids: [] }),
+      body: JSON.stringify({ resultIds: [] }),
     });
 
     expect(res.status).toBe(400);
@@ -198,14 +198,14 @@ describe('inspection/results router: POST /', () => {
   const validBody = {
     results: [
       {
-        result_id: 'RESULT-001',
-        user_id: 'USER-001',
-        inspection_item_id: 'ITEM-001',
-        equipment_id: 'EQ-001',
-        equipment_serial_number: 'SN-001',
+        resultId: 'RESULT-001',
+        userId: 'USER-001',
+        inspectionItemId: 'ITEM-001',
+        equipmentId: 'EQ-001',
+        equipmentSerialNumber: 'SN-001',
         result: '55',
         notes: 'note-1',
-        inspection_date: '2026-09-18T12:00:00.000Z',
+        inspectionDate: '2026-09-18T12:00:00.000Z',
       },
     ],
   };
