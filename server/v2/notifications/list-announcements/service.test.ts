@@ -27,7 +27,7 @@ vi.mock('~/server/db', () => ({
 const baseParams = {
   page: 1,
   itemsPerPage: 10,
-  sortRow: 'created_at' as const,
+  sortRow: 'createdAt' as const,
   sortOrder: 'desc' as const,
   userId: 'user-1',
 };

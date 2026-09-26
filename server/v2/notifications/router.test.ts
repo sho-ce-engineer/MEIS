@@ -82,7 +82,7 @@ describe('notifications router: /announcements', () => {
   const validBody = {
     page: 1,
     itemsPerPage: 10,
-    sortRow: 'created_at',
+    sortRow: 'createdAt',
     sortOrder: 'desc',
   };
 
@@ -173,7 +173,7 @@ describe('notifications router: /announcements', () => {
 
 describe('notifications router: /already-read', () => {
   const validBody = {
-    is_viewed: true,
+    isViewed: true,
     notificationId: 1,
   };
 
