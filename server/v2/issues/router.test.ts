@@ -40,8 +40,8 @@ describe('issues router: POST /list', () => {
   const validBody = {
     page: 1,
     itemsPerPage: 10,
-    sortRow: 'reported_date',
-    sortByOrder: 'desc',
+    sortRow: 'reportedDate',
+    sortOrder: 'desc',
     filterCriteria: {},
   };
 
@@ -69,11 +69,36 @@ describe('issues router: POST /list', () => {
     expect(listIssuesMock).toHaveBeenCalledWith({
       page: 1,
       itemsPerPage: 10,
-      sortRow: 'reported_date',
-      sortByOrder: 'desc',
+      sortRow: 'reportedDate',
+      sortOrder: 'desc',
       filterCriteria: {},
       facilityCode: 'FAC001',
     });
+  });
+
+  it('itemsPerPageに100を超える値（一覧の「All」）と絞り込み条件を指定した場合も、200でそのままlistIssuesへ渡す', async () => {
+    listIssuesMock.mockResolvedValue({ items: [], total: 0 });
+    const filterCriteria = {
+      reportedDate: '2026-09-14',
+      equipmentId: 'EQ001',
+      location: 'ICU',
+    };
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/issues/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validBody,
+        itemsPerPage: 999999,
+        filterCriteria,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(listIssuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ itemsPerPage: 999999, filterCriteria }),
+    );
   });
 
   it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
@@ -124,11 +149,11 @@ describe('issues router: POST /list', () => {
 
 describe('issues router: POST /', () => {
   const validBody = {
-    reported_date: '2026-09-14T11:55:51.756Z',
+    reportedDate: '2026-09-14T11:55:51.756Z',
     reporter: 'reporter-1',
     location: 'location-1',
     description: 'description-1',
-    equipment_id: 'EQ001',
+    equipmentId: 'EQ001',
   };
 
   beforeEach(() => {
@@ -153,11 +178,11 @@ describe('issues router: POST /', () => {
     expect(res.status).toBe(204);
     expect(addIssueMock).toHaveBeenCalledWith({
       facilityCode: 'FAC001',
-      reportedDate: validBody.reported_date,
+      reportedDate: validBody.reportedDate,
       reporter: validBody.reporter,
       location: validBody.location,
       description: validBody.description,
-      equipmentId: validBody.equipment_id,
+      equipmentId: validBody.equipmentId,
     });
   });
 
@@ -255,7 +280,7 @@ describe('issues router: GET /count', () => {
 });
 
 describe('issues router: DELETE /', () => {
-  const validBody = { issue_id: 'FAC001IssueId20260914000000R123456' };
+  const validBody = { issueId: 'FAC001IssueId20260914000000R123456' };
 
   beforeEach(() => {
     vi.resetModules();
@@ -279,7 +304,7 @@ describe('issues router: DELETE /', () => {
     expect(res.status).toBe(204);
     expect(deleteIssueMock).toHaveBeenCalledWith({
       facilityCode: 'FAC001',
-      issueId: validBody.issue_id,
+      issueId: validBody.issueId,
     });
   });
 
@@ -316,12 +341,12 @@ describe('issues router: DELETE /', () => {
     expect(deleteIssueMock).not.toHaveBeenCalled();
   });
 
-  it('issue_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
+  it('issueIdが空文字の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/issues', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ issue_id: '' }),
+      body: JSON.stringify({ issueId: '' }),
     });
 
     expect(res.status).toBe(400);

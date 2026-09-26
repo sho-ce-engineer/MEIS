@@ -11,8 +11,8 @@ vi.mock('~/server/db', () => ({
 const baseParams = {
   page: 1,
   itemsPerPage: 10,
-  sortRow: 'reported_date' as const,
-  sortByOrder: 'desc' as const,
+  sortRow: 'reportedDate' as const,
+  sortOrder: 'desc' as const,
   filterCriteria: {},
   facilityCode: 'FAC001',
 };
