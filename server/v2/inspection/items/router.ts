@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
@@ -18,6 +17,7 @@ import { saveSortedInspectionItemsRequestSchema } from '~/server/v2/inspection/i
 import { saveSortedInspectionItems } from '~/server/v2/inspection/items/save-sorted-inspection-items/service';
 import { updateInspectionItemRequestSchema } from '~/server/v2/inspection/items/update-inspection-item/domain';
 import { updateInspectionItem } from '~/server/v2/inspection/items/update-inspection-item/service';
+import { zValidator } from '~/server/v2/lib/zValidator';
 
 const app = new Hono<{ Variables: Variables }>();
 

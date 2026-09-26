@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator';
 import bcrypt from 'bcrypt';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
@@ -9,6 +8,7 @@ import {
   makeSignupMailText,
   makeSignupNotificationMailText,
 } from '~/server/utils/makeSignupMailText';
+import { zValidator } from '~/server/v2/lib/zValidator';
 import { addSessionRequestSchema } from './add-session/domain';
 import { getUserCredential } from './add-session/service';
 import { addUserRequestSchema } from './add-user/domain';

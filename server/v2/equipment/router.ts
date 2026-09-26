@@ -1,9 +1,9 @@
-import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { stream } from 'hono/streaming';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
 import type { Variables } from '~/server/v2/auth';
+import { zValidator } from '~/server/v2/lib/zValidator';
 import { addEquipmentRequestSchema } from './add-equipment/domain';
 import { addEquipment } from './add-equipment/service';
 import {

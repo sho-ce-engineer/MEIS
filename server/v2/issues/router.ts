@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { Variables } from '~/server/v2/auth';
@@ -9,6 +8,7 @@ import { deleteIssueRequestSchema } from '~/server/v2/issues/delete-issue/domain
 import { deleteIssue } from '~/server/v2/issues/delete-issue/service';
 import { listIssuesRequestSchema } from '~/server/v2/issues/list-issues/domain';
 import { listIssues } from '~/server/v2/issues/list-issues/service';
+import { zValidator } from '~/server/v2/lib/zValidator';
 
 const app = new Hono<{ Variables: Variables }>();
 
