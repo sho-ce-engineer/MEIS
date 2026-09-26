@@ -12,8 +12,8 @@ const baseParams = {
   facilityCode: 'FAC001',
   page: 1,
   itemsPerPage: 10,
-  sortRow: 'inspection_date' as const,
-  sortByOrder: 'desc' as const,
+  sortRow: 'inspectionDate' as const,
+  sortOrder: 'desc' as const,
   filterCriteria: {},
 };
 

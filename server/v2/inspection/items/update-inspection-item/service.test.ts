@@ -37,6 +37,33 @@ describe('updateInspectionItem', () => {
     });
   });
 
+  it('数値項目は文字列に変換し、未入力（null）の項目はnullで更新する', async () => {
+    const returningMock = vi
+      .fn()
+      .mockResolvedValue([{ inspectionItemId: 'ITEM-001' }]);
+    const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
+    const setMock = vi.fn().mockReturnValue({ where: whereMock });
+    updateMock.mockReturnValue({ set: setMock });
+
+    const { updateInspectionItem } = await import('./service');
+    await updateInspectionItem({
+      ...baseParams,
+      min: 0,
+      max: '100',
+      lowerLimit: null,
+      upperLimit: undefined,
+    });
+
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        min: '0',
+        max: '100',
+        lowerlimit: null,
+        upperlimit: null,
+      }),
+    );
+  });
+
   it('該当行が無い場合、undefinedを返す', async () => {
     const returningMock = vi.fn().mockResolvedValue([]);
     const whereMock = vi.fn().mockReturnValue({ returning: returningMock });

@@ -144,7 +144,7 @@ describe('inspection/items router: POST /types', () => {
 
 describe('inspection/items router: DELETE /', () => {
   const validBody = {
-    inspection_item_id: 'FAC001InspItemId20260914000000R123456',
+    inspectionItemId: 'FAC001InspItemId20260914000000R123456',
   };
 
   beforeEach(() => {
@@ -169,7 +169,7 @@ describe('inspection/items router: DELETE /', () => {
     expect(res.status).toBe(204);
     expect(deleteInspectionItemMock).toHaveBeenCalledWith({
       facilityCode: 'FAC001',
-      inspectionItemId: validBody.inspection_item_id,
+      inspectionItemId: validBody.inspectionItemId,
     });
   });
 
@@ -211,7 +211,7 @@ describe('inspection/items router: DELETE /', () => {
     const res = await app.request('/items', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inspection_item_id: '' }),
+      body: JSON.stringify({ inspectionItemId: '' }),
     });
 
     expect(res.status).toBe(400);
@@ -219,10 +219,10 @@ describe('inspection/items router: DELETE /', () => {
   });
 });
 
-describe('inspection/items router: POST /sorted', () => {
+describe('inspection/items router: PUT /sorted', () => {
   const validBody = {
     updatedItems: {
-      外装点検: [{ inspection_item_id: 'ITEM-001' }],
+      外装点検: [{ inspectionItemId: 'ITEM-001' }],
     },
   };
 
@@ -240,7 +240,7 @@ describe('inspection/items router: POST /sorted', () => {
 
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/items/sorted', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -257,7 +257,7 @@ describe('inspection/items router: POST /sorted', () => {
 
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/items/sorted', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -276,7 +276,7 @@ describe('inspection/items router: POST /sorted', () => {
       .route('/items', itemsRouter);
 
     const res = await app.request('/items/sorted', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -288,10 +288,10 @@ describe('inspection/items router: POST /sorted', () => {
   it('inspection_item_idが空文字の場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/items/sorted', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        updatedItems: { 外装点検: [{ inspection_item_id: '' }] },
+        updatedItems: { 外装点検: [{ inspectionItemId: '' }] },
       }),
     });
 
@@ -485,12 +485,12 @@ describe('inspection/items router: POST /list', () => {
 
 describe('inspection/items router: POST /', () => {
   const validBody = {
-    inspection_type: '日常点検',
-    inspection_item_category: '外装点検',
-    inspection_item: 'item-1',
-    inspection_component_type: 'InspectionCustomCheck',
-    equipment_type: 'Diagnostic',
-    equipment_model: 'CT200',
+    inspectionType: '日常点検',
+    inspectionItemCategory: '外装点検',
+    inspectionItem: 'item-1',
+    inspectionComponentType: 'InspectionCustomCheck',
+    equipmentType: 'Diagnostic',
+    equipmentModel: 'CT200',
   };
 
   beforeEach(() => {
@@ -516,19 +516,46 @@ describe('inspection/items router: POST /', () => {
     expect(await res.json()).toEqual({ inspectionItemId: 'ITEM-NEW' });
     expect(addInspectionItemMock).toHaveBeenCalledWith({
       facilityCode: 'FAC001',
-      inspectionType: validBody.inspection_type,
-      inspectionItemCategory: validBody.inspection_item_category,
-      inspectionItem: validBody.inspection_item,
+      inspectionType: validBody.inspectionType,
+      inspectionItemCategory: validBody.inspectionItemCategory,
+      inspectionItem: validBody.inspectionItem,
       inspectionItemDescription: undefined,
-      inspectionComponentType: validBody.inspection_component_type,
-      equipmentType: validBody.equipment_type,
-      equipmentModel: validBody.equipment_model,
+      inspectionComponentType: validBody.inspectionComponentType,
+      equipmentType: validBody.equipmentType,
+      equipmentModel: validBody.equipmentModel,
       min: undefined,
       max: undefined,
       suffix: undefined,
-      lowerlimit: undefined,
-      upperlimit: undefined,
+      lowerLimit: undefined,
+      upperLimit: undefined,
     });
+  });
+
+  it('数値項目が未入力（null）の場合も、200でnullのままaddInspectionItemへ渡す', async () => {
+    addInspectionItemMock.mockResolvedValue({ inspectionItemId: 'ITEM-NEW' });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validBody,
+        min: null,
+        max: null,
+        lowerLimit: null,
+        upperLimit: null,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(addInspectionItemMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        min: null,
+        max: null,
+        lowerLimit: null,
+        upperLimit: null,
+      }),
+    );
   });
 
   it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
@@ -569,7 +596,7 @@ describe('inspection/items router: POST /', () => {
     const res = await app.request('/items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...validBody, inspection_item: '' }),
+      body: JSON.stringify({ ...validBody, inspectionItem: '' }),
     });
 
     expect(res.status).toBe(400);
@@ -670,14 +697,14 @@ describe('inspection/items router: POST /copy', () => {
 
 describe('inspection/items router: PUT /', () => {
   const validBody = {
-    inspection_item_id: 'ITEM-001',
-    inspection_type: '日常点検',
-    inspection_item_category: '外装点検',
-    inspection_item: 'item-1',
-    inspection_component_type: 'InspectionCustomCheck',
-    equipment_type: 'Diagnostic',
-    equipment_model: 'CT200',
-    inspection_sort_number: 1,
+    inspectionItemId: 'ITEM-001',
+    inspectionType: '日常点検',
+    inspectionItemCategory: '外装点検',
+    inspectionItem: 'item-1',
+    inspectionComponentType: 'InspectionCustomCheck',
+    equipmentType: 'Diagnostic',
+    equipmentModel: 'CT200',
+    inspectionSortNumber: 1,
   };
 
   beforeEach(() => {
@@ -715,9 +742,38 @@ describe('inspection/items router: PUT /', () => {
       min: undefined,
       max: undefined,
       suffix: undefined,
-      lowerlimit: undefined,
-      upperlimit: undefined,
+      lowerLimit: undefined,
+      upperLimit: undefined,
     });
+  });
+
+  it('数値項目がDBから取得した文字列のまま送られた場合も、200でそのままupdateInspectionItemへ渡す', async () => {
+    updateInspectionItemMock.mockResolvedValue({
+      inspectionItemId: 'ITEM-001',
+    });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/items', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validBody,
+        min: '0',
+        max: '100',
+        lowerLimit: '10',
+        upperLimit: null,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(updateInspectionItemMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        min: '0',
+        max: '100',
+        lowerLimit: '10',
+        upperLimit: null,
+      }),
+    );
   });
 
   it('該当する点検項目が無い場合、404になる', async () => {
@@ -771,7 +827,7 @@ describe('inspection/items router: PUT /', () => {
     const res = await app.request('/items', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...validBody, inspection_item: '' }),
+      body: JSON.stringify({ ...validBody, inspectionItem: '' }),
     });
 
     expect(res.status).toBe(400);
