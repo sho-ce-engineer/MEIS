@@ -103,18 +103,16 @@ const getIssuesCount = async () => {
   loading.value = true;
   disabled.value = true;
   try {
-    const response = await $fetch<{ count: number }>(
-      '/api/issues/issues-count',
-      {
-        method: 'GET',
-      },
-    );
+    const response = await $fetch<{ count: number }>('/api/v2/issues/count', {
+      method: 'GET',
+    });
     troubleIssuesTotal.value = response.count;
     disabled.value = false;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'トラブル対応報告数の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'トラブル対応報告数の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[issues-count]Error fetching issues count:', error);

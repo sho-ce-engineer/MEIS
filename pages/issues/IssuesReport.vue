@@ -39,10 +39,10 @@
                   label="院内管理ID"
                   prepend-icon="mdi-barcode-scan"
                   variant="underlined"
-                  v-model="filterCriteria.equipment_id"
+                  v-model="filterCriteria.equipmentId"
                   @click:prepend="scanEquipmentDialog = true"
                   clearable
-                  @click:clear="filterCriteria.equipment_id = undefined"
+                  @click:clear="filterCriteria.equipmentId = undefined"
                   :items="equipmentIdItems"
                   :loading="loading"
                   no-data-text="該当データがありません。機器台帳から登録してください。"
@@ -59,7 +59,7 @@
                       <p class="mt-4 text-caption">
                         ※読み込めない場合、ピントが合う位置までゆっくり前後させてください。
                       </p>
-                      {{ filterCriteria.equipment_id }}
+                      {{ filterCriteria.equipmentId }}
                       <QrcodeStream
                         @detect="onDetectFilterEquipmentId"
                         :formats="['qr_code', 'linear_codes']"
@@ -122,20 +122,20 @@
               <v-form>
                 <v-date-input
                   label="対応日"
-                  v-model="initial_date"
+                  v-model="initialDate"
                   :rules="[rules.required]"
-                  @update:modelValue="select_reported_date(initial_date)"
+                  @update:modelValue="selectReportedDate(initialDate)"
                 ></v-date-input>
                 <v-text-field
                   label="対応者"
                   disabled
-                  v-model="user_name"
+                  v-model="userName"
                   :rules="[rules.required]"
                   prepend-icon="mdi-human-greeting-variant"
                 ></v-text-field>
                 <v-autocomplete
                   label="院内機器ID"
-                  v-model="newReport.equipment_id"
+                  v-model="newReport.equipmentId"
                   :rules="[rules.required]"
                   prepend-icon="mdi-barcode-scan"
                   @change=""
@@ -157,7 +157,7 @@
                       <p class="mt-4 text-caption">
                         ※読み込めない場合、ピントが合う位置までゆっくり前後させてください。
                       </p>
-                      {{ newReport.equipment_id }}
+                      {{ newReport.equipmentId }}
                       <QrcodeStream
                         @detect="onDetect"
                         :formats="['qr_code', 'linear_codes']"
@@ -250,7 +250,7 @@
         :headers="headers"
         :items="issueItems"
         :items-length="totalItems"
-        item-key="issue_id"
+        item-value="issueId"
         class="elevation-1"
         :loading="loading"
         items-per-page="10"
@@ -271,11 +271,11 @@
               <tr
                 v-bind="IssueEditActivaterProps"
                 class="clickable-table-row"
-                @click="fetchEquipmentDetail(item.equipment_id)"
+                @click="fetchEquipmentDetail(item.equipmentId)"
               >
-                <td>{{ item.reported_date }}</td>
+                <td>{{ item.reportedDate }}</td>
                 <td>{{ item.reporter }}</td>
-                <td>{{ item.equipment_id }}</td>
+                <td>{{ item.equipmentId }}</td>
                 <td>{{ item.location }}</td>
                 <td>{{ item.description }}</td>
               </tr></template
@@ -297,7 +297,7 @@
                     <v-row>
                       <v-col cols="12" md="6">
                         <h4>対応日</h4>
-                        <p>{{ item.reported_date }}</p>
+                        <p>{{ item.reportedDate }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>発生場所</h4>
@@ -325,7 +325,7 @@
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>院内機器ID</h4>
-                        <p>{{ item.equipment_id }}</p>
+                        <p>{{ item.equipmentId }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>シリアルナンバー</h4>
@@ -382,7 +382,7 @@
                         append-icon="mdi-delete-empty-outline"
                         @click="
                           {
-                            (historyDelete(item.issue_id),
+                            (historyDelete(item.issueId),
                               (isActive.value = false));
                           }
                         "
@@ -419,17 +419,17 @@
 </template>
 <script setup lang="ts">
 interface IssueItem {
-  issue_id: string;
-  reported_date: string;
+  issueId: string;
+  reportedDate: string;
   reporter: string;
-  equipment_id: string;
+  equipmentId: string;
   location: string;
   description: string;
 }
 
 interface IssuesFilterCriteria {
-  reported_date?: string;
-  equipment_id?: string;
+  reportedDate?: string;
+  equipmentId?: string;
   location?: string;
 }
 
@@ -446,9 +446,9 @@ interface EquipmentDetails {
 }
 
 interface NewIssueItem {
-  reported_date: Date | string; //ToDo:タイムゾーン問題
+  reportedDate: Date | string; //ToDo:タイムゾーン問題
   reporter?: string;
-  equipment_id: string;
+  equipmentId: string;
   location: string;
   description: string;
 }
@@ -457,7 +457,7 @@ const loading = ref(true);
 //ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const user_name = computed(() => sessionData.value?.name);
+const userName = computed(() => sessionData.value?.name);
 
 //Alert
 const alertMessage = ref('');
@@ -476,26 +476,26 @@ const rules = reactive({
 });
 
 const headers = [
-  { title: '対応日', sortable: true, key: 'reported_date' },
+  { title: '対応日', sortable: true, key: 'reportedDate' },
   { title: '対応者', sortable: true, key: 'reporter' },
-  { title: '院内機器ID', sortable: true, key: 'equipment_id' },
+  { title: '院内機器ID', sortable: true, key: 'equipmentId' },
   { title: '発生場所', sortable: true, key: 'location' },
   { title: '不具合内容', sortable: true, key: 'description' },
 ];
 
 // //フィルター機能
 const filterCriteriaDialog = ref(false);
-const initial_date = shallowRef(new Date());
+const initialDate = shallowRef(new Date());
 const reportedDate = shallowRef<Date | undefined>(undefined);
 const filterCriteria = reactive<IssuesFilterCriteria>({
-  equipment_id: '',
+  equipmentId: '',
   location: '',
-  reported_date: undefined,
+  reportedDate: undefined,
 });
 
 const sortbyReportedDate = (date: Date | undefined) => {
   // JSTの日付でフィルタするため、ブラウザのローカル日付(yyyy-MM-dd)を送る
-  filterCriteria.reported_date = date ? format(date, 'yyyy-MM-dd') : '';
+  filterCriteria.reportedDate = date ? format(date, 'yyyy-MM-dd') : '';
 };
 
 //機器IDのオートコンプリート
@@ -553,13 +553,13 @@ import { QrcodeStream } from 'vue-qrcode-reader';
 
 const dialog = ref(false);
 const onDetect = (detectedCodes: any) => {
-  newReport.value.equipment_id = detectedCodes[0].rawValue;
+  newReport.value.equipmentId = detectedCodes[0].rawValue;
   dialog.value = false;
 };
 
 const scanEquipmentDialog = ref(false);
 const onDetectFilterEquipmentId = (detectedCodes: any) => {
-  filterCriteria.equipment_id = detectedCodes[0].rawValue;
+  filterCriteria.equipmentId = detectedCodes[0].rawValue;
   scanEquipmentDialog.value = false;
 };
 
@@ -579,7 +579,7 @@ const clearFilter = () => {
 
 const issueItems = ref<IssueItem[]>([]);
 const totalItems = ref(0);
-const sortBy = ref<SortOption[]>([{ key: 'reported_date', order: 'desc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'reportedDate', order: 'desc' }]);
 const loadItems = async (
   page: number = 1,
   itemsPerPage: number = 10,
@@ -587,17 +587,17 @@ const loadItems = async (
   filterCriteria: IssuesFilterCriteria = {},
 ) => {
   loading.value = true;
-  const { sortKey, sortByOrder } = getSortOptions(sortBy);
+  const { sortKey, sortOrder } = getSortOptions(sortBy);
   try {
     const response = await $fetch<{ items: IssueItem[]; total: number }>(
-      '/api/issues/issues-list',
+      '/api/v2/issues/list',
       {
         method: 'POST',
         body: {
           page,
           itemsPerPage,
           sortRow: sortKey,
-          sortByOrder,
+          sortOrder,
           filterCriteria: filterCriteria,
         },
       },
@@ -605,9 +605,10 @@ const loadItems = async (
     issueItems.value = response.items;
     totalItems.value = response.total;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'データ取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'データ取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[issues-list]Load error:', error);
@@ -617,9 +618,9 @@ const loadItems = async (
 };
 
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'reported_date';
+  const sortKey = sortBy.length ? sortBy[0].key : 'reportedDate';
   const sortOrder = sortBy.length ? sortBy[0].order : 'desc';
-  return { sortKey, sortByOrder: sortOrder };
+  return { sortKey, sortOrder };
 };
 
 const handleUpdateOptions = (options: {
@@ -634,23 +635,23 @@ const handleUpdateOptions = (options: {
 
 //新規報告ダイアログ
 const issuesReportDialog = ref(false);
-const select_reported_date = (date: Date | undefined) => {
-  newReport.value.reported_date = date ? date.toISOString() : '';
+const selectReportedDate = (date: Date | undefined) => {
+  newReport.value.reportedDate = date ? date.toISOString() : '';
 };
 
 const newReport = ref<NewIssueItem>({
-  reported_date: initial_date.value,
-  reporter: user_name.value,
-  equipment_id: '',
+  reportedDate: initialDate.value,
+  reporter: userName.value,
+  equipmentId: '',
   location: '',
   description: '',
 });
 
 const resetForm = () => {
   newReport.value = {
-    reported_date: initial_date.value,
-    reporter: user_name.value,
-    equipment_id: '',
+    reportedDate: initialDate.value,
+    reporter: userName.value,
+    equipmentId: '',
     location: '',
     description: '',
   };
@@ -661,11 +662,11 @@ const confirmationDialog = ref(false);
 const error = ref(false);
 const checkIssuesReportRules = () => {
   if (
-    !newReport.value.reported_date ||
+    !newReport.value.reportedDate ||
     !newReport.value.reporter ||
     !newReport.value.location ||
     !newReport.value.description ||
-    !newReport.value.equipment_id
+    !newReport.value.equipmentId
   ) {
     alertMessage.value = '空の入力必須項目があります。';
     alertType.value = 'error';
@@ -681,9 +682,9 @@ const checkIssuesReportRules = () => {
 //新規報告
 const saveIssueReport = async () => {
   try {
-    await $fetch('/api/issues/issue-add', {
+    await $fetch('/api/v2/issues', {
       method: 'POST',
-      body: { ...newReport },
+      body: newReport.value,
     });
     loadItems();
     issuesReportDialog.value = false;
@@ -693,9 +694,10 @@ const saveIssueReport = async () => {
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'トラブル対応報告の保存中に問題が発生しました。内容を確認の上、再度確保存してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'トラブル対応報告の保存中に問題が発生しました。内容を確認の上、再度確保存してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[issue-add]New add error:', error);
@@ -709,19 +711,18 @@ const historyDelete = async (issueId: string) => {
   loading.value = true;
   disabled.value = true;
   try {
-    await $fetch('/api/issues/issue-delete', {
-      method: 'POST',
-      body: {
-        issue_id: issueId,
-      },
+    await $fetch('/api/v2/issues', {
+      method: 'DELETE',
+      body: { issueId },
     });
     alertMessage.value = 'トラブル対応履歴の削除が成功しました。';
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'トラブル対応履歴の削除中に問題が発生しました。内容を確認した上で再度「保存」してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'トラブル対応履歴の削除中に問題が発生しました。内容を確認した上で再度「保存」してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[issue-delete]Delete error:', error);
