@@ -110,7 +110,7 @@ const loading = ref(false);
 const notificationsItems = ref<Announcement[]>([]);
 const totalItems = ref(0);
 const unreadCount = ref(0);
-const sortBy = ref<SortOption[]>([{ key: 'created_at', order: 'desc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'createdAt', order: 'desc' }]);
 
 //Alert
 const alertMessage = ref('');
@@ -122,8 +122,8 @@ const updateShowAlert = (value: boolean) => {
 
 // ヘッダー情報
 const headers = [
-  { title: '通知日', sortable: true, key: 'created_at' },
-  { title: '重要度', sortable: true, key: 'importance_level' },
+  { title: '通知日', sortable: true, key: 'createdAt' },
+  { title: '重要度', sortable: true, key: 'importanceLevel' },
   { title: 'タイトル', sortable: false, key: 'title' },
 ];
 
@@ -169,7 +169,7 @@ const loadItems = async (
 
 // ソートオプションの取得
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'created_at';
+  const sortKey = sortBy.length ? sortBy[0].key : 'createdAt';
   const sortOrder = sortBy.length ? sortBy[0].order : 'desc';
   return { sortKey, sortOrder };
 };
@@ -205,7 +205,7 @@ const markAsViewed = async (notificationId: number) => {
       method: 'PATCH',
       body: {
         notificationId: notificationId,
-        is_viewed: true,
+        isViewed: true,
       },
     });
     const notification = notificationsItems.value.find(

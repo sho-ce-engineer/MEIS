@@ -4,8 +4,8 @@ import { db } from '~/server/db';
 import { announcements, userNotifications } from '~/server/db/schema';
 
 const sortColumnMap = {
-  created_at: announcements.createdAt,
-  importance_level: announcements.importanceLevel,
+  createdAt: announcements.createdAt,
+  importanceLevel: announcements.importanceLevel,
   title: announcements.title,
 } as const;
 

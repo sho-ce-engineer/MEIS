@@ -53,13 +53,13 @@ app
     zValidator('json', markAsReadRequestSchema),
     async (c) => {
       const { user_id: userId } = c.get('jwtPayload');
-      const { is_viewed, notificationId } = c.req.valid('json');
+      const { isViewed, notificationId } = c.req.valid('json');
 
       try {
         await markAsRead({
           userId,
           announcementId: notificationId,
-          isViewed: is_viewed,
+          isViewed,
         });
         return c.json({ success: true });
       } catch (error) {
