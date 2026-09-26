@@ -99,6 +99,45 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ user_id: 'user-1' });
   });
+
+  it('認証に失敗した場合、メッセージは「ログインが必要です。」になる', async () => {
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { errorHandler } = await import('~/server/v2/lib/errorHandler');
+    const app = new Hono()
+      .use('*', authMiddleware)
+      .get('/', (c) => c.text('ok'))
+      .onError(errorHandler);
+
+    const res = await app.request('/');
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ message: 'ログインが必要です。' });
+  });
+
+  it('認証を通過した後のハンドラーのエラーは、メッセージを書き換えない', async () => {
+    const { authMiddleware } = await import('~/server/v2/auth');
+    const { errorHandler } = await import('~/server/v2/lib/errorHandler');
+    const { HTTPException } = await import('hono/http-exception');
+    const app = new Hono()
+      .use('*', authMiddleware)
+      .get('/', () => {
+        throw new HTTPException(401, { message: 'ハンドラー側のエラー' });
+      })
+      .onError(errorHandler);
+
+    const validToken = await sign(
+      { user_id: 'user-1', exp: Math.floor(Date.now() / 1000) + 60 },
+      TEST_SECRET,
+      'HS256',
+    );
+
+    const res = await app.request('/', {
+      headers: { Cookie: `auth.token=${validToken}` },
+    });
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ message: 'ハンドラー側のエラー' });
+  });
 });
 
 describe('facilityMiddleware', () => {

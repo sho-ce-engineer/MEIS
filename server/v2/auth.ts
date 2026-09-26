@@ -17,11 +17,29 @@ if (!secretKey) {
   throw new Error('SECRET_KEY is not configured');
 }
 
-export const authMiddleware = jwt({
+const jwtMiddleware = jwt({
   secret: secretKey,
   alg: 'HS256',
   cookie: 'auth.token',
 });
+
+export const authMiddleware: MiddlewareHandler = async (c, next) => {
+  let isAuthenticated = false;
+  try {
+    await jwtMiddleware(c, async () => {
+      isAuthenticated = true;
+      await next();
+    });
+  } catch (error) {
+    if (!isAuthenticated && error instanceof HTTPException) {
+      throw new HTTPException(error.status, {
+        message: 'ログインが必要です。',
+        cause: error,
+      });
+    }
+    throw error;
+  }
+};
 
 export const facilityMiddleware: MiddlewareHandler<{
   Variables: Variables;

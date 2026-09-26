@@ -9,6 +9,7 @@ import authRouter from '~/server/v2/auth/router';
 import equipmentRouter from '~/server/v2/equipment/router';
 import inspectionRouter from '~/server/v2/inspection/router';
 import issuesRouter from '~/server/v2/issues/router';
+import { errorHandler } from '~/server/v2/lib/errorHandler';
 import notificationsRouter from '~/server/v2/notifications/router';
 import settingsRouter from '~/server/v2/settings/router';
 
@@ -28,7 +29,8 @@ const app = new Hono()
   .route('/issues', issuesRouter)
   .route('/inspection', inspectionRouter)
   .route('/equipment', equipmentRouter)
-  .route('/settings', settingsRouter);
+  .route('/settings', settingsRouter)
+  .onError(errorHandler);
 
 export default defineEventHandler((event) => {
   return app.fetch(toWebRequest(event));

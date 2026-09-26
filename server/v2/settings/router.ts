@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DatabaseError, DrizzleQueryError } from '~/server/db';
@@ -6,6 +5,7 @@ import { sendMail } from '~/server/mail/send-mail';
 import { generateInviteCode } from '~/server/utils/generateInviteCode';
 import { makeInvitationMailTxt } from '~/server/utils/makeInviteMailText';
 import type { Variables } from '~/server/v2/auth';
+import { zValidator } from '~/server/v2/lib/zValidator';
 import {
   listUsers,
   type SortOrder,
