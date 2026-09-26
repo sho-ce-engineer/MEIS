@@ -12,8 +12,8 @@
             <v-avatar size="80" variant="elevated" color="primary" class="mb-4"
               >ME</v-avatar
             >
-            <p class="text-caption">{{ facility_name }}</p>
-            <p class="text-h5">{{ input_user_name }}</p>
+            <p class="text-caption">{{ facilityName }}</p>
+            <p class="text-h5">{{ inputUserName }}</p>
           </v-col>
           <v-divider vertical class="d-none d-sm-flex my-3"></v-divider>
           <v-divider class="d-sm-none d-flex mx-3"></v-divider>
@@ -22,14 +22,14 @@
               <v-col sm="6" cols="12">
                 <v-text-field
                   label="ユーザー名"
-                  v-model="input_user_name"
+                  v-model="inputUserName"
                   variant="underlined"
                   density="compact"
                   :rules="[rules.required]"
                 ></v-text-field>
                 <v-text-field
                   label="メールアドレス"
-                  v-model="input_user_email"
+                  v-model="inputUserEmail"
                   variant="underlined"
                   density="compact"
                   :rules="[rules.required, rules.email]"
@@ -81,9 +81,9 @@ const loading = ref(false);
 //ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const user_name = computed(() => sessionData.value?.name);
-const user_email = computed(() => sessionData.value?.email);
-const facility_name = computed(() => sessionData.value?.facility_name);
+const userName = computed(() => sessionData.value?.name);
+const userEmail = computed(() => sessionData.value?.email);
+const facilityName = computed(() => sessionData.value?.facility_name);
 
 //アラート
 const alertMessage = ref('');
@@ -105,8 +105,8 @@ const rules = {
     value === password.value || 'パスワードが一致しません',
 };
 
-const input_user_name = ref<string>(user_name.value ?? '');
-const input_user_email = ref<string>(user_email.value ?? '');
+const inputUserName = ref<string>(userName.value ?? '');
+const inputUserEmail = ref<string>(userEmail.value ?? '');
 const password = ref('');
 const confirmPassword = ref('');
 
@@ -121,11 +121,11 @@ const updateUserInfo = async () => {
   }
 
   try {
-    await $fetch(`/api/settings/users/edit-userdata`, {
+    await $fetch('/api/v2/settings/user-data', {
       method: 'PATCH',
       body: {
-        user_name: input_user_name.value,
-        user_email: input_user_email.value,
+        userName: inputUserName.value,
+        userEmail: inputUserEmail.value,
         password: password.value,
       },
     });
@@ -134,9 +134,10 @@ const updateUserInfo = async () => {
     showAlert.value = true;
   } catch (error) {
     console.error('[edit-userdata]Load error:', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'ユーザーデータを登録中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'ユーザーデータを登録中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {

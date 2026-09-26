@@ -31,14 +31,14 @@ const app = new Hono<{ Variables: Variables }>()
       page = 1,
       itemsPerPage = 10,
       sortRow,
-      sortByOrder,
+      sortOrder,
     } = c.req.valid('json');
 
     const sortByKey = ALLOWED_SORT_KEYS.includes(sortRow as SortRow)
       ? (sortRow as SortRow)
       : 'userName';
     const sortOrderValue: SortOrder =
-      sortByOrder === 'asc' || sortByOrder === 'desc' ? sortByOrder : 'asc';
+      sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'asc';
 
     try {
       const result = await listUsers({
@@ -46,7 +46,7 @@ const app = new Hono<{ Variables: Variables }>()
         page,
         itemsPerPage,
         sortRow: sortByKey,
-        sortByOrder: sortOrderValue,
+        sortOrder: sortOrderValue,
       });
 
       return c.json(result);
