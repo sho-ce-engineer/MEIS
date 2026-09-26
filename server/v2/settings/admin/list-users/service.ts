@@ -15,7 +15,7 @@ export interface ListUsersParams {
   page: number;
   itemsPerPage: number;
   sortRow: SortRow;
-  sortByOrder: SortOrder;
+  sortOrder: SortOrder;
 }
 
 export const listUsers = async ({
@@ -23,9 +23,9 @@ export const listUsers = async ({
   page,
   itemsPerPage,
   sortRow,
-  sortByOrder,
+  sortOrder,
 }: ListUsersParams) => {
-  const orderFn = sortByOrder === 'asc' ? asc : desc;
+  const orderFn = sortOrder === 'asc' ? asc : desc;
 
   const rows = await db
     .select({

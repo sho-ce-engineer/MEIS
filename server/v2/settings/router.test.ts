@@ -377,26 +377,42 @@ describe('settings router: POST /users', () => {
         page: 1,
         itemsPerPage: 10,
         sortRow: 'userName',
-        sortByOrder: 'asc',
+        sortOrder: 'asc',
       }),
     );
   });
 
-  it('不正なsortRow・sortByOrderの場合、デフォルト値にフォールバックする', async () => {
+  it('権限（userRole）の降順で並べ替えを指定した場合、そのままlistUsersへ渡す', async () => {
     listUsersMock.mockResolvedValue({ items: [], total: 0 });
 
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/settings/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sortRow: 'invalidKey', sortByOrder: 'invalid' }),
+      body: JSON.stringify({ sortRow: 'userRole', sortOrder: 'desc' }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(listUsersMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sortRow: 'userRole', sortOrder: 'desc' }),
+    );
+  });
+
+  it('不正なsortRow・sortOrderの場合、デフォルト値にフォールバックする', async () => {
+    listUsersMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sortRow: 'invalidKey', sortOrder: 'invalid' }),
     });
 
     expect(res.status).toBe(200);
     expect(listUsersMock).toHaveBeenCalledWith(
       expect.objectContaining({
         sortRow: 'userName',
-        sortByOrder: 'asc',
+        sortOrder: 'asc',
       }),
     );
   });

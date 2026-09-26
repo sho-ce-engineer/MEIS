@@ -13,7 +13,7 @@ const baseParams = {
   page: 1,
   itemsPerPage: 10,
   sortRow: 'userName' as const,
-  sortByOrder: 'asc' as const,
+  sortOrder: 'asc' as const,
 };
 
 function mockListQuery(rows: unknown[]) {

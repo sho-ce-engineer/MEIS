@@ -26,7 +26,7 @@
                   メンバーを追加して、機器管理業務を始めましょう。
                 </div>
                 <v-text-field
-                  v-model="email_invite"
+                  v-model="inviteEmail"
                   label="メールアドレス"
                   type="email"
                   :rules="[rules.required, rules.email]"
@@ -44,7 +44,7 @@
                 <v-select
                   label="ユーザー権限"
                   :items="userRoleItems"
-                  v-model="user_role"
+                  v-model="inviteUserRole"
                   required
                   hint="データの保全のため、通常は「general」を選択してください。"
                   persistent-hint
@@ -68,7 +68,7 @@
         :headers="headers"
         :items="facilityMemberItems"
         :items-length="totalItems"
-        item-key="user_name"
+        item-value="userId"
         class="elevation-1"
         :loading="loading"
         items-per-page="10"
@@ -83,10 +83,10 @@
           { value: 999999, title: 'All' },
         ]"
       >
-        <template #item.user_role="{ item }">
+        <template #item.userRole="{ item }">
           <v-select
-            v-model="item.user_role"
-            @update:modelValue="updateUserRole(item.user_id, item.user_role)"
+            v-model="item.userRole"
+            @update:modelValue="updateUserRole(item.userId, item.userRole)"
             :items="['admin', 'general']"
             dense
             hide-details
@@ -99,7 +99,7 @@
         <template #item.actions="{ item }">
           <v-btn
             class="text-red-lighten-1"
-            @click="openDeleteDialog(item.user_id, item.user_name)"
+            @click="openDeleteDialog(item.userId, item.userName)"
             variant="outlined"
             prepend-icon="mdi-account-minus"
           >
@@ -151,9 +151,9 @@ interface SortOption {
 }
 
 interface FacilityMemberItem {
-  user_id: string;
-  user_name: string;
-  user_role: string;
+  userId: string;
+  userName: string;
+  userRole: string;
 }
 
 const loading = ref(true);
@@ -161,9 +161,9 @@ const loading = ref(true);
 // ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const user_id = computed(() => sessionData.value?.user_id);
-const user_name = computed(() => sessionData.value?.name);
-const facility_code = computed(() => sessionData.value?.facility_code);
+const currentUserId = computed(() => sessionData.value?.user_id);
+const currentUserName = computed(() => sessionData.value?.name);
+const facilityCode = computed(() => sessionData.value?.facility_code);
 const userRole = computed(() => sessionData.value?.role);
 
 // Alert
@@ -180,12 +180,12 @@ const rules = {
   email: (value: string) =>
     /.+@.+\..+/.test(value) || '有効なメールアドレスを入力してください',
   matchEmail: (value: string) =>
-    value === email_invite.value || 'メールアドレスが一致しません',
+    value === inviteEmail.value || 'メールアドレスが一致しません',
 };
 
 const headers = [
-  { title: 'ユーザー名', sortable: true, key: 'user_name' },
-  { title: '権限', sortable: true, key: 'user_role' },
+  { title: 'ユーザー名', sortable: true, key: 'userName' },
+  { title: '権限', sortable: true, key: 'userRole' },
   { title: '操作', key: 'actions', sortable: false },
 ];
 
@@ -199,27 +199,28 @@ const loadItems = async (
 ) => {
   loading.value = true;
   try {
-    const { sortKey, sortByOrder } = getSortOptions(sortBy);
+    const { sortKey, sortOrder } = getSortOptions(sortBy);
 
     const response = await $fetch<{
       items: FacilityMemberItem[];
       total: number;
-    }>('/api/settings/admin/members-list', {
+    }>('/api/v2/settings/users', {
       method: 'POST',
       body: {
         page,
         itemsPerPage,
         sortRow: sortKey,
-        sortByOrder,
+        sortOrder,
       },
     });
 
     facilityMemberItems.value = response.items;
     totalItems.value = response.total;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'データ取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'データ取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[members-list]Load error:', error);
@@ -229,11 +230,11 @@ const loadItems = async (
 };
 
 // ソートオプションの取得
-const sortBy = ref<SortOption[]>([{ key: 'user_name', order: 'asc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'userName', order: 'asc' }]);
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'user_name';
+  const sortKey = sortBy.length ? sortBy[0].key : 'userName';
   const sortOrder = sortBy.length ? sortBy[0].order : 'asc';
-  return { sortKey, sortByOrder: sortOrder };
+  return { sortKey, sortOrder };
 };
 
 const handleUpdateOptions = (options: {
@@ -249,20 +250,21 @@ const handleUpdateOptions = (options: {
 // ユーザー権限を更新
 const updateUserRole = async (userId: string, newRole: string) => {
   try {
-    await $fetch(`/api/settings/admin/role-change`, {
+    await $fetch('/api/v2/settings/role', {
       method: 'PUT',
       body: {
-        new_user_role: newRole,
-        target_user_id: userId,
+        newUserRole: newRole,
+        targetUserId: userId,
       },
     });
     alertMessage.value = `対象ユーザーの権限が更新されました。`;
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'ユーザー権限の更新中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'ユーザー権限の更新中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[role-change]Load error:', error);
@@ -288,10 +290,10 @@ const deleteUser = async () => {
     return;
   }
   try {
-    await $fetch(`/api/settings/admin/user-delete`, {
+    await $fetch('/api/v2/settings/user', {
       method: 'DELETE',
       body: {
-        target_user_id: selectedUserId.value,
+        targetUserId: selectedUserId.value,
       },
     });
     alertMessage.value = `ユーザー ${selectedUserName.value} を削除しました。`;
@@ -299,9 +301,10 @@ const deleteUser = async () => {
     showAlert.value = true;
     loadItems();
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'ユーザーの削除処理中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'ユーザーの削除処理中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[user-delete]Load error:', error);
@@ -311,14 +314,14 @@ const deleteUser = async () => {
 };
 
 //ユーザー招待
-const email_invite = ref('');
+const inviteEmail = ref('');
 const confirmEmailInvite = ref('');
-const user_role = ref('general');
+const inviteUserRole = ref('general');
 const userRoleItems = ['general', 'admin'];
 const sendInviteDialog = ref(false);
 
 const validateInviteForm = () => {
-  if (!facility_code.value) {
+  if (!facilityCode.value) {
     alertMessage.value =
       '施設コードが取得できませんでした。再度ログインし直してください。';
     return false;
@@ -332,9 +335,9 @@ const validateInviteForm = () => {
 };
 
 const resetInviteForm = () => {
-  email_invite.value = '';
+  inviteEmail.value = '';
   confirmEmailInvite.value = '';
-  user_role.value = 'general';
+  inviteUserRole.value = 'general';
 };
 
 const sendInvite = async () => {
@@ -348,12 +351,12 @@ const sendInvite = async () => {
   }
 
   try {
-    await $fetch('/api/settings/admin/invite', {
+    await $fetch('/api/v2/settings/invitations', {
       method: 'POST',
       body: {
-        invited_by_user_id: user_id.value,
-        invited_by_user_name: user_name.value,
-        email: email_invite.value,
+        invitedByUserId: currentUserId.value,
+        invitedByUserName: currentUserName.value,
+        email: inviteEmail.value,
       },
     });
     alertMessage.value = `招待メールを送信しました！`;
@@ -362,9 +365,10 @@ const sendInvite = async () => {
     sendInviteDialog.value = false;
     resetInviteForm();
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '招待処理に問題が発生しました。内容を確認の上、再度実施してください。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '招待処理に問題が発生しました。内容を確認の上、再度実施してください。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[invite]invite error:', error);
