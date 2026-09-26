@@ -34,7 +34,7 @@ const loading = ref(false);
 
 // アラートの設定
 const alertMessage = ref('');
-const alertType = ref('');
+const alertType = ref<'success' | 'info' | 'warning' | 'error'>('info');
 const showAlert = ref(false);
 const updateShowAlert = (value: boolean) => {
   showAlert.value = value;
@@ -79,9 +79,10 @@ const handleSubmit = async () => {
       showAlert.value = true;
     }
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'ログイン中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'ログイン中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('Login error:', error);

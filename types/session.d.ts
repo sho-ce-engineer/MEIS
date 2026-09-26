@@ -1,8 +1,8 @@
 declare interface SessionData {
-  user_id: string;
+  userId: string;
   name: string;
   email: string;
-  facility_name: string;
-  facility_code: string;
+  facilityName: string;
+  facilityCode: string;
   role: string;
 }

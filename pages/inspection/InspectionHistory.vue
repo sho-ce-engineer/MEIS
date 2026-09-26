@@ -395,7 +395,6 @@ interface InspectionResultDetail {
 //ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const facility_code = computed(() => sessionData.value?.facility_code);
 
 //アラート
 const alertMessage = ref('');

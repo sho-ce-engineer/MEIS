@@ -39,10 +39,10 @@
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
 const users = computed(() => {
-  const user_id = sessionData.value?.user_id;
-  const user_name = sessionData.value?.name;
-  if (!user_id || !user_name) return [];
-  return [{ id: user_id, name: user_name }];
+  const userId = sessionData.value?.userId;
+  const userName = sessionData.value?.name;
+  if (!userId || !userName) return [];
+  return [{ id: userId, name: userName }];
 });
 
 //アラート
