@@ -3,31 +3,31 @@ import { db } from '~/server/db';
 import { equipmentLedger } from '~/server/db/schema';
 
 const sortColumnMap = {
-  equipment_id: equipmentLedger.equipmentId,
-  equipment_type: equipmentLedger.equipmentType,
-  equipment_manufacturer: equipmentLedger.equipmentManufacturer,
-  equipment_name: equipmentLedger.equipmentName,
-  equipment_model: equipmentLedger.equipmentModel,
-  equipment_serial_number: equipmentLedger.equipmentSerialNumber,
-  acquisition_date: equipmentLedger.acquisitionDate,
+  equipmentId: equipmentLedger.equipmentId,
+  equipmentType: equipmentLedger.equipmentType,
+  equipmentManufacturer: equipmentLedger.equipmentManufacturer,
+  equipmentName: equipmentLedger.equipmentName,
+  equipmentModel: equipmentLedger.equipmentModel,
+  equipmentSerialNumber: equipmentLedger.equipmentSerialNumber,
+  acquisitionDate: equipmentLedger.acquisitionDate,
 } as const;
 
 export type SortRow = keyof typeof sortColumnMap;
 export type SortOrder = 'asc' | 'desc';
 
 const FILTER_COLUMN_MAP = {
-  equipment_id: equipmentLedger.equipmentId,
-  equipment_type: equipmentLedger.equipmentType,
-  equipment_manufacturer: equipmentLedger.equipmentManufacturer,
-  equipment_name: equipmentLedger.equipmentName,
-  equipment_model: equipmentLedger.equipmentModel,
-  equipment_serial_number: equipmentLedger.equipmentSerialNumber,
-  equipment_status: equipmentLedger.equipmentStatus,
-  equipment_maintenance_contract: equipmentLedger.equipmentMaintenanceContract,
+  equipmentId: equipmentLedger.equipmentId,
+  equipmentType: equipmentLedger.equipmentType,
+  equipmentManufacturer: equipmentLedger.equipmentManufacturer,
+  equipmentName: equipmentLedger.equipmentName,
+  equipmentModel: equipmentLedger.equipmentModel,
+  equipmentSerialNumber: equipmentLedger.equipmentSerialNumber,
+  equipmentStatus: equipmentLedger.equipmentStatus,
+  equipmentMaintenanceContract: equipmentLedger.equipmentMaintenanceContract,
 } as const;
 
 export type FilterCriteria = Partial<
-  Record<keyof typeof FILTER_COLUMN_MAP, string>
+  Record<keyof typeof FILTER_COLUMN_MAP, string | null>
 >;
 
 export interface ListEquipmentLedgerParams {
@@ -35,7 +35,7 @@ export interface ListEquipmentLedgerParams {
   page: number;
   itemsPerPage: number;
   sortRow: SortRow;
-  sortByOrder: SortOrder;
+  sortOrder: SortOrder;
   search?: string;
   filterCriteria: FilterCriteria;
 }
@@ -65,11 +65,11 @@ export async function listEquipmentLedger({
   page,
   itemsPerPage,
   sortRow,
-  sortByOrder,
+  sortOrder,
   search,
   filterCriteria,
 }: ListEquipmentLedgerParams) {
-  const orderFn = sortByOrder === 'asc' ? asc : desc;
+  const orderFn = sortOrder === 'asc' ? asc : desc;
   const whereCondition = and(
     eq(equipmentLedger.facilityCode, facilityCode),
     ...buildFilterConditions(filterCriteria, search),

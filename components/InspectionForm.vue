@@ -74,19 +74,19 @@
           <v-list lines="one" class="ml-5">
             <v-list-item
               title="機器種別"
-              :subtitle="equipment.equipment_type"
+              :subtitle="equipment.equipmentType"
             ></v-list-item>
             <v-list-item
               title="機器名"
-              :subtitle="equipment.equipment_name"
+              :subtitle="equipment.equipmentName"
             ></v-list-item>
             <v-list-item
               title="型番"
-              :subtitle="equipment.equipment_model"
+              :subtitle="equipment.equipmentModel"
             ></v-list-item>
             <v-list-item
               title="シリアル番号"
-              :subtitle="equipment.equipment_serial_number"
+              :subtitle="equipment.equipmentSerialNumber"
             ></v-list-item>
           </v-list>
           <p class="text-right">上記内容で間違いありませんか？</p>
@@ -206,11 +206,11 @@ import InspectionCustomCheck from '../components/Ui/InspectionCustomCheck.vue';
 import InspectionCustomDate from '../components/Ui/InspectionCustomDate.vue';
 import InspectionCustomNumber from '../components/Ui/InspectionCustomNumber.vue';
 
-interface equipmentDetails {
-  equipment_type: string;
-  equipment_name: string;
-  equipment_model: string;
-  equipment_serial_number: string;
+interface EquipmentDetails {
+  equipmentType: string;
+  equipmentName: string;
+  equipmentModel: string;
+  equipmentSerialNumber: string;
 }
 
 interface InspectionItem {
@@ -245,7 +245,7 @@ const Alert = defineEmits(['alert']);
 
 // Reactive references
 const inputEquipmentId = ref('');
-const equipment = ref<equipmentDetails | null>(null);
+const equipment = ref<EquipmentDetails | null>(null);
 const inspectionItems = ref<InspectionItem[] | null>(null);
 const inputResult = ref<Record<string, any>>({});
 const userId = ref(props.users[0].id);
@@ -282,14 +282,14 @@ const equipmentIdItems = ref<string[]>([]);
 const fetchEquipmentIdItems = async () => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/equipment/equipment-id', {
+    const response = await $fetch<string[]>('/api/v2/equipment/id', {
       method: 'GET',
     });
     equipmentIdItems.value = response;
   } catch (error) {
     Alert(
       'alert',
-      (error as any).data?.data?.message || '機器IDの取得に失敗しました。',
+      getApiErrorMessage(error, '機器IDの取得に失敗しました。'),
       'error',
     );
     console.error('[InspectionForm] Error fetching equipment ID items:', error);
@@ -302,19 +302,24 @@ const fetchEquipmentIdItems = async () => {
 const fetchEquipmentDetails = async () => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/equipment/equipment-details', {
-      method: 'POST',
-      body: {
-        equipment_id: inputEquipmentId.value,
+    const response = await $fetch<EquipmentDetails>(
+      '/api/v2/equipment/details',
+      {
+        method: 'POST',
+        body: {
+          equipmentId: inputEquipmentId.value,
+        },
       },
-    });
+    );
     equipment.value = response || null;
     disabled.value = false;
   } catch (error) {
     Alert(
       'alert',
-      (error as any).data?.data?.message ||
+      getApiErrorMessage(
+        error,
         '機器が見つかりません。正しい院内IDを入力してください。',
+      ),
       'error',
     );
     console.error('[InspectionForm] Error fetching equipment details:', error);
@@ -342,7 +347,7 @@ const fetchInspectionItems = async () => {
       {
         method: 'POST',
         body: {
-          equipmentModel: equipment.value?.equipment_model,
+          equipmentModel: equipment.value?.equipmentModel,
           inspectionType: props.inspectionType,
         },
       },
@@ -449,7 +454,7 @@ const generateResultData = (item: InspectionItem) => {
     userId: userId.value,
     inspectionItemId: item.inspectionItemId,
     equipmentId: inputEquipmentId.value,
-    equipmentSerialNumber: equipment.value?.equipment_serial_number,
+    equipmentSerialNumber: equipment.value?.equipmentSerialNumber,
     result: result,
     notes: notes,
     inspectionDate: getInspectionDate(),

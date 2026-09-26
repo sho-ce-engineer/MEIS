@@ -424,14 +424,18 @@ const headers = [
 const equipmentTypeItems = ref<string[]>([]);
 const fetchEquipmentTypes = async () => {
   try {
-    const response = await $fetch('/api/equipment/equipment-types', {
-      method: 'GET',
-    });
+    const response = await $fetch<{ equipmentType: string }[]>(
+      '/api/v2/equipment/types',
+      {
+        method: 'GET',
+      },
+    );
     equipmentTypeItems.value = response.map((item) => item.equipmentType);
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器種類の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器種類の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-types]Load error:', error);
@@ -443,14 +447,15 @@ const equipmentIdItems = ref<string[]>([]);
 const fetchEquipmentIdItems = async () => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/equipment/equipment-id', {
+    const response = await $fetch<string[]>('/api/v2/equipment/id', {
       method: 'GET',
     });
     equipmentIdItems.value = response;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '機器IDの取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '機器IDの取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-id]Load error:', error);
@@ -664,9 +669,10 @@ const generateInspectionResultsDetailes = async (
     );
     return inspectionResultsDetailes;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '新しいオブジェクトの生成に失敗しました';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '新しいオブジェクトの生成に失敗しました',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[generateInspectionResultsDetailes()]Load error:', error);

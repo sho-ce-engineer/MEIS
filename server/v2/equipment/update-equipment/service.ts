@@ -5,16 +5,16 @@ import { equipmentLedger } from '~/server/db/schema';
 export interface UpdateEquipmentParams {
   equipmentId: string;
   equipmentName: string;
-  equipmentModel?: string;
-  equipmentManufacturer?: string;
-  equipmentSerialNumber?: string;
-  equipmentType?: string;
+  equipmentModel?: string | null;
+  equipmentManufacturer?: string | null;
+  equipmentSerialNumber?: string | null;
+  equipmentType?: string | null;
   facilityCode: string;
   acquisitionDate?: string | null;
-  equipmentStatus?: string;
-  equipmentNotes?: string;
-  equipmentMaintenanceContract?: string;
-  equipmentStorageLocation?: string;
+  equipmentStatus?: string | null;
+  equipmentNotes?: string | null;
+  equipmentMaintenanceContract?: string | null;
+  equipmentStorageLocation?: string | null;
 }
 
 export const updateEquipment = async ({
