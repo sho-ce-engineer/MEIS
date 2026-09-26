@@ -24,6 +24,7 @@
   - 例：`equipment/router.ts`が`/types`・`/manufacturer`・`/id`をまとめて持つ。`equipment/types/router.ts`のような分散は作らない
 - URLパス（`router.ts`で定義するパス）は対象を表す名詞のみとし、動詞を含めない。動詞の意味合いはHTTPメソッドが担う
   - 例：`GET /users`（一覧取得だがパスは名詞）
+  - 例外：`auth/router.ts`は`@sidebase/nuxt-auth`（local provider）のエンドポイント仕様に合わせ、`POST /login`・`POST /logout`・`POST /signup`・`GET /session`とする
 - テストは実装と同じ階層に`xxx.test.ts`
   - `service.ts` → `service.test.ts`（DB層のモック、`vi.mock('~/server/db', ...)`）
   - 親`router.ts` → `router.test.ts`（service層のモック、`app.request()`でHTTP経由のテスト）
