@@ -92,7 +92,7 @@
               マイアカウント設定
             </v-list-item>
             <v-list-item
-              v-if="user_role === 'admin'"
+              v-if="userRole === 'admin'"
               to="/settings/MemberManagement"
             >
               メンバー管理
@@ -132,10 +132,10 @@
                   <v-card-text>
                     <v-list>
                       <span class="text-caption text-center d-block">{{
-                        facility_name
+                        facilityName
                       }}</span>
                       <p class="text-body-1 text-center d-block mb-1">
-                        {{ user_name }}
+                        {{ userName }}
                       </p>
                       <v-divider class="my-3"></v-divider>
                       <v-list-item
@@ -182,10 +182,10 @@ const drawer = ref(false);
 
 //ユーザーデータ
 const sessionData = computed(() => data.value as SessionData | null);
-const user_name = computed(() => sessionData.value?.name);
-const facility_name = computed(() => sessionData.value?.facility_name);
-const facility_code = computed(() => sessionData.value?.facility_code);
-const user_role = computed(() => sessionData.value?.role);
+const userName = computed(() => sessionData.value?.name);
+const facilityName = computed(() => sessionData.value?.facilityName);
+const facilityCode = computed(() => sessionData.value?.facilityCode);
+const userRole = computed(() => sessionData.value?.role);
 
 // アラートの設定
 const alertMessage = ref('');
@@ -241,12 +241,13 @@ const setLendingCookie = async () => {
   try {
     await $fetch('/api/loans/token/set-lending-cookie', {
       method: 'POST',
-      body: { facility_code: facility_code.value },
+      body: { facility_code: facilityCode.value },
     });
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '貸出返却システムへのアクセスに失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '貸出返却システムへのアクセスに失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[set-lending-cookie]Error fetching unread count:', error);

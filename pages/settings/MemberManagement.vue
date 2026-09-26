@@ -161,9 +161,9 @@ const loading = ref(true);
 // ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const currentUserId = computed(() => sessionData.value?.user_id);
+const currentUserId = computed(() => sessionData.value?.userId);
 const currentUserName = computed(() => sessionData.value?.name);
-const facilityCode = computed(() => sessionData.value?.facility_code);
+const facilityCode = computed(() => sessionData.value?.facilityCode);
 const userRole = computed(() => sessionData.value?.role);
 
 // Alert

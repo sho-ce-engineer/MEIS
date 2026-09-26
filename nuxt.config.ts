@@ -38,6 +38,7 @@ export default defineNuxtConfig({
   },
   modules: ['@sidebase/nuxt-auth', 'nuxt-security'],
   auth: {
+    baseURL: '/api/v2/auth',
     globalAppMiddleware: true,
     provider: {
       type: 'local',

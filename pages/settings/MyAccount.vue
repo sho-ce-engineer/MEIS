@@ -83,7 +83,7 @@ const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
 const userName = computed(() => sessionData.value?.name);
 const userEmail = computed(() => sessionData.value?.email);
-const facilityName = computed(() => sessionData.value?.facility_name);
+const facilityName = computed(() => sessionData.value?.facilityName);
 
 //アラート
 const alertMessage = ref('');

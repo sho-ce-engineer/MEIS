@@ -24,14 +24,14 @@
     <v-divider class="mb-4"></v-divider>
     <v-text-field
       label="ユーザー名"
-      v-model="user_name"
+      v-model="userName"
       type="text"
       :rules="[rules.required]"
       required
     ></v-text-field>
     <v-text-field
       label="施設名"
-      v-model="facility_name"
+      v-model="facilityName"
       type="text"
       :rules="[rules.required]"
       required
@@ -58,12 +58,12 @@ const loading = ref(false);
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
-const user_name = ref('');
-const facility_name = ref('');
+const userName = ref('');
+const facilityName = ref('');
 
 // アラートの設定
 const alertMessage = ref('');
-const alertType = ref('');
+const alertType = ref<'success' | 'info' | 'warning' | 'error'>('info');
 const showAlert = ref(false);
 const updateShowAlert = (value: boolean) => {
   showAlert.value = value;
@@ -106,17 +106,18 @@ const register = async () => {
       {
         email: email.value,
         password: password.value,
-        user_name: user_name.value,
-        facility_name: facility_name.value,
+        userName: userName.value,
+        facilityName: facilityName.value,
         recaptchaToken: recaptchaToken,
       },
       { callbackUrl: '/Dashboard', redirect: true },
     );
   } catch (error) {
     console.error('サインアップエラー:', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'サインアップ中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'サインアップ中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {
