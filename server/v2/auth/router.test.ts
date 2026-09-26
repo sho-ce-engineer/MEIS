@@ -69,7 +69,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('auth router: POST /session（ログイン）', () => {
+describe('auth router: POST /login（ログイン）', () => {
   const validBody = {
     email: 'test@test.com',
     password: 'password',
@@ -87,7 +87,7 @@ describe('auth router: POST /session（ログイン）', () => {
     });
 
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', validBody);
+    const res = await postJson(app, '/auth/login', validBody);
 
     expect(res.status).toBe(200);
     const { token } = await res.json();
@@ -106,7 +106,7 @@ describe('auth router: POST /session（ログイン）', () => {
     });
 
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', {
+    const res = await postJson(app, '/auth/login', {
       ...validBody,
       password: 'wrong-password',
     });
@@ -118,7 +118,7 @@ describe('auth router: POST /session（ログイン）', () => {
     getUserCredentialMock.mockResolvedValue(undefined);
 
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', validBody);
+    const res = await postJson(app, '/auth/login', validBody);
 
     expect(res.status).toBe(401);
   });
@@ -127,7 +127,7 @@ describe('auth router: POST /session（ログイン）', () => {
     verifyRecaptchaMock.mockResolvedValue(false);
 
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', validBody);
+    const res = await postJson(app, '/auth/login', validBody);
 
     expect(res.status).toBe(400);
     expect(getUserCredentialMock).not.toHaveBeenCalled();
@@ -137,14 +137,14 @@ describe('auth router: POST /session（ログイン）', () => {
     getUserCredentialMock.mockRejectedValue(new Error('DB接続エラー'));
 
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', validBody);
+    const res = await postJson(app, '/auth/login', validBody);
 
     expect(res.status).toBe(500);
   });
 
   it('emailが無い場合、400になる', async () => {
     const app = await buildApp();
-    const res = await postJson(app, '/auth/session', {
+    const res = await postJson(app, '/auth/login', {
       password: 'password',
       recaptchaToken: 'recaptcha-token',
     });
@@ -238,17 +238,17 @@ describe('auth router: GET /session（セッション情報の取得）', () => 
   });
 });
 
-describe('auth router: DELETE /session（ログアウト）', () => {
+describe('auth router: POST /logout（ログアウト）', () => {
   it('v1と同じく、200で固定のメッセージを返す', async () => {
     const app = await buildApp();
-    const res = await app.request('/auth/session', { method: 'DELETE' });
+    const res = await app.request('/auth/logout', { method: 'POST' });
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ message: 'logout successfully' });
   });
 });
 
-describe('auth router: POST /users（新規登録）', () => {
+describe('auth router: POST /signup（新規登録）', () => {
   const baseBody = {
     email: 'new@test.com',
     password: 'password',
@@ -292,7 +292,7 @@ describe('auth router: POST /users（新規登録）', () => {
       addUserMock.mockResolvedValue(createdUser('facilitytesuto', 'admin'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({
@@ -340,7 +340,7 @@ describe('auth router: POST /users（新規登録）', () => {
 
     it('施設名が無い場合、400になり何も登録しない', async () => {
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', baseBody);
+      const res = await postJson(app, '/auth/signup', baseBody);
 
       expect(res.status).toBe(400);
       expect(addFacilityMock).not.toHaveBeenCalled();
@@ -351,7 +351,7 @@ describe('auth router: POST /users（新規登録）', () => {
       addFacilityMock.mockRejectedValue(new Error('DB接続エラー'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(500);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -366,7 +366,7 @@ describe('auth router: POST /users（新規登録）', () => {
       addUserMock.mockResolvedValue(createdUser('FAC001', 'general'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(200);
       expect(getInvitationMock).toHaveBeenCalledWith({
@@ -396,7 +396,7 @@ describe('auth router: POST /users（新規登録）', () => {
       getInvitationMock.mockResolvedValue(undefined);
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(404);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -409,7 +409,7 @@ describe('auth router: POST /users（新規登録）', () => {
       });
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(400);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -422,7 +422,7 @@ describe('auth router: POST /users（新規登録）', () => {
       });
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(400);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -435,7 +435,7 @@ describe('auth router: POST /users（新規登録）', () => {
       });
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(400);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -447,7 +447,7 @@ describe('auth router: POST /users（新規登録）', () => {
       updateInvitationAsUsedMock.mockRejectedValue(new Error('DB接続エラー'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(500);
       expect(sendMailMock).not.toHaveBeenCalled();
@@ -461,7 +461,7 @@ describe('auth router: POST /users（新規登録）', () => {
       getUserByEmailMock.mockResolvedValue({ userId: 'existing-user' });
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(400);
       expect(addUserMock).not.toHaveBeenCalled();
@@ -471,7 +471,7 @@ describe('auth router: POST /users（新規登録）', () => {
       verifyRecaptchaMock.mockResolvedValue(false);
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(400);
       expect(getUserByEmailMock).not.toHaveBeenCalled();
@@ -481,7 +481,7 @@ describe('auth router: POST /users（新規登録）', () => {
       verifyRecaptchaMock.mockRejectedValue(new Error('network error'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(500);
       expect(getUserByEmailMock).not.toHaveBeenCalled();
@@ -491,7 +491,7 @@ describe('auth router: POST /users（新規登録）', () => {
       addUserMock.mockRejectedValue(new Error('DB接続エラー'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(500);
       expect(sendMailMock).not.toHaveBeenCalled();
@@ -502,7 +502,7 @@ describe('auth router: POST /users（新規登録）', () => {
       sendMailMock.mockRejectedValue(new Error('メール送信エラー'));
 
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', body);
+      const res = await postJson(app, '/auth/signup', body);
 
       expect(res.status).toBe(200);
       expect(sendMailMock).toHaveBeenCalledTimes(2);
@@ -514,7 +514,7 @@ describe('auth router: POST /users（新規登録）', () => {
       ['userName', { email: 'new@test.com', password: 'password' }],
     ])('%sが無い場合、400になり何もしない', async (_, partial) => {
       const app = await buildApp();
-      const res = await postJson(app, '/auth/users', {
+      const res = await postJson(app, '/auth/signup', {
         ...partial,
         facilityName: 'てすと',
         recaptchaToken: 'recaptcha-token',
