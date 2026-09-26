@@ -78,6 +78,37 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.vue"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useConst": "off",
+            "useImportType": "off"
+          },
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "app.vue",
+        "error.vue",
+        "layouts/**",
+        "pages/**",
+        "components/*/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "useVueMultiWordComponentNames": "off"
+          }
+        }
+      }
     }
   ]
 }
