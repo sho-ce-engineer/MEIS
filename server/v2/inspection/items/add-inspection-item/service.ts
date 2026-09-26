@@ -2,6 +2,10 @@ import { and, eq, max } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { inspectionItems } from '~/server/db/schema';
 import { generateInspectionItemId } from '~/server/v2/inspection/items/lib/generateInspectionItemId';
+import {
+  type NumericValue,
+  toNumericColumn,
+} from '~/server/v2/inspection/items/lib/toNumericColumn';
 
 export interface AddInspectionItemParams {
   facilityCode: string;
@@ -12,11 +16,11 @@ export interface AddInspectionItemParams {
   inspectionComponentType: string;
   equipmentType: string;
   equipmentModel: string;
-  min?: number;
-  max?: number;
+  min?: NumericValue;
+  max?: NumericValue;
   suffix?: string;
-  lowerlimit?: number;
-  upperlimit?: number;
+  lowerLimit?: NumericValue;
+  upperLimit?: NumericValue;
 }
 
 export async function addInspectionItem({
@@ -31,8 +35,8 @@ export async function addInspectionItem({
   min,
   max: maxValue,
   suffix,
-  lowerlimit,
-  upperlimit,
+  lowerLimit,
+  upperLimit,
 }: AddInspectionItemParams) {
   const [{ maxSortNumber }] = await db
     .select({ maxSortNumber: max(inspectionItems.inspectionSortNumber) })
@@ -60,11 +64,11 @@ export async function addInspectionItem({
       equipmentType,
       equipmentModel,
       inspectionSortNumber: newSortNumber,
-      min: min?.toString(),
-      max: maxValue?.toString(),
+      min: toNumericColumn(min),
+      max: toNumericColumn(maxValue),
       suffix,
-      lowerlimit: lowerlimit?.toString(),
-      upperlimit: upperlimit?.toString(),
+      lowerlimit: toNumericColumn(lowerLimit),
+      upperlimit: toNumericColumn(upperLimit),
     })
     .returning();
 

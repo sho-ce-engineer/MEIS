@@ -2,16 +2,16 @@
   <div>
     <div class="inspection-date__label-wrapper">
       <v-icon>mdi-calendar-clock-outline</v-icon>
-      <v-label>{{ inspection_item }}</v-label>
+      <v-label>{{ inspectionItem }}</v-label>
     </div>
     <div class="inspection-date-wrapper">
       <!-- 点検項目の説明 -->
       <p class="inspection-item-description text-body-2 text-grey-darken-2">
-        {{ inspection_item_description }}
+        {{ inspectionItemDescription }}
       </p>
       <v-date-input
         label="タッチして入力"
-        v-model="inspection_select_date"
+        v-model="inspectionSelectDate"
         variant="underlined"
         append-icon="mdi-pencil-plus"
         prepend-icon="undefine"
@@ -39,11 +39,11 @@ const props = defineProps({
     type: Date,
     default: null,
   },
-  inspection_item: {
+  inspectionItem: {
     type: String,
     default: '初期値が表示されています。点検項目が登録されていません。',
   },
-  inspection_item_description: {
+  inspectionItemDescription: {
     type: String,
     default: null,
   },
@@ -55,7 +55,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'update:notesFieldValue']);
 
-const inspection_select_date = shallowRef(props.modelValue);
+const inspectionSelectDate = shallowRef(props.modelValue);
 const showNotesField = ref(false);
 const localNotesFieldValue = ref(props.notesFieldValue);
 
@@ -63,7 +63,7 @@ const localNotesFieldValue = ref(props.notesFieldValue);
 watch(
   () => props.modelValue,
   (newVal) => {
-    inspection_select_date.value = newVal;
+    inspectionSelectDate.value = newVal;
   },
 );
 
@@ -77,7 +77,7 @@ watch(
 );
 
 const handleInput = () => {
-  emit('update:modelValue', inspection_select_date.value);
+  emit('update:modelValue', inspectionSelectDate.value);
 };
 
 const toggleNotesField = () => {

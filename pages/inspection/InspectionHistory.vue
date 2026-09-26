@@ -30,10 +30,10 @@
                   label="院内管理ID"
                   prepend-icon="mdi-barcode-scan"
                   variant="underlined"
-                  v-model="filterCriteria.equipment_id"
+                  v-model="filterCriteria.equipmentId"
                   @click:prepend="scanEquipmentDialog = true"
                   clearable
-                  @click:clear="filterCriteria.equipment_id = undefined"
+                  @click:clear="filterCriteria.equipmentId = undefined"
                   :items="equipmentIdItems"
                   :loading="loading"
                   no-data-text="該当データがありません。機器台帳から登録してください。"
@@ -50,7 +50,7 @@
                       <p class="mt-4 text-caption">
                         ※読み込めない場合、ピントが合う位置までゆっくり前後させてください。
                       </p>
-                      {{ filterCriteria.equipment_id }}
+                      {{ filterCriteria.equipmentId }}
                       <QrcodeStream
                         @detect="onDetect"
                         :formats="['qr_code', 'linear_codes']"
@@ -67,34 +67,34 @@
                 </v-dialog>
                 <v-select
                   label="機器種別"
-                  v-model="filterCriteria.equipment_type"
-                  :items="select_equiment_type_items"
+                  v-model="filterCriteria.equipmentType"
+                  :items="equipmentTypeItems"
                   @update:focused="fetchEquipmentTypes()"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_type = undefined"
+                  @click:clear="filterCriteria.equipmentType = undefined"
                 ></v-select>
                 <v-text-field
                   label="機器名称"
-                  v-model="filterCriteria.equipment_name"
+                  v-model="filterCriteria.equipmentName"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_name = undefined"
+                  @click:clear="filterCriteria.equipmentName = undefined"
                 ></v-text-field>
                 <v-text-field
                   label="型番"
-                  v-model="filterCriteria.equipment_model"
+                  v-model="filterCriteria.equipmentModel"
                   variant="underlined"
                   clearable
-                  @click:clear="filterCriteria.equipment_model = undefined"
+                  @click:clear="filterCriteria.equipmentModel = undefined"
                 ></v-text-field>
                 <v-text-field
                   label="シリアル番号"
-                  v-model="filterCriteria.equipment_serial_number"
+                  v-model="filterCriteria.equipmentSerialNumber"
                   variant="underlined"
                   clearable
                   @click:clear="
-                    filterCriteria.equipment_serial_number = undefined
+                    filterCriteria.equipmentSerialNumber = undefined
                   "
                 ></v-text-field>
               </form>
@@ -141,7 +141,7 @@
         :headers="headers"
         :items="filteredInspectionHistoryItems"
         :items-length="totalItems"
-        item-key="inspection_id"
+        item-key="inspectionId"
         class="elevation-1"
         :loading="loading"
         items-per-page="10"
@@ -165,18 +165,18 @@
                 v-bind="InspectionResultDetailActivaterProps"
                 class="clickable-table-row"
                 @click="
-                  generateInspectionResultsDetailes(item.inspection_results)
+                  generateInspectionResultsDetailes(item.inspectionResults)
                 "
               >
-                <td>{{ item.inspection_date }}</td>
-                <td>{{ item.inspection_type }}</td>
-                <td>{{ item.user_name }}</td>
-                <td>{{ item.equipment_id }}</td>
-                <td>{{ item.equipment_name }}</td>
-                <td>{{ item.equipment_model }}</td>
+                <td>{{ item.inspectionDate }}</td>
+                <td>{{ item.inspectionType }}</td>
+                <td>{{ item.userName }}</td>
+                <td>{{ item.equipmentId }}</td>
+                <td>{{ item.equipmentName }}</td>
+                <td>{{ item.equipmentModel }}</td>
                 <td class="text-center">
                   <v-icon
-                    v-if="hasInspectionStatusIcon(item.inspection_results)"
+                    v-if="hasInspectionStatusIcon(item.inspectionResults)"
                     color="warning"
                   >
                     mdi-progress-alert
@@ -201,27 +201,27 @@
                     <v-row>
                       <v-col cols="12" md="6">
                         <h4>点検日</h4>
-                        <p>{{ item.inspection_date }}</p>
+                        <p>{{ item.inspectionDate }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>点検者</h4>
-                        <p>{{ item.user_name }}</p>
+                        <p>{{ item.userName }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>機器名称</h4>
-                        <p>{{ item.equipment_name }}</p>
+                        <p>{{ item.equipmentName }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>型番</h4>
-                        <p>{{ item.equipment_model }}</p>
+                        <p>{{ item.equipmentModel }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>院内ID</h4>
-                        <p>{{ item.equipment_id }}</p>
+                        <p>{{ item.equipmentId }}</p>
                       </v-col>
                       <v-col cols="12" md="6">
                         <h4>シリアルナンバー</h4>
-                        <p>{{ item.equipment_serial_number }}</p>
+                        <p>{{ item.equipmentSerialNumber }}</p>
                       </v-col>
                     </v-row>
                   </div>
@@ -239,7 +239,7 @@
                         <v-expansion-panels>
                           <v-expansion-panel
                             v-for="item in filteredResultsByCategory(category)"
-                            :key="item.inspection_item_id"
+                            :key="item.inspectionItemId"
                           >
                             <v-expansion-panel-title>
                               <v-icon
@@ -252,7 +252,7 @@
                               <v-icon v-else color="warning" class="mr-4">
                                 mdi-progress-alert
                               </v-icon>
-                              {{ item.inspection_item }}
+                              {{ item.inspectionItem }}
                             </v-expansion-panel-title>
                             <v-expansion-panel-text>
                               <p>
@@ -313,7 +313,7 @@
                         append-icon="mdi-delete-empty-outline"
                         @click="
                           {
-                            (historyDelete(item.inspection_results),
+                            (historyDelete(item.inspectionResults),
                               (isActive.value = false));
                           }
                         "
@@ -349,29 +349,29 @@
 
 <script setup lang="ts">
 interface InspectionResult {
-  result_id: string;
+  resultId: string;
   result: string;
   notes: string;
 }
 
 interface InspectionHistoryItem {
-  equipment_id: string;
-  equipment_serial_number: string;
-  equipment_name: string;
-  equipment_model: string;
-  equipment_manufacturer: string;
-  inspection_date: string;
-  user_name: string;
-  inspection_type: string;
-  inspection_results: Record<string, InspectionResult>;
+  equipmentId: string;
+  equipmentSerialNumber: string;
+  equipmentName: string;
+  equipmentModel: string;
+  equipmentManufacturer: string;
+  inspectionDate: string;
+  userName: string;
+  inspectionType: string;
+  inspectionResults: Record<string, InspectionResult>;
 }
 
 interface InspectionFilterCriteria {
-  equipment_id?: string;
-  equipment_type?: string;
-  equipment_name?: string;
-  equipment_model?: string;
-  equipment_serial_number?: string;
+  equipmentId?: string;
+  equipmentType?: string;
+  equipmentName?: string;
+  equipmentModel?: string;
+  equipmentSerialNumber?: string;
 }
 
 interface SortOption {
@@ -380,11 +380,11 @@ interface SortOption {
 }
 
 interface InspectionResultDetail {
-  inspection_item: string;
-  inspection_item_id: string;
-  inspection_item_description: string;
-  inspection_item_category: string;
-  inspection_sort_number: number;
+  inspectionItem: string;
+  inspectionItemId: string;
+  inspectionItemDescription: string;
+  inspectionItemCategory: string;
+  inspectionSortNumber: number;
   suffix: string;
   result: {
     result: string;
@@ -406,30 +406,28 @@ const updateShowAlert = (value: boolean) => {
 };
 
 const headers = [
-  { title: '点検日', key: 'inspection_date', sortable: true },
-  { title: '点検区分', key: 'inspection_type', sortable: true },
-  { title: '点検者', key: 'user_id', sortable: true },
-  { title: '機器ID', key: 'equipment_id', sortable: true },
-  { title: '機器名称', key: 'equipment_name', sortable: true },
-  { title: '機器型番', key: 'equipment_model', sortable: true },
+  { title: '点検日', key: 'inspectionDate', sortable: true },
+  { title: '点検区分', key: 'inspectionType', sortable: true },
+  { title: '点検者', key: 'userId', sortable: true },
+  { title: '機器ID', key: 'equipmentId', sortable: true },
+  { title: '機器名称', key: 'equipmentName', sortable: true },
+  { title: '機器型番', key: 'equipmentModel', sortable: true },
   {
     title: '点検ステータス',
-    key: 'inspection_status',
+    key: 'inspectionStatus',
     sortable: false,
     align: 'center' as const,
   },
 ];
 
 //機器種別の取得
-const select_equiment_type_items = ref<string[]>([]);
+const equipmentTypeItems = ref<string[]>([]);
 const fetchEquipmentTypes = async () => {
   try {
     const response = await $fetch('/api/equipment/equipment-types', {
       method: 'GET',
     });
-    select_equiment_type_items.value = response.map(
-      (item) => item.equipment_type,
-    );
+    equipmentTypeItems.value = response.map((item) => item.equipmentType);
   } catch (error) {
     alertMessage.value =
       (error as any).data?.data?.message ||
@@ -467,17 +465,17 @@ import { QrcodeStream } from 'vue-qrcode-reader';
 
 const scanEquipmentDialog = ref(false);
 const onDetect = (detectedCodes: any[]) => {
-  filterCriteria.equipment_id = detectedCodes[0].rawValue;
+  filterCriteria.equipmentId = detectedCodes[0].rawValue;
   scanEquipmentDialog.value = false;
 };
 
 //フィルター機能
 const filterCriteriaDialog = ref(false);
 const filterCriteria = reactive<InspectionFilterCriteria>({
-  equipment_id: '',
-  equipment_type: '',
-  equipment_name: '',
-  equipment_model: '',
+  equipmentId: '',
+  equipmentType: '',
+  equipmentName: '',
+  equipmentModel: '',
 });
 
 //フィルター実行
@@ -498,7 +496,7 @@ const inspectionHistoryItems = ref<InspectionHistoryItem[]>([]);
 const loading = ref(true);
 const disabled = ref(false);
 const totalItems = ref(0);
-const sortBy = ref<SortOption[]>([{ key: 'inspection_date', order: 'desc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'inspectionDate', order: 'desc' }]);
 const loadItems = async (
   page = 1,
   itemsPerPage = 10,
@@ -508,17 +506,17 @@ const loadItems = async (
 ) => {
   loading.value = true;
   try {
-    const { sortKey, sortByOrder } = getSortOptions(sortBy);
+    const { sortKey, sortOrder } = getSortOptions(sortBy);
     const response = await $fetch<{
       items: InspectionHistoryItem[];
       total: number;
-    }>('/api/inspection/inspection-history', {
+    }>('/api/v2/inspection/results/history', {
       method: 'POST',
       body: {
         page,
         itemsPerPage,
         sortRow: sortKey,
-        sortByOrder,
+        sortOrder,
         inspectionType,
         filterCriteria: filterCriteria,
       },
@@ -526,9 +524,10 @@ const loadItems = async (
     inspectionHistoryItems.value = response.items;
     totalItems.value = response.total;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      'データ取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      'データ取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[equipment-ledger]Load error:', error);
@@ -538,9 +537,9 @@ const loadItems = async (
 };
 
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'inspection_date';
+  const sortKey = sortBy.length ? sortBy[0].key : 'inspectionDate';
   const sortOrder = sortBy.length ? sortBy[0].order : 'desc';
-  return { sortKey, sortByOrder: sortOrder };
+  return { sortKey, sortOrder };
 };
 
 const handleUpdateOptions = (options: {
@@ -570,7 +569,7 @@ const setInspectionTypeFilter = (type: string) => {
 const filteredInspectionHistoryItems = computed(() => {
   if (inspectionTypeFilter.value) {
     return inspectionHistoryItems.value.filter(
-      (item) => item.inspection_type === inspectionTypeFilter.value,
+      (item) => item.inspectionType === inspectionTypeFilter.value,
     );
   }
   return inspectionHistoryItems.value;
@@ -594,23 +593,27 @@ const hasInspectionStatusIcon = (
 const fetchInspectionItemDetails = async (inspectionItemIds: string[]) => {
   loading.value = true;
   try {
-    const response = await $fetch('/api/inspection/inspection-item-details', {
-      method: 'POST',
-      body: {
-        inspectionItemIds: Array.isArray(inspectionItemIds)
-          ? inspectionItemIds
-          : [],
+    const response = await $fetch<Omit<InspectionResultDetail, 'result'>[]>(
+      '/api/v2/inspection/items/details',
+      {
+        method: 'POST',
+        body: {
+          inspectionItemIds: Array.isArray(inspectionItemIds)
+            ? inspectionItemIds
+            : [],
+        },
       },
-    });
+    );
     return response;
   } catch (error) {
     console.error(
       '[inspection-item-details] Error occurred while fetching inspection item details:',
       error,
     );
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検項目の詳細情報の取得に失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検項目の詳細情報の取得に失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {
@@ -623,11 +626,11 @@ const inspectionResultsDetailes = ref<Record<string, InspectionResultDetail>>(
   {},
 );
 const generateInspectionResultsDetailes = async (
-  inspection_results: Record<string, InspectionResult>,
+  inspectionResults: Record<string, InspectionResult>,
 ) => {
   loading.value = true;
   try {
-    const inspectionItemIds = Object.keys(inspection_results);
+    const inspectionItemIds = Object.keys(inspectionResults);
 
     // inspection_itemの詳細情報を取得
     const inspectionItemsDetails =
@@ -638,25 +641,26 @@ const generateInspectionResultsDetailes = async (
     inspectionResultsDetailes.value = inspectionItemsDetails.reduce(
       (acc, item) => {
         const {
-          inspection_item_id,
-          inspection_item,
-          inspection_item_description,
-          inspection_item_category,
-          inspection_sort_number,
+          inspectionItemId,
+          inspectionItem,
+          inspectionItemDescription,
+          inspectionItemCategory,
+          inspectionSortNumber,
           suffix,
         } = item;
 
-        acc[inspection_item_id] = {
-          inspection_item,
-          inspection_item_description,
-          inspection_item_category,
-          inspection_sort_number,
+        acc[inspectionItemId] = {
+          inspectionItem,
+          inspectionItemId,
+          inspectionItemDescription,
+          inspectionItemCategory,
+          inspectionSortNumber,
           suffix,
-          result: inspection_results[inspection_item_id],
+          result: inspectionResults[inspectionItemId],
         };
         return acc;
       },
-      {},
+      {} as Record<string, InspectionResultDetail>,
     );
     return inspectionResultsDetailes;
   } catch (error) {
@@ -675,8 +679,8 @@ const generateInspectionResultsDetailes = async (
 const categoryOrder = ['外装点検', '機能点検', '実測点検', '警報点検'];
 const filteredResultsByCategory = (category: string) => {
   return Object.values(inspectionResultsDetailes.value)
-    .filter((item) => item.inspection_item_category === category)
-    .sort((a, b) => a.inspection_sort_number - b.inspection_sort_number); // inspection_sort_numberで並べ替え
+    .filter((item) => item.inspectionItemCategory === category)
+    .sort((a, b) => a.inspectionSortNumber - b.inspectionSortNumber);
 };
 
 // 結果に応じて色を設定する関数
@@ -699,24 +703,23 @@ const getResultIcon = (result: string) => {
 const historyDeleteDialog = ref(false);
 const resultIdList = ref<string[]>([]);
 const historyDelete = async (resultIds: Record<string, InspectionResult>) => {
-  resultIdList.value = Object.values(resultIds).map((item) => item.result_id);
+  resultIdList.value = Object.values(resultIds).map((item) => item.resultId);
   loading.value = true;
   disabled.value = true;
   try {
-    await $fetch('/api/inspection/inspection-results-delete', {
-      method: 'POST',
-      body: {
-        result_ids: resultIdList.value,
-      },
+    await $fetch('/api/v2/inspection/results', {
+      method: 'DELETE',
+      body: { resultIds: resultIdList.value },
     });
     alertMessage.value = '１件の点検結果を削除しました。';
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
     console.error('[inspection-results-delete]:Try Error', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検結果の削除中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検結果の削除中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {

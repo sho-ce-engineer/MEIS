@@ -23,7 +23,7 @@ app
         page,
         itemsPerPage,
         sortRow,
-        sortByOrder,
+        sortOrder,
         inspectionType,
         filterCriteria,
       } = c.req.valid('json');
@@ -34,7 +34,7 @@ app
           page,
           itemsPerPage,
           sortRow,
-          sortByOrder,
+          sortOrder,
           inspectionType,
           filterCriteria,
         });
@@ -81,16 +81,7 @@ app
       try {
         await saveInspectionResults({
           facilityCode,
-          results: results.map((item) => ({
-            resultId: item.result_id,
-            userId: item.user_id,
-            inspectionItemId: item.inspection_item_id,
-            equipmentId: item.equipment_id,
-            equipmentSerialNumber: item.equipment_serial_number,
-            result: item.result,
-            notes: item.notes,
-            inspectionDate: item.inspection_date,
-          })),
+          results,
         });
         return c.body(null, 204);
       } catch (error) {
@@ -109,7 +100,7 @@ app
     zValidator('json', deleteInspectionResultsRequestSchema),
     async (c) => {
       const facilityCode = c.get('facilityCode');
-      const { result_ids: resultIds } = c.req.valid('json');
+      const { resultIds } = c.req.valid('json');
 
       try {
         await deleteInspectionResults({ facilityCode, resultIds });

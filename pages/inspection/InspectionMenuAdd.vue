@@ -28,7 +28,7 @@
           @update:modelValue="fetchEquipmentModels"
           hint="台帳に登録されている機器種別をもとに表示されます。"
           persistent-hint
-          :disabled="equipmentTypes_disabled"
+          :disabled="equipmentTypesDisabled"
           class="mb-3"
         />
 
@@ -42,7 +42,7 @@
           @update:modelValue="fetchInspectionTypes"
           hint="ここは機器台帳に登録されている機器の型番が表示されます。"
           persistent-hint
-          :disabled="equipmentModel_disabled"
+          :disabled="equipmentModelDisabled"
           class="mb-3"
         />
         <h3>点検区分</h3>
@@ -50,10 +50,10 @@
           v-model="selectedInspectionType"
           :items="inspectionType"
           label="点検内容を作成する点検区分を選択してください。"
-          item-title="inspection_type"
-          item-value="inspection_type"
+          item-title="inspectionType"
+          item-value="inspectionType"
           @update:modelValue="fetchInspectionItems"
-          :disabled="inspectionType_disabled"
+          :disabled="inspectionTypeDisabled"
           persistent-hint
           no-data-text="登録されている点検データはありません。右のフォームから作成してください。"
         />
@@ -70,7 +70,7 @@
             <draggable
               v-model="groupedInspectionItems[category]"
               group="inspection-items"
-              item-key="inspection_item_id"
+              item-key="inspectionItemId"
               tag="div"
               :data-category="category"
               @end="handleEnd"
@@ -78,12 +78,12 @@
             >
               <template #item="{ element }">
                 <v-list-item
-                  :key="element.inspection_item_id"
+                  :key="element.inspectionItemId"
                   @click="editInspectionItem(element)"
-                  :title="element.inspection_item"
-                  :subtitle="element.inspection_item_description"
-                  :prepend-icon="getIcon(element.inspection_component_type)"
-                  :data-id="element.inspection_item_id"
+                  :title="element.inspectionItem"
+                  :subtitle="element.inspectionItemDescription"
+                  :prepend-icon="getIcon(element.inspectionComponentType)"
+                  :data-id="element.inspectionItemId"
                 >
                 </v-list-item>
               </template>
@@ -109,28 +109,28 @@
           <v-card-text class="text-primary">
             <h3>点検区分</h3>
             <v-select
-              v-model="newInspectionItem.inspection_type"
+              v-model="newInspectionItem.inspectionType"
               :items="['日常点検', '定期点検']"
               label="点検区分を選択してください。"
               class="mb-3"
             />
             <h3>点検項目のカテゴリ</h3>
             <v-select
-              v-model="newInspectionItem.inspection_item_category"
+              v-model="newInspectionItem.inspectionItemCategory"
               :items="inspectionItemCategorys"
               label="点検項目のカテゴリを選択してください。"
               class="mb-3"
             />
             <h3>点検項目</h3>
             <v-text-field
-              v-model="newInspectionItem.inspection_item"
+              v-model="newInspectionItem.inspectionItem"
               label="点検項目を入力してください。"
               hint="１行での入力がおすすめです"
               class="mb-3"
             />
             <h4>点検内容の補足</h4>
             <v-textarea
-              v-model="newInspectionItem.inspection_item_description"
+              v-model="newInspectionItem.inspectionItemDescription"
               label="点検内容を入力してください。"
               rows="3"
               hint="点検項目を補足する情報を入力してください。"
@@ -138,24 +138,24 @@
             />
             <h3>点検結果の入力タイプ</h3>
             <v-select
-              v-model="newInspectionItem.inspection_component_type"
+              v-model="newInspectionItem.inspectionComponentType"
               :items="inputTypes"
               item-title="label"
-              item-value="input_type"
+              item-value="inputType"
               label="入力タイプを選択してください。"
             />
             <!-- "InspectionCustomNumber" が選択された場合にのみ追加のフォームを表示 -->
             <div
               v-if="
-                newInspectionItem.inspection_component_type ===
+                newInspectionItem.inspectionComponentType ===
                 'InspectionCustomNumber'
               "
             >
               <h3>数値入力の詳細設定</h3>
               <v-text-field
-                :model-value="newInspectionItem.upperlimit"
+                :model-value="newInspectionItem.upperLimit"
                 @update:model-value="
-                  newInspectionItem.upperlimit =
+                  newInspectionItem.upperLimit =
                     $event === '' ? null : Number($event)
                 "
                 label="上限値"
@@ -163,9 +163,9 @@
                 hint="基準値に対する上限値を入力してください。設定すると、設定値を超えた値が入力された場合、アラート文が表示されます。"
               />
               <v-text-field
-                :model-value="newInspectionItem.lowerlimit"
+                :model-value="newInspectionItem.lowerLimit"
                 @update:model-value="
-                  newInspectionItem.lowerlimit =
+                  newInspectionItem.lowerLimit =
                     $event === '' ? null : Number($event)
                 "
                 label="下限値"
@@ -207,7 +207,7 @@
               @click="inspectionItemDeleteDialog = true"
               variant="plain"
               color="red-darken-3"
-              v-if="newInspectionItem.inspection_item_id"
+              v-if="newInspectionItem.inspectionItemId"
             ></v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -242,7 +242,7 @@
                   color="red-darken-3"
                   append-icon="mdi-delete-empty-outline"
                   @click="
-                    inspectionItemDelete(newInspectionItem.inspection_item_id)
+                    inspectionItemDelete(newInspectionItem.inspectionItemId)
                   "
                   variant="plain"
                   :loading="inspectionItemDeleteloading"
@@ -271,20 +271,20 @@ import InspectionCustomDate from '../../components/Ui/InspectionCustomDate.vue';
 import InspectionCustomNumber from '../../components/Ui/InspectionCustomNumber.vue';
 
 interface InspectionItem {
-  inspection_type: string;
-  inspection_item_id: string;
-  inspection_item_category: string;
-  inspection_item: string;
-  inspection_item_description: string;
-  inspection_component_type: string;
-  equipment_type: string;
-  equipment_model: string;
+  inspectionType: string;
+  inspectionItemId: string;
+  inspectionItemCategory: string;
+  inspectionItem: string;
+  inspectionItemDescription: string;
+  inspectionComponentType: string;
+  equipmentType: string;
+  equipmentModel: string;
   suffix?: string;
-  min?: number | null;
-  max?: number | null;
-  lowerlimit?: number | null;
-  upperlimit?: number | null;
-  inspection_sort_number: number | null;
+  min?: number | string | null;
+  max?: number | string | null;
+  lowerLimit?: number | string | null;
+  upperLimit?: number | string | null;
+  inspectionSortNumber: number | null;
 }
 
 //Alert機能
@@ -297,7 +297,7 @@ const updateShowAlert = (value: boolean) => {
 
 // 機器種類の取得
 const equipmentTypes = ref<string[]>([]);
-const equipmentTypes_disabled = ref(false);
+const equipmentTypesDisabled = ref(false);
 const fetchEquipmentTypes = async () => {
   try {
     const response = await $fetch('/api/equipment/equipment-types', {
@@ -316,7 +316,7 @@ const fetchEquipmentTypes = async () => {
 
 // 機器型番の取得
 const equipmentModel = ref<{ equipment_model: string }[]>([]);
-const equipmentModel_disabled = ref(true);
+const equipmentModelDisabled = ref(true);
 const selectedEquipmentType = ref<string>('');
 const fetchEquipmentModels = async () => {
   if (!selectedEquipmentType.value) {
@@ -333,8 +333,8 @@ const fetchEquipmentModels = async () => {
       },
     });
     equipmentModel.value = response;
-    equipmentModel_disabled.value = false;
-    equipmentTypes_disabled.value = true;
+    equipmentModelDisabled.value = false;
+    equipmentTypesDisabled.value = true;
   } catch (error) {
     alertMessage.value =
       (error as any).data?.data?.message ||
@@ -351,7 +351,7 @@ const fetchEquipmentModels = async () => {
 // 点検区分の取得
 const selectedEquipmentModel = ref<string>('');
 const inspectionType = ref<string[]>([]);
-const inspectionType_disabled = ref(true);
+const inspectionTypeDisabled = ref(true);
 const fetchInspectionTypes = async () => {
   if (!selectedEquipmentModel.value) {
     alertMessage.value = '機器型番を選択してください。';
@@ -361,19 +361,23 @@ const fetchInspectionTypes = async () => {
   }
 
   try {
-    const response = await $fetch('/api/inspection/inspection-types', {
-      method: 'POST',
-      body: {
-        equipmentModel: selectedEquipmentModel.value,
+    const response = await $fetch<{ inspectionType: string }[]>(
+      '/api/v2/inspection/items/types',
+      {
+        method: 'POST',
+        body: {
+          equipmentModel: selectedEquipmentModel.value,
+        },
       },
-    });
-    inspectionType.value = response.map((item) => item.inspection_type);
-    inspectionType_disabled.value = false;
-    equipmentModel_disabled.value = true;
+    );
+    inspectionType.value = response.map((item) => item.inspectionType);
+    inspectionTypeDisabled.value = false;
+    equipmentModelDisabled.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検区分の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検区分の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[inspection-types]Load error:', error);
@@ -394,7 +398,7 @@ const fetchInspectionItems = async () => {
 
   try {
     const response = await $fetch<InspectionItem[]>(
-      '/api/inspection/inspection-items',
+      '/api/v2/inspection/items/list',
       {
         method: 'POST',
         body: {
@@ -404,12 +408,13 @@ const fetchInspectionItems = async () => {
       },
     );
     inspectionItems.value = response;
-    inspectionType_disabled.value = true;
+    inspectionTypeDisabled.value = true;
     inspectionItemFormDisabled.value = false;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検項目の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検項目の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[inspection-items]Load error:', error);
@@ -431,7 +436,7 @@ const computedGroupedItems = computed(() => {
 
   return inspectionItems.value.reduce(
     (groups, item) => {
-      const category = item.inspection_item_category || 'その他';
+      const category = item.inspectionItemCategory || 'その他';
       if (!groups[category]) {
         groups[category] = [];
       }
@@ -469,36 +474,36 @@ const inputTypes = [
   {
     label: 'OK/NG',
     component: InspectionCustomCheck,
-    input_type: 'InspectionCustomCheck',
+    inputType: 'InspectionCustomCheck',
   },
   {
     label: '数値入力',
     component: InspectionCustomNumber,
-    input_type: 'InspectionCustomNumber',
+    inputType: 'InspectionCustomNumber',
   },
   {
     label: '日付入力',
     component: InspectionCustomDate,
-    input_type: 'InspectionCustomDate',
+    inputType: 'InspectionCustomDate',
   },
 ];
 
 // 点検項目の追加・更新
 const newInspectionItem = reactive<InspectionItem>({
-  inspection_type: '',
-  inspection_item: '',
-  inspection_item_id: '',
-  inspection_item_category: '',
-  inspection_item_description: '',
-  inspection_component_type: '',
-  equipment_type: '',
-  equipment_model: '',
+  inspectionType: '',
+  inspectionItem: '',
+  inspectionItemId: '',
+  inspectionItemCategory: '',
+  inspectionItemDescription: '',
+  inspectionComponentType: '',
+  equipmentType: '',
+  equipmentModel: '',
   suffix: '',
   min: null,
   max: null,
-  lowerlimit: null,
-  upperlimit: null,
-  inspection_sort_number: null,
+  lowerLimit: null,
+  upperLimit: null,
+  inspectionSortNumber: null,
 });
 
 const addOrUpdateInspectionItemLoading = ref(false);
@@ -506,10 +511,10 @@ const addOrUpdateInspectionItem = async () => {
   addOrUpdateInspectionItemLoading.value = true;
   inspectionItemFormDisabled.value = true;
   if (
-    !newInspectionItem.inspection_type ||
-    !newInspectionItem.inspection_item_category ||
-    !newInspectionItem.inspection_item ||
-    !newInspectionItem.inspection_component_type ||
+    !newInspectionItem.inspectionType ||
+    !newInspectionItem.inspectionItemCategory ||
+    !newInspectionItem.inspectionItem ||
+    !newInspectionItem.inspectionComponentType ||
     !selectedEquipmentType.value ||
     !selectedEquipmentModel.value
   ) {
@@ -521,20 +526,14 @@ const addOrUpdateInspectionItem = async () => {
     return;
   }
 
-  newInspectionItem.equipment_type = selectedEquipmentType.value;
-  newInspectionItem.equipment_model = selectedEquipmentModel.value;
+  newInspectionItem.equipmentType = selectedEquipmentType.value;
+  newInspectionItem.equipmentModel = selectedEquipmentModel.value;
 
-  let endpoint;
-  // 新規もしくは編集のエンドポイントの設定
-  if (!newInspectionItem.inspection_item_id) {
-    endpoint = '/api/inspection/inspection-items-add';
-  } else {
-    endpoint = '/api/inspection/inspection-items-update';
-  }
+  const method = newInspectionItem.inspectionItemId ? 'PUT' : 'POST';
 
   try {
-    await $fetch(endpoint, {
-      method: 'POST',
+    await $fetch('/api/v2/inspection/items', {
+      method,
       body: newInspectionItem,
     });
     resetInspectionItem();
@@ -544,9 +543,10 @@ const addOrUpdateInspectionItem = async () => {
     fetchInspectionItems();
   } catch (error) {
     console.error('[inspection-items-add/update] Error:', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検項目の保存中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検項目の保存中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {
@@ -557,15 +557,15 @@ const addOrUpdateInspectionItem = async () => {
 
 // 入力された点検項目のリセット
 const resetInspectionItem = () => {
-  newInspectionItem.inspection_item_id = '';
-  newInspectionItem.inspection_type = '';
-  newInspectionItem.inspection_item_category = '';
-  newInspectionItem.inspection_item = '';
-  newInspectionItem.inspection_item_description = '';
-  newInspectionItem.inspection_component_type = '';
-  newInspectionItem.inspection_sort_number = null;
-  newInspectionItem.upperlimit = null;
-  newInspectionItem.lowerlimit = null;
+  newInspectionItem.inspectionItemId = '';
+  newInspectionItem.inspectionType = '';
+  newInspectionItem.inspectionItemCategory = '';
+  newInspectionItem.inspectionItem = '';
+  newInspectionItem.inspectionItemDescription = '';
+  newInspectionItem.inspectionComponentType = '';
+  newInspectionItem.inspectionSortNumber = null;
+  newInspectionItem.upperLimit = null;
+  newInspectionItem.lowerLimit = null;
   newInspectionItem.suffix = '';
   newInspectionItem.max = null;
   newInspectionItem.min = null;
@@ -582,25 +582,24 @@ const resetEquipmentData = () => {
   for (const key in groupedInspectionItems) {
     delete groupedInspectionItems[key];
   }
-  equipmentTypes_disabled.value = false;
+  equipmentTypesDisabled.value = false;
   resetInspectionItem();
   fetchEquipmentTypes();
 };
 
 // 既存の点検項目を編集する
 const editInspectionItem = (item: InspectionItem) => {
-  newInspectionItem.inspection_item_id = item.inspection_item_id;
-  newInspectionItem.inspection_type = item.inspection_type;
-  newInspectionItem.inspection_item_category = item.inspection_item_category;
-  newInspectionItem.inspection_item = item.inspection_item;
-  newInspectionItem.inspection_item_description =
-    item.inspection_item_description;
-  newInspectionItem.inspection_component_type = item.inspection_component_type;
-  newInspectionItem.inspection_sort_number = item.inspection_sort_number;
-  newInspectionItem.equipment_type = selectedEquipmentType.value;
-  newInspectionItem.equipment_model = selectedEquipmentModel.value;
-  newInspectionItem.upperlimit = item.upperlimit;
-  newInspectionItem.lowerlimit = item.lowerlimit;
+  newInspectionItem.inspectionItemId = item.inspectionItemId;
+  newInspectionItem.inspectionType = item.inspectionType;
+  newInspectionItem.inspectionItemCategory = item.inspectionItemCategory;
+  newInspectionItem.inspectionItem = item.inspectionItem;
+  newInspectionItem.inspectionItemDescription = item.inspectionItemDescription;
+  newInspectionItem.inspectionComponentType = item.inspectionComponentType;
+  newInspectionItem.inspectionSortNumber = item.inspectionSortNumber;
+  newInspectionItem.equipmentType = selectedEquipmentType.value;
+  newInspectionItem.equipmentModel = selectedEquipmentModel.value;
+  newInspectionItem.upperLimit = item.upperLimit;
+  newInspectionItem.lowerLimit = item.lowerLimit;
   newInspectionItem.suffix = item.suffix;
   newInspectionItem.max = item.max;
   newInspectionItem.min = item.min;
@@ -645,7 +644,7 @@ const handleEnd = async (event: any) => {
 
   try {
     const updatedItems = groupedInspectionItems;
-    await $fetch('/api/inspection/inspection-items-save-sorted', {
+    await $fetch('/api/v2/inspection/items/sorted', {
       method: 'PUT',
       body: {
         updatedItems,
@@ -657,8 +656,10 @@ const handleEnd = async (event: any) => {
     showAlert.value = true;
   } catch (error) {
     console.error('Error sorted item:', error);
-    alertMessage.value =
-      (error as any).data?.data?.message || '並び替えの保存に失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '並び替えの保存に失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   }
@@ -695,20 +696,19 @@ const inspectionItemDeleteloading = ref(false);
 const inspectionItemDelete = async (inspectionItemId: string) => {
   inspectionItemDeleteloading.value = true;
   try {
-    await $fetch('/api/inspection/inspection-item-delete', {
-      method: 'POST',
-      body: {
-        inspection_item_id: inspectionItemId,
-      },
+    await $fetch('/api/v2/inspection/items', {
+      method: 'DELETE',
+      body: { inspectionItemId },
     });
     alertMessage.value = '１件の点検項目を削除しました。';
     alertType.value = 'success';
     showAlert.value = true;
   } catch (error) {
     console.error('[inspection-item-delete]:Try Error', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検項目の削除中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検項目の削除中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {

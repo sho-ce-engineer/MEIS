@@ -34,8 +34,8 @@ export async function listInspectionItems({
       suffix: inspectionItems.suffix,
       min: inspectionItems.min,
       max: inspectionItems.max,
-      lowerlimit: inspectionItems.lowerlimit,
-      upperlimit: inspectionItems.upperlimit,
+      lowerLimit: inspectionItems.lowerlimit,
+      upperLimit: inspectionItems.upperlimit,
       inspectionSortNumber: inspectionItems.inspectionSortNumber,
     })
     .from(inspectionItems)

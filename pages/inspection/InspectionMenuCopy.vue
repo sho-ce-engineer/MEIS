@@ -33,7 +33,7 @@
               @update:modelValue="fetchEquipmentModels"
               hint="台帳に登録されている機器種別をもとに表示されます。"
               persistent-hint
-              :disabled="equipmentTypes_disabled"
+              :disabled="equipmentTypesDisabled"
               class="mb-3" />
 
             <h3>点検機器の型番</h3>
@@ -46,19 +46,19 @@
               @update:modelValue="fetchInspectionTypes"
               hint="ここは機器台帳に登録されている機器の型番が表示されます。"
               persistent-hint
-              :disabled="equipmentModel_disabled"
+              :disabled="equipmentModelDisabled"
               class="mb-3" />
             <h3>点検区分</h3>
             <v-select
               v-model="selectedInspectionType"
               :items="inspectionType"
               label="点検区分を選択してください。"
-              item-title="inspection_type"
-              item-value="inspection_type"
-              :disabled="inspectionType_disabled"
+              item-title="inspectionType"
+              item-value="inspectionType"
+              :disabled="inspectionTypeDisabled"
               persistent-hint
               no-data-text="登録されている点検データはありません。先に点検内容を作成してください。"
-              @update:modelValue="inspectionType_disabled = true"
+              @update:modelValue="inspectionTypeDisabled = true"
           /></v-card-text> </v-card
       ></v-col>
       <v-col cols="12" md="2" class="d-flex justify-center flex-column"
@@ -114,7 +114,7 @@
                 text="複製する"
                 color="primary"
                 variant="elevated"
-                :disabled="copyConfirmationBtn_disabled"
+                :disabled="copyConfirmationBtnDisabled"
                 @click="handleCopyData()"
               ></v-btn></v-card-actions
           ></v-card> </v-dialog
@@ -167,8 +167,8 @@
               v-model="selectedTargetInspectionType"
               :items="['日常点検', '定期点検']"
               label="点検区分を選択してください。"
-              item-title="inspection_type"
-              item-value="inspection_type"
+              item-title="inspectionType"
+              item-value="inspectionType"
               :disabled="targetInspectionType_disabled"
               @update:modelValue="targetInspectionType_disabled = true"
           /></v-card-text> </v-card
@@ -197,7 +197,7 @@ const updateShowAlert = (value: boolean) => {
 
 // 機器種類の取得
 const equipmentTypes = ref<string[]>([]);
-const equipmentTypes_disabled = ref(false);
+const equipmentTypesDisabled = ref(false);
 const selectedEquipmentType = ref<string>('');
 const fetchEquipmentTypes = async () => {
   try {
@@ -217,7 +217,7 @@ const fetchEquipmentTypes = async () => {
 
 // 機器型番の取得
 const equipmentModel = ref<{ equipment_model: string }[]>([]);
-const equipmentModel_disabled = ref(true);
+const equipmentModelDisabled = ref(true);
 const selectedEquipmentModel = ref<string>('');
 const fetchEquipmentModels = async () => {
   if (!selectedEquipmentType.value) return;
@@ -232,8 +232,8 @@ const fetchEquipmentModels = async () => {
     equipmentModel.value = response.map((model) => ({
       equipment_model: model.equipment_model,
     }));
-    equipmentModel_disabled.value = false;
-    equipmentTypes_disabled.value = true;
+    equipmentModelDisabled.value = false;
+    equipmentTypesDisabled.value = true;
   } catch (error) {
     alertMessage.value =
       (error as any).data?.data?.message ||
@@ -249,25 +249,29 @@ const fetchEquipmentModels = async () => {
 
 // 点検区分の取得
 const inspectionType = ref<string[]>([]);
-const inspectionType_disabled = ref(true);
+const inspectionTypeDisabled = ref(true);
 const selectedInspectionType = ref<string>('');
 const fetchInspectionTypes = async () => {
   if (!selectedEquipmentModel.value) return;
 
   try {
-    const response = await $fetch('/api/inspection/inspection-types', {
-      method: 'POST',
-      body: {
-        equipmentModel: selectedEquipmentModel.value,
+    const response = await $fetch<{ inspectionType: string }[]>(
+      '/api/v2/inspection/items/types',
+      {
+        method: 'POST',
+        body: {
+          equipmentModel: selectedEquipmentModel.value,
+        },
       },
-    });
-    inspectionType.value = response.map((item) => item.inspection_type);
-    inspectionType_disabled.value = false;
-    equipmentModel_disabled.value = true;
+    );
+    inspectionType.value = response.map((item) => item.inspectionType);
+    inspectionTypeDisabled.value = false;
+    equipmentModelDisabled.value = true;
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検区分の取得中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検区分の取得中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[inspection-types]Load error:', error);
@@ -363,11 +367,11 @@ const copyConfirmationDialog = ref(false);
 const copyBtn_disabled = computed(() => {
   return !selectedInspectionType.value || !selectedTargetInspectionType.value;
 });
-const copyConfirmationBtn_disabled = ref(false);
+const copyConfirmationBtnDisabled = ref(false);
 const handleCopyData = async () => {
   loading.value = true;
   copyConfirmationDialog.value = false;
-  copyConfirmationBtn_disabled.value = true;
+  copyConfirmationBtnDisabled.value = true;
   const baseInspectionData = {
     baseEquipmentType: selectedEquipmentType.value,
     baseEquipmentModel: selectedEquipmentModel.value,
@@ -379,7 +383,7 @@ const handleCopyData = async () => {
     targetInspectionType: selectedTargetInspectionType.value,
   };
   try {
-    await $fetch('/api/inspection/inspection-items-copy', {
+    await $fetch('/api/v2/inspection/items/copy', {
       method: 'POST',
       body: {
         baseInspectionData,
@@ -392,14 +396,15 @@ const handleCopyData = async () => {
     resetAllData();
   } catch (error) {
     console.error('[inspection-items-copy] Error:', error);
-    alertMessage.value =
-      (error as any).data?.data?.message ||
-      '点検項目の保存中にエラーが発生しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '点検項目の保存中にエラーが発生しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
   } finally {
     loading.value = false;
-    copyConfirmationBtn_disabled.value = false;
+    copyConfirmationBtnDisabled.value = false;
   }
 };
 
@@ -411,9 +416,9 @@ const resetAllData = () => {
   equipmentTypes.value = [];
   equipmentModel.value = [];
   inspectionType.value = [];
-  equipmentModel_disabled.value = true;
-  inspectionType_disabled.value = true;
-  equipmentTypes_disabled.value = false;
+  equipmentModelDisabled.value = true;
+  inspectionTypeDisabled.value = true;
+  equipmentTypesDisabled.value = false;
   fetchEquipmentTypes();
   selectedTargetEquipmentType.value = '';
   selectedTargetEquipmentModel.value = '';
@@ -425,7 +430,7 @@ const resetAllData = () => {
   targetInspectionType_disabled.value = true;
   targetEquipmentTypes_disabled.value = false;
   fetchTargetEquipmentTypes();
-  copyConfirmationBtn_disabled.value = false;
+  copyConfirmationBtnDisabled.value = false;
 };
 onMounted(() => {
   fetchEquipmentTypes();
