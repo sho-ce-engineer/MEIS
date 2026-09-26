@@ -15,7 +15,7 @@ const app = new Hono<{ Variables: Variables }>();
 app
   .post('/list', zValidator('json', listIssuesRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
-    const { page, itemsPerPage, sortRow, sortByOrder, filterCriteria } =
+    const { page, itemsPerPage, sortRow, sortOrder, filterCriteria } =
       c.req.valid('json');
 
     try {
@@ -23,7 +23,7 @@ app
         page,
         itemsPerPage,
         sortRow,
-        sortByOrder,
+        sortOrder,
         filterCriteria,
         facilityCode,
       });
@@ -50,13 +50,8 @@ app
   })
   .post('/', zValidator('json', addIssueRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
-    const {
-      reported_date: reportedDate,
-      reporter,
-      location,
-      description,
-      equipment_id: equipmentId,
-    } = c.req.valid('json');
+    const { reportedDate, reporter, location, description, equipmentId } =
+      c.req.valid('json');
 
     try {
       await addIssue({
@@ -77,7 +72,7 @@ app
   })
   .delete('/', zValidator('json', deleteIssueRequestSchema), async (c) => {
     const facilityCode = c.get('facilityCode');
-    const { issue_id: issueId } = c.req.valid('json');
+    const { issueId } = c.req.valid('json');
 
     try {
       await deleteIssue({ facilityCode, issueId });
