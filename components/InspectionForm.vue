@@ -201,10 +201,10 @@
 </template>
 
 <script setup lang="ts">
-import InspectionCustomCheck from '../components/Ui/InspectionCustomCheck.vue';
-import InspectionCustomNumber from '../components/Ui/InspectionCustomNumber.vue';
-import InspectionCustomDate from '../components/Ui/InspectionCustomDate.vue';
 import { format } from 'date-fns';
+import InspectionCustomCheck from '../components/Ui/InspectionCustomCheck.vue';
+import InspectionCustomDate from '../components/Ui/InspectionCustomDate.vue';
+import InspectionCustomNumber from '../components/Ui/InspectionCustomNumber.vue';
 
 interface equipmentDetails {
   equipment_type: string;
@@ -262,13 +262,14 @@ const inspection_date = () => date.value.toISOString();
 const rules = {
   required: (value: string) => !!value || '入力必須項目です。',
   idreg: (value: string) =>
-    (!!value && /^[a-zA-Z0-9\-]+$/.test(value)) ||
+    (!!value && /^[a-zA-Z0-9-]+$/.test(value)) ||
     '半角英数字とハイフンのみ使用できます。',
 };
 
 //バーコードリーダー機能
 //機能変更予定
 import { QrcodeStream } from 'vue-qrcode-reader';
+
 const dialog = ref(false);
 const onDetect = (detectedCodes: any[]) => {
   inputEquipmentId.value = detectedCodes[0].rawValue;

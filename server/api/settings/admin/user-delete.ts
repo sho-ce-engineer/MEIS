@@ -1,4 +1,5 @@
 import pool from '~/server/config/db';
+
 // TODO: Phase5で論理削除対応予定
 // 現状は物理削除。inspection_resultsなど関連レコードがある場合は
 // 外部キー制約エラーになる可能性がある。

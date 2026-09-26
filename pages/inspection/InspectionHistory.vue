@@ -464,6 +464,7 @@ const fetchEquipmentIdItems = async () => {
 //バーコードリーダー機能
 //機能変更予定
 import { QrcodeStream } from 'vue-qrcode-reader';
+
 const scanEquipmentDialog = ref(false);
 const onDetect = (detectedCodes: any[]) => {
   filterCriteria.equipment_id = detectedCodes[0].rawValue;
@@ -487,7 +488,7 @@ const applyFilter = () => {
 
 const clearFilter = () => {
   for (let key in filterCriteria) {
-    if (filterCriteria.hasOwnProperty(key)) {
+    if (Object.hasOwn(filterCriteria, key)) {
       filterCriteria[key as keyof InspectionFilterCriteria] = undefined;
     }
   }

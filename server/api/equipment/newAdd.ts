@@ -1,5 +1,5 @@
-import pool from '~/server/config/db';
 import { sendNoContent } from 'h3';
+import pool from '~/server/config/db';
 
 interface NewEquipmentRequestBody {
   equipment_type: string;

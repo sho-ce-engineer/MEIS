@@ -471,7 +471,7 @@ const updateShowAlert = (value: boolean) => {
 const rules = reactive({
   required: (value: string) => !!value || '入力必須項目です。',
   idreg: (value: string) =>
-    (!!value && /^[a-zA-Z0-9\-]+$/.test(value)) ||
+    (!!value && /^[a-zA-Z0-9-]+$/.test(value)) ||
     '半角英数字とハイフンのみ使用できます。',
 });
 
@@ -550,6 +550,7 @@ import { format } from 'date-fns';
 //バーコードリーダー機能
 //今後機能変更予定
 import { QrcodeStream } from 'vue-qrcode-reader';
+
 const dialog = ref(false);
 const onDetect = (detectedCodes: any) => {
   newReport.value.equipment_id = detectedCodes[0].rawValue;
@@ -569,7 +570,7 @@ const applyFilter = () => {
 };
 const clearFilter = () => {
   for (let key in filterCriteria) {
-    if (filterCriteria.hasOwnProperty(key)) {
+    if (Object.hasOwn(filterCriteria, key)) {
       filterCriteria[key as keyof IssuesFilterCriteria] = undefined;
     }
   }

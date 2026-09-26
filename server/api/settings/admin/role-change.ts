@@ -1,4 +1,5 @@
 import pool from '~/server/config/db';
+
 //ToDo
 //次回の機能修正の際に、権限変更処理の見直しを行う
 

@@ -1,6 +1,6 @@
-import pool from '~/server/config/db';
 import crypto from 'crypto';
 import { Resend } from 'resend';
+import pool from '~/server/config/db';
 
 // TODO: 現状はSMTPへの送信成功までしか検知できない。
 // 不達検知の必要性など、今後検討

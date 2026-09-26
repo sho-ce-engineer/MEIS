@@ -267,8 +267,8 @@
 
 <script setup lang="ts">
 import InspectionCustomCheck from '../../components/Ui/InspectionCustomCheck.vue';
-import InspectionCustomNumber from '../../components/Ui/InspectionCustomNumber.vue';
 import InspectionCustomDate from '../../components/Ui/InspectionCustomDate.vue';
+import InspectionCustomNumber from '../../components/Ui/InspectionCustomNumber.vue';
 
 interface InspectionItem {
   inspection_type: string;
@@ -608,6 +608,7 @@ const editInspectionItem = (item: InspectionItem) => {
 
 //D&D処理
 import draggable from 'vuedraggable';
+
 // groupedInspectionItemsをcomputedGroupedItemsで更新
 const groupedInspectionItems = reactive<Record<string, InspectionItem[]>>({});
 watchEffect(() => {
