@@ -63,14 +63,12 @@ const withDbError = async <T>(label: string, query: () => Promise<T>) => {
 };
 
 const app = new Hono()
-  .post('/session', zValidator('json', addSessionRequestSchema), async (c) => {
+  .post('/login', zValidator('json', addSessionRequestSchema), async (c) => {
     const { email, password, recaptchaToken } = c.req.valid('json');
 
     await ensureRecaptcha(recaptchaToken);
 
-    const user = await withDbError('session', () =>
-      getUserCredential({ email }),
-    );
+    const user = await withDbError('login', () => getUserCredential({ email }));
 
     const isValidPassword = user
       ? await bcrypt.compare(password, user.password)
@@ -124,8 +122,8 @@ const app = new Hono()
       facilityName: user.facilityName,
     });
   })
-  .delete('/session', (c) => c.json({ message: 'logout successfully' }))
-  .post('/users', zValidator('json', addUserRequestSchema), async (c) => {
+  .post('/logout', (c) => c.json({ message: 'logout successfully' }))
+  .post('/signup', zValidator('json', addUserRequestSchema), async (c) => {
     const {
       email,
       password,
@@ -137,7 +135,7 @@ const app = new Hono()
 
     await ensureRecaptcha(recaptchaToken);
 
-    const existingUser = await withDbError('users', () =>
+    const existingUser = await withDbError('signup', () =>
       getUserByEmail({ email }),
     );
     if (existingUser) {
@@ -151,7 +149,7 @@ const app = new Hono()
     let resolvedFacilityName: string;
 
     if (inviteCode) {
-      const invitation = await withDbError('users', () =>
+      const invitation = await withDbError('signup', () =>
         getInvitation({ inviteCode }),
       );
       if (!invitation) {
@@ -182,12 +180,12 @@ const app = new Hono()
       userRole = 'admin';
       resolvedFacilityName = facilityName;
 
-      await withDbError('users', () =>
+      await withDbError('signup', () =>
         addFacility({ facilityCode, facilityName }),
       );
     }
 
-    const newUser = await withDbError('users', () =>
+    const newUser = await withDbError('signup', () =>
       addUser({
         userId: generateUserId(facilityCode),
         userEmail: email,
@@ -199,7 +197,7 @@ const app = new Hono()
     );
 
     if (inviteCode) {
-      await withDbError('users', () => updateInvitationAsUsed({ inviteCode }));
+      await withDbError('signup', () => updateInvitationAsUsed({ inviteCode }));
     }
 
     const userMail = makeSignupMailText({ userName, userEmail: email });
@@ -211,7 +209,7 @@ const app = new Hono()
         userMail.html,
       );
     } catch (error) {
-      console.error('[auth/users]Error sending signup mail to user:', error);
+      console.error('[auth/signup]Error sending signup mail to user:', error);
     }
 
     const notificationMail = makeSignupNotificationMailText({
@@ -226,7 +224,7 @@ const app = new Hono()
         notificationMail.html,
       );
     } catch (error) {
-      console.error('[auth/users]Error sending signup mail to owner:', error);
+      console.error('[auth/signup]Error sending signup mail to owner:', error);
     }
 
     return c.json({
