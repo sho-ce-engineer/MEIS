@@ -48,7 +48,7 @@ app
       });
     }
   })
-  .post(
+  .patch(
     '/already-read',
     zValidator('json', markAsReadRequestSchema),
     async (c) => {
