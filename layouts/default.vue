@@ -212,7 +212,7 @@ const openNotificationsDialog = () => {
 const loadItems = async () => {
   try {
     const response = await $fetch<{ unreadCount: number }>(
-      '/api/notifications/unread-count',
+      '/api/v2/notifications/unread-count',
       {
         method: 'GET',
       },
@@ -226,8 +226,10 @@ const loadItems = async () => {
       );
     }
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message || '通知の読み込みに失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '通知の読み込みに失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[default]Error fetching unread count:', error);

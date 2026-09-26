@@ -12,7 +12,7 @@ vi.mock('~/server/db', () => ({
 
 const baseParams = {
   userId: 'user-1',
-  announcementId: '1',
+  announcementId: 1,
   isViewed: true,
 };
 

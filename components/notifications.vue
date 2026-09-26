@@ -25,18 +25,18 @@
         >
           <tr
             v-bind="NotificationsDetaileActivaterProps"
-            :class="['clickable-table-row', { 'viewed-item': item.is_viewed }]"
+            :class="['clickable-table-row', { 'viewed-item': item.isViewed }]"
             @click="markAsViewed(item.id)"
           >
-            <td width="10%">{{ item.created_at }}</td>
+            <td width="10%">{{ item.createdAt }}</td>
             <td
               width="10%"
               :class="[
-                getImportanceClass(item.importance_level),
-                { 'viewed-item': item.is_viewed },
+                getImportanceClass(item.importanceLevel),
+                { 'viewed-item': item.isViewed },
               ]"
             >
-              {{ item.importance_level }}
+              {{ item.importanceLevel }}
             </td>
             <td>{{ item.title }}</td>
           </tr></template
@@ -51,12 +51,12 @@
             <v-divider></v-divider>
             <v-card-text>
               <div class="text-medium-emphasis text-right">
-                公開日：{{ item.created_at }}
+                公開日：{{ item.createdAt }}
               </div>
               <div class="text-medium-emphasis text-right">
                 重要度：<span
-                  :class="getImportanceClass(item.importance_level)"
-                  >{{ item.importance_level }}</span
+                  :class="getImportanceClass(item.importanceLevel)"
+                  >{{ item.importanceLevel }}</span
                 >
               </div>
               <div class="text-h5 text-center mb-5">
@@ -82,15 +82,15 @@
 </template>
 <script setup lang="ts">
 interface Announcement {
-  id: string;
+  id: number;
   title: string;
   message: string;
-  importance_level: string;
-  is_active: boolean;
-  created_at: string;
+  importanceLevel: string;
+  isActive: boolean;
+  createdAt: string;
   audience: string;
-  is_viewed: boolean;
-  viewed_at: string | null;
+  isViewed: boolean;
+  viewedAt: string | null;
 }
 
 interface AnnouncementsResponse {
@@ -110,7 +110,7 @@ const loading = ref(false);
 const notificationsItems = ref<Announcement[]>([]);
 const totalItems = ref(0);
 const unreadCount = ref(0);
-const sortBy = ref<SortOption[]>([{ key: 'created_at', order: 'desc' }]);
+const sortBy = ref<SortOption[]>([{ key: 'createdAt', order: 'desc' }]);
 
 //Alert
 const alertMessage = ref('');
@@ -122,8 +122,8 @@ const updateShowAlert = (value: boolean) => {
 
 // ヘッダー情報
 const headers = [
-  { title: '通知日', sortable: true, key: 'created_at' },
-  { title: '重要度', sortable: true, key: 'importance_level' },
+  { title: '通知日', sortable: true, key: 'createdAt' },
+  { title: '重要度', sortable: true, key: 'importanceLevel' },
   { title: 'タイトル', sortable: false, key: 'title' },
 ];
 
@@ -135,28 +135,30 @@ const loadItems = async (
 ) => {
   loading.value = true;
   try {
-    const { sortKey, sortByOrder } = getSortOptions(sortBy);
+    const { sortKey, sortOrder } = getSortOptions(sortBy);
     const response = await $fetch<AnnouncementsResponse>(
-      '/api/notifications/announcements',
+      '/api/v2/notifications/announcements',
       {
         method: 'POST',
         body: {
           page,
           itemsPerPage,
           sortRow: sortKey,
-          sortByOrder,
+          sortOrder,
         },
       },
     );
     notificationsItems.value = response.items;
     totalItems.value = response.total;
     unreadCount.value = notificationsItems.value.filter(
-      (item) => !item.is_viewed,
+      (item) => !item.isViewed,
     ).length;
     emit('update:unreadCount', unreadCount.value);
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message || '通知の取得に失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '通知の取得に失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[notifications]Error loading notifications:', error);
@@ -167,9 +169,9 @@ const loadItems = async (
 
 // ソートオプションの取得
 const getSortOptions = (sortBy: SortOption[]) => {
-  const sortKey = sortBy.length ? sortBy[0].key : 'created_at';
+  const sortKey = sortBy.length ? sortBy[0].key : 'createdAt';
   const sortOrder = sortBy.length ? sortBy[0].order : 'desc';
-  return { sortKey, sortByOrder: sortOrder };
+  return { sortKey, sortOrder };
 };
 
 // オプション変更時のハンドリング
@@ -197,28 +199,30 @@ const getImportanceClass = (importanceLevel: string) => {
 };
 
 //既読処理
-const markAsViewed = async (notificationId: string) => {
+const markAsViewed = async (notificationId: number) => {
   try {
-    await $fetch(`/api/notifications/already-read`, {
+    await $fetch('/api/v2/notifications/already-read', {
       method: 'PATCH',
       body: {
         notificationId: notificationId,
-        is_viewed: true,
+        isViewed: true,
       },
     });
     const notification = notificationsItems.value.find(
       (item) => item.id === notificationId,
     );
     if (notification) {
-      notification.is_viewed = true;
+      notification.isViewed = true;
       unreadCount.value = notificationsItems.value.filter(
-        (item) => !item.is_viewed,
+        (item) => !item.isViewed,
       ).length;
       emit('update:unreadCount', unreadCount.value);
     }
   } catch (error) {
-    alertMessage.value =
-      (error as any).data?.data?.message || '通知の既読処理に失敗しました。';
+    alertMessage.value = getApiErrorMessage(
+      error,
+      '通知の既読処理に失敗しました。',
+    );
     alertType.value = 'error';
     showAlert.value = true;
     console.error('[notifications]Error updating notification:', error);

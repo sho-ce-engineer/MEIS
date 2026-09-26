@@ -4,7 +4,7 @@ import { userNotifications } from '~/server/db/schema';
 
 export interface MarkAsReadParams {
   userId: string;
-  announcementId: string;
+  announcementId: number;
   isViewed: boolean;
 }
 
@@ -19,7 +19,7 @@ export async function markAsRead({
     .where(
       and(
         eq(userNotifications.userId, userId),
-        eq(userNotifications.announcementId, Number(announcementId)),
+        eq(userNotifications.announcementId, announcementId),
       ),
     )
     .returning({ id: userNotifications.id });
@@ -27,7 +27,7 @@ export async function markAsRead({
   if (updated.length === 0) {
     await db.insert(userNotifications).values({
       userId,
-      announcementId: Number(announcementId),
+      announcementId,
       isViewed,
       viewedAt: sql`NOW()`,
     });

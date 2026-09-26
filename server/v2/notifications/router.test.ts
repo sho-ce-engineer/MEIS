@@ -82,7 +82,7 @@ describe('notifications router: /announcements', () => {
   const validBody = {
     page: 1,
     itemsPerPage: 10,
-    sortRow: 'created_at',
+    sortRow: 'createdAt',
     sortOrder: 'desc',
   };
 
@@ -107,6 +107,22 @@ describe('notifications router: /announcements', () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ items: [], total: 0 });
+  });
+
+  it('itemsPerPageに100を超える値（一覧の「All」）を指定した場合も、200で結果を返す', async () => {
+    listAnnouncementsMock.mockResolvedValue({ items: [], total: 0 });
+
+    const app = await buildAppWithJwtPayload('user-1');
+    const res = await app.request('/notifications/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, itemsPerPage: 999999 }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(listAnnouncementsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ itemsPerPage: 999999 }),
+    );
   });
 
   it('認証済み・バリデーション成功・DBエラーの場合、500になる', async () => {
@@ -157,8 +173,8 @@ describe('notifications router: /announcements', () => {
 
 describe('notifications router: /already-read', () => {
   const validBody = {
-    is_viewed: true,
-    notificationId: '1',
+    isViewed: true,
+    notificationId: 1,
   };
 
   beforeEach(() => {
@@ -175,7 +191,7 @@ describe('notifications router: /already-read', () => {
 
     const app = await buildAppWithJwtPayload('user-1');
     const res = await app.request('/notifications/already-read', {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -184,7 +200,7 @@ describe('notifications router: /already-read', () => {
     expect(await res.json()).toEqual({ success: true });
     expect(markAsReadMock).toHaveBeenCalledWith({
       userId: 'user-1',
-      announcementId: '1',
+      announcementId: 1,
       isViewed: true,
     });
   });
@@ -194,7 +210,7 @@ describe('notifications router: /already-read', () => {
 
     const app = await buildAppWithJwtPayload('user-1');
     const res = await app.request('/notifications/already-read', {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -213,7 +229,7 @@ describe('notifications router: /already-read', () => {
       .route('/notifications', notificationsRouter);
 
     const res = await app.request('/notifications/already-read', {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validBody),
     });
@@ -222,12 +238,12 @@ describe('notifications router: /already-read', () => {
     expect(markAsReadMock).not.toHaveBeenCalled();
   });
 
-  it('notificationIdが数値文字列でない場合、400になる（zValidatorの配線確認）', async () => {
+  it('notificationIdが数値でない場合、400になる（zValidatorの配線確認）', async () => {
     const app = await buildAppWithJwtPayload('user-1');
     const res = await app.request('/notifications/already-read', {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...validBody, notificationId: 'not-a-number' }),
+      body: JSON.stringify({ ...validBody, notificationId: '1' }),
     });
 
     expect(res.status).toBe(400);
