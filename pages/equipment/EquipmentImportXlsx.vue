@@ -81,17 +81,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import * as XLSX from 'xlsx';
+import { readSheet } from 'read-excel-file/browser';
 
 interface ExcelRow {
-  院内管理ID: string;
-  機器種別: string;
-  メーカー: string;
-  機器名称: string;
-  型番: string;
-  シリアル番号: string;
-  購入年月日: string | Date;
-  備考: string;
+  院内管理ID?: unknown;
+  機器種別?: unknown;
+  メーカー?: unknown;
+  機器名称?: unknown;
+  型番?: unknown;
+  シリアル番号?: unknown;
+  購入年月日?: unknown;
+  備考?: unknown;
 }
 
 const loading = ref(false);
@@ -143,15 +143,15 @@ const handleFileUpload = async () => {
   loading.value = true;
   disabled.value = true;
   if (file.value) {
-    const data = await file.value.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    jsonData.value = XLSX.utils.sheet_to_json(worksheet);
-    jsonData.value.forEach((item) => {
+    const [header = [], ...rows] = await readSheet(file.value);
+    jsonData.value = rows.map((row) => {
+      const item: ExcelRow = Object.fromEntries(
+        header.map((column, index) => [String(column), row[index]]),
+      );
       if (item.購入年月日 instanceof Date) {
         item.購入年月日 = item.購入年月日.toISOString().split('T')[0];
       }
+      return item;
     });
     loading.value = false;
     disabled.value = false;
@@ -176,14 +176,14 @@ const submitImportData = async () => {
   const toText = (value: unknown) =>
     value === undefined || value === null ? value : String(value);
   const filteredData = rawData.map((item) => ({
-    equipmentId: toText(item['院内管理ID']),
-    equipmentType: toText(item['機器種別']),
-    equipmentManufacturer: toText(item['メーカー']),
-    equipmentName: toText(item['機器名称']),
-    equipmentModel: toText(item['型番']),
-    equipmentSerialNumber: toText(item['シリアル番号']),
-    acquisitionDate: toText(item['購入年月日']),
-    equipmentNotes: toText(item['備考']),
+    equipmentId: toText(item.院内管理ID),
+    equipmentType: toText(item.機器種別),
+    equipmentManufacturer: toText(item.メーカー),
+    equipmentName: toText(item.機器名称),
+    equipmentModel: toText(item.型番),
+    equipmentSerialNumber: toText(item.シリアル番号),
+    acquisitionDate: toText(item.購入年月日),
+    equipmentNotes: toText(item.備考),
   }));
 
   try {
