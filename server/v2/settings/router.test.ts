@@ -60,7 +60,7 @@ async function buildAppWithFacilityCode(
     .use('*', async (c, next) => {
       c.set('facilityCode', facilityCode);
       c.set('facilityName', facilityName);
-      c.set('jwtPayload', { user_id: userId });
+      c.set('userId', userId);
       await next();
     })
     .route('/settings', settingsRouter);
