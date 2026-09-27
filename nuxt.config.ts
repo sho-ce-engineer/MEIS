@@ -36,6 +36,10 @@ export default defineNuxtConfig({
   build: {
     transpile: ['vuetify'],
   },
+  ignore: [
+    'server/api/{auth,equipment,inspection,issues,notifications,settings}/**',
+    'server/middleware/auth.ts',
+  ],
   modules: ['@sidebase/nuxt-auth', 'nuxt-security'],
   auth: {
     baseURL: '/api/v2/auth',
