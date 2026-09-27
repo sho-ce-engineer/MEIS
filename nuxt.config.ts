@@ -42,21 +42,10 @@ export default defineNuxtConfig({
   ],
   modules: ['@sidebase/nuxt-auth', 'nuxt-security'],
   auth: {
-    baseURL: '/api/v2/auth',
+    baseURL: `${process.env.FRONTEND_URL}/api/v2/auth`,
     globalAppMiddleware: true,
     provider: {
-      type: 'local',
-      endpoints: {
-        signUp: { path: '/signup', method: 'post' },
-      },
-      token: {
-        cookieName: 'auth.token',
-        maxAgeInSeconds: 3600,
-        sameSiteAttribute: 'strict',
-      },
-      pages: {
-        login: '/',
-      },
+      type: 'authjs',
     },
   },
   security: {

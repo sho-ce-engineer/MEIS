@@ -170,14 +170,14 @@ const app = new Hono<{ Variables: Variables }>()
     zValidator('json', updateUserDataRequestSchema),
     async (c) => {
       const facilityCode = c.get('facilityCode');
-      const userId = c.get('jwtPayload');
+      const userId = c.get('userId');
 
       const { userName, userEmail, password } = c.req.valid('json');
       let result: Awaited<ReturnType<typeof updateUserData>>;
 
       try {
         result = await updateUserData({
-          userId: userId.user_id,
+          userId,
           facilityCode,
           userName,
           userEmail,

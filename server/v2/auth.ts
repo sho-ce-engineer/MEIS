@@ -1,50 +1,40 @@
 import type { MiddlewareHandler } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { HTTPException } from 'hono/http-exception';
-import type { JwtVariables } from 'hono/jwt';
-import { jwt } from 'hono/jwt';
+import { decode } from 'next-auth/jwt';
 import type { QueryResult } from 'pg';
 import pool from '~/server/config/db';
+import { AUTH_COOKIE_NAME, authSecret } from '~/server/v2/auth/authOptions';
 
-export type Variables = JwtVariables<{ user_id: string }> & {
+export type Variables = {
+  userId: string;
   facilityCode: string;
   facilityName: string;
   userRole: string;
 };
 
-const secretKey = process.env.SECRET_KEY;
-if (!secretKey) {
-  console.error('[auth middleware] SECRET_KEY is not configured');
-  throw new Error('SECRET_KEY is not configured');
-}
+export const authMiddleware: MiddlewareHandler<{
+  Variables: Variables;
+}> = async (c, next) => {
+  const sessionToken = getCookie(c, AUTH_COOKIE_NAME);
+  const payload = sessionToken
+    ? await decode({ token: sessionToken, secret: authSecret }).catch(
+        () => null,
+      )
+    : null;
 
-const jwtMiddleware = jwt({
-  secret: secretKey,
-  alg: 'HS256',
-  cookie: 'auth.token',
-});
-
-export const authMiddleware: MiddlewareHandler = async (c, next) => {
-  let isAuthenticated = false;
-  try {
-    await jwtMiddleware(c, async () => {
-      isAuthenticated = true;
-      await next();
-    });
-  } catch (error) {
-    if (!isAuthenticated && error instanceof HTTPException) {
-      throw new HTTPException(error.status, {
-        message: 'ログインが必要です。',
-        cause: error,
-      });
-    }
-    throw error;
+  if (typeof payload?.userId !== 'string') {
+    throw new HTTPException(401, { message: 'ログインが必要です。' });
   }
+
+  c.set('userId', payload.userId);
+  await next();
 };
 
 export const facilityMiddleware: MiddlewareHandler<{
   Variables: Variables;
 }> = async (c, next) => {
-  const authenticatedUser = c.get('jwtPayload');
+  const userId = c.get('userId');
 
   const authenticatedUserQuery = `
     SELECT
@@ -59,7 +49,7 @@ export const facilityMiddleware: MiddlewareHandler<{
 
   try {
     AuthenticatedUserFacilityResult = await pool.query(authenticatedUserQuery, [
-      authenticatedUser.user_id,
+      userId,
     ]);
   } catch (error) {
     if (error instanceof HTTPException) {
@@ -72,9 +62,7 @@ export const facilityMiddleware: MiddlewareHandler<{
   }
 
   if (AuthenticatedUserFacilityResult.rowCount === 0) {
-    console.error(
-      `[auth] Facility code not found for user_id: ${authenticatedUser.user_id}`,
-    );
+    console.error(`[auth] Facility code not found for user_id: ${userId}`);
     throw new HTTPException(404, { message: '施設コードが見つかりません。' });
   }
 
@@ -90,7 +78,7 @@ export const facilityMiddleware: MiddlewareHandler<{
 export const adminUserOnlyMiddleware: MiddlewareHandler<{
   Variables: Variables;
 }> = async (c, next) => {
-  const authenticatedUser = c.get('jwtPayload');
+  const userId = c.get('userId');
 
   const authenticatedUserRoleQuery = `
     SELECT user_role FROM users
@@ -100,7 +88,7 @@ export const adminUserOnlyMiddleware: MiddlewareHandler<{
 
   try {
     authenticatedUserRoleResult = await pool.query(authenticatedUserRoleQuery, [
-      authenticatedUser.user_id,
+      userId,
     ]);
   } catch (error) {
     if (error instanceof HTTPException) {

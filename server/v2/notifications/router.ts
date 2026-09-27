@@ -15,7 +15,7 @@ app
     '/announcements',
     zValidator('json', listAnnouncementsRequestSchema),
     async (c) => {
-      const { user_id: userId } = c.get('jwtPayload');
+      const userId = c.get('userId');
       const { page, itemsPerPage, sortRow, sortOrder } = c.req.valid('json');
 
       try {
@@ -36,7 +36,7 @@ app
     },
   )
   .get('/unread-count', async (c) => {
-    const { user_id: userId } = c.get('jwtPayload');
+    const userId = c.get('userId');
 
     try {
       const unreadCount = await getUnreadCount(userId);
@@ -52,7 +52,7 @@ app
     '/already-read',
     zValidator('json', markAsReadRequestSchema),
     async (c) => {
-      const { user_id: userId } = c.get('jwtPayload');
+      const userId = c.get('userId');
       const { isViewed, notificationId } = c.req.valid('json');
 
       try {
