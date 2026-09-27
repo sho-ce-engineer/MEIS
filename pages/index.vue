@@ -23,7 +23,7 @@
               max-width="750px"
               style="width: 100%"
             >
-              <AuthInviteForm v-if="isInvite" />
+              <AuthInviteForm v-if="isInvite" @registered="onRegistered" />
               <template v-else>
                 <v-card-title>{{
                   isLogin ? 'ようこそ！' : '新規登録'
@@ -36,8 +36,8 @@
                   }}
                 </v-card-subtitle>
                 <v-card-text>
-                  <AuthLoginForm v-if="isLogin" />
-                  <AuthSignupForm v-else />
+                  <AuthLoginForm v-if="isLogin" :notice="loginNotice" />
+                  <AuthSignupForm v-else @registered="onRegistered" />
                   <p class="loginCard__privacy-policy-txt">
                     サインインまたはサインアップすると、M.E.I.Sの
                     <v-dialog max-width="800">
@@ -302,8 +302,16 @@ const isLogin = ref(false);
 const isInvite = ref(false);
 const route = useRoute();
 
+const loginNotice = ref('');
+
 const toggleForm = () => {
   isLogin.value = !isLogin.value;
+};
+
+const onRegistered = () => {
+  loginNotice.value = 'アカウントを作成しました。ログインしてください。';
+  isInvite.value = false;
+  isLogin.value = true;
 };
 const transitionOnMounted = ref(false);
 

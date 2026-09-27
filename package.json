@@ -26,6 +26,7 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.8",
     "jsonwebtoken": "^9.0.2",
+    "next-auth": "4.21.1",
     "nuxt": "~3.21.11",
     "nuxt-security": "~2.4.0",
     "pg": "^8.13.0",

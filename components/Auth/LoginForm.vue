@@ -28,6 +28,8 @@
 </template>
 
 <script setup lang="ts">
+const props = defineProps<{ notice?: string }>();
+
 const email = ref('');
 const password = ref('');
 const loading = ref(false);
@@ -52,46 +54,55 @@ const { signIn } = useAuth();
 const config = useRuntimeConfig();
 const siteKey = config.public.recaptchaSiteKey;
 
+const showLoginError = (message: string) => {
+  alertMessage.value = message;
+  alertType.value = 'error';
+  showAlert.value = true;
+  grecaptcha.reset();
+};
+
 const handleSubmit = async () => {
-  loading.value = true;
   const recaptchaToken = grecaptcha.getResponse();
   if (!recaptchaToken) {
     alertMessage.value = 'reCAPTCHAの確認を完了してください。';
     alertType.value = 'error';
     showAlert.value = true;
-    loading.value = false;
     return;
   }
 
+  loading.value = true;
   try {
-    const result = await signIn(
-      {
-        email: email.value,
-        password: password.value,
-        recaptchaToken: recaptchaToken,
-      },
-      { callbackUrl: '/Dashboard' },
-    );
+    const result = await signIn('credentials', {
+      email: email.value,
+      password: password.value,
+      recaptchaToken,
+      redirect: false,
+      callbackUrl: '/Dashboard',
+    });
     if (result?.error) {
-      alertMessage.value =
-        result.error || 'ログインに失敗しました。内容を確認してください。';
-      alertType.value = 'error';
-      showAlert.value = true;
+      showLoginError(
+        result.error === 'CredentialsSignin'
+          ? 'メールアドレスまたはパスワードが正しくありません'
+          : result.error,
+      );
+      return;
     }
+    await navigateTo('/Dashboard');
   } catch (error) {
-    alertMessage.value = getApiErrorMessage(
-      error,
-      'ログイン中にエラーが発生しました。',
-    );
-    alertType.value = 'error';
-    showAlert.value = true;
     console.error('Login error:', error);
+    showLoginError(
+      getApiErrorMessage(error, 'ログイン中にエラーが発生しました。'),
+    );
   } finally {
     loading.value = false;
-    grecaptcha.reset();
   }
 };
 onMounted(() => {
+  if (props.notice) {
+    alertMessage.value = props.notice;
+    alertType.value = 'success';
+    showAlert.value = true;
+  }
   if (grecaptcha) {
     grecaptcha.ready(() => {
       grecaptcha.render('g-recaptcha', {

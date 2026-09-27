@@ -1,7 +1,5 @@
-import bcrypt from 'bcrypt';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { sign, verify } from 'hono/jwt';
 import { toRomaji } from 'wanakana';
 import { sendMail } from '~/server/mail/send-mail';
 import {
@@ -9,8 +7,6 @@ import {
   makeSignupNotificationMailText,
 } from '~/server/utils/makeSignupMailText';
 import { zValidator } from '~/server/v2/lib/zValidator';
-import { addSessionRequestSchema } from './add-session/domain';
-import { getUserCredential } from './add-session/service';
 import { addUserRequestSchema } from './add-user/domain';
 import {
   addFacility,
@@ -19,26 +15,14 @@ import {
   getUserByEmail,
   updateInvitationAsUsed,
 } from './add-user/service';
-import { getSessionUser } from './get-session/service';
 import { generateUserId } from './lib/generateUserId';
 import { verifyRecaptcha } from './lib/verifyRecaptcha';
-
-const TOKEN_EXPIRES_IN_SECONDS = 60 * 60;
 
 const ownerEmail = process.env.EMAIL_SERVICE_OWNER;
 if (!ownerEmail) {
   console.error('[auth] EMAIL_SERVICE_OWNER is not configured');
   throw new Error('[auth] EMAIL_SERVICE_OWNER is not configured');
 }
-
-const getSecretKey = () => {
-  const secretKey = process.env.SECRET_KEY;
-  if (!secretKey) {
-    console.error('[auth] SECRET_KEY is not configured');
-    throw new HTTPException(500, { message: 'サーバー設定エラー' });
-  }
-  return secretKey;
-};
 
 const ensureRecaptcha = async (recaptchaToken: string) => {
   let isHuman: boolean;
@@ -62,68 +46,10 @@ const withDbError = async <T>(label: string, query: () => Promise<T>) => {
   }
 };
 
-const app = new Hono()
-  .post('/login', zValidator('json', addSessionRequestSchema), async (c) => {
-    const { email, password, recaptchaToken } = c.req.valid('json');
-
-    await ensureRecaptcha(recaptchaToken);
-
-    const user = await withDbError('login', () => getUserCredential({ email }));
-
-    const isValidPassword = user
-      ? await bcrypt.compare(password, user.password)
-      : false;
-    if (!user || !isValidPassword) {
-      throw new HTTPException(401, {
-        message: 'メールアドレスまたはパスワードが正しくありません',
-      });
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const token = await sign(
-      { user_id: user.userId, iat: now, exp: now + TOKEN_EXPIRES_IN_SECONDS },
-      getSecretKey(),
-      'HS256',
-    );
-
-    return c.json({ token });
-  })
-  .get('/session', async (c) => {
-    const authHeaderValue = c.req.header('Authorization');
-    if (!authHeaderValue) {
-      throw new HTTPException(401, {
-        message: 'Authorizationヘッダーが見つかりません。',
-      });
-    }
-
-    const secretKey = getSecretKey();
-    const [, token] = authHeaderValue.split('Bearer ');
-
-    let userId: string;
-    try {
-      const payload = await verify(token, secretKey, 'HS256');
-      userId = payload.user_id as string;
-    } catch (error) {
-      console.error('[auth/session]JWT verification failed:', error);
-      throw new HTTPException(401, { message: 'ログインが必要です。' });
-    }
-
-    const user = await withDbError('session', () => getSessionUser({ userId }));
-    if (!user) {
-      throw new HTTPException(404, { message: 'ユーザーが見つかりません。' });
-    }
-
-    return c.json({
-      userId: user.userId,
-      email: user.userEmail,
-      name: user.userName,
-      role: user.userRole,
-      facilityCode: user.facilityCode,
-      facilityName: user.facilityName,
-    });
-  })
-  .post('/logout', (c) => c.json({ message: 'logout successfully' }))
-  .post('/signup', zValidator('json', addUserRequestSchema), async (c) => {
+const app = new Hono().post(
+  '/',
+  zValidator('json', addUserRequestSchema),
+  async (c) => {
     const {
       email,
       password,
@@ -195,6 +121,12 @@ const app = new Hono()
         userRole,
       }),
     );
+    if (!newUser) {
+      console.error('[auth/signup]Inserted user was not returned');
+      throw new HTTPException(500, {
+        message: 'サーバーエラーが発生しました。',
+      });
+    }
 
     if (inviteCode) {
       await withDbError('signup', () => updateInvitationAsUsed({ inviteCode }));
@@ -239,6 +171,7 @@ const app = new Hono()
         },
       },
     });
-  });
+  },
+);
 
 export default app;

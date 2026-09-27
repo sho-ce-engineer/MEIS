@@ -84,8 +84,9 @@ const rules = {
 const config = useRuntimeConfig();
 const siteKey = config.public.recaptchaSiteKey;
 
+const emit = defineEmits<{ registered: [] }>();
+
 //signUp処理
-const { signUp } = useAuth();
 const register = async () => {
   if (password.value !== confirmPassword.value) {
     alertMessage.value = 'パスワードが一致しません。';
@@ -102,16 +103,17 @@ const register = async () => {
   }
   loading.value = true;
   try {
-    await signUp(
-      {
+    await $fetch('/api/v2/accounts', {
+      method: 'POST',
+      body: {
         email: email.value,
         password: password.value,
         userName: userName.value,
         facilityName: facilityName.value,
         recaptchaToken: recaptchaToken,
       },
-      { callbackUrl: '/Dashboard', redirect: true },
-    );
+    });
+    emit('registered');
   } catch (error) {
     console.error('サインアップエラー:', error);
     alertMessage.value = getApiErrorMessage(
@@ -120,9 +122,9 @@ const register = async () => {
     );
     alertType.value = 'error';
     showAlert.value = true;
+    grecaptcha.reset();
   } finally {
     loading.value = false;
-    grecaptcha.reset();
   }
 };
 onMounted(() => {

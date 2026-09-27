@@ -17,6 +17,7 @@
    - `NUXT_PUBLIC_RECAPTCHA_SITEKEY` / `RECAPTCHA_SECRET_KEY`：reCAPTCHA
    - `RESEND_API_KEY` / `EMAIL_SERVICE_USER` / `EMAIL_SERVICE_OWNER`：メール送信（Resend）
    - `FRONTEND_URL` / `NODE_ENV`
+     - `FRONTEND_URL`は認証（`auth.baseURL`）にも使う。ビルド時に値が埋め込まれるため、本番ではビルド環境にも設定する
 3. 開発サーバー起動
    ```bash
    npm run dev

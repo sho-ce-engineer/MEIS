@@ -23,7 +23,7 @@ async function buildAppWithJwtPayload(userId: string) {
 
   const app = new Hono<{ Variables: Variables }>()
     .use('*', async (c, next) => {
-      c.set('jwtPayload', { user_id: userId });
+      c.set('userId', userId);
       await next();
     })
     .route('/notifications', notificationsRouter);
