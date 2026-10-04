@@ -8,6 +8,13 @@
       "when": 1786805985586,
       "tag": "0000_tricky_albert_cleary",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791096378670,
+      "tag": "0001_sync_snapshot_timestamptz",
+      "breakpoints": true
     }
   ]
 }
