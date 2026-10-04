@@ -37,6 +37,13 @@ Vue側（frontend）のテストは現時点で未整備。
 | generalユーザー | test@test.jp  | test123  |
 | adminユーザー   | test@test.com | password |
 
+## 設計方針
+下記を"基本"設計方針とする。ただし、事例によってその境界は都度判断するものとする
+- バックエンドの設計は、Clean Architecture
+- バックエンドとフロントエンドの責務の分担は、Container/Presentationalパターンの考え方に倣う
+  - バックエンドは処理を行い、結果を事実（状態・値）として返す
+  - 画面に出す文面や表示方法は、フロントエンドで決める
+
 ## コードスタイル / Code Style
 - フォーマッター、リンター: **Biome** を使用（`npx biome check --write .` でソースコードを整形・import整理）
 - ブランチ名は <type>/<内容をkebab-case> とし、typeはConventional Commitsのtype語彙（feat/fix/chore/refactor/docsなど）から選ぶ。
