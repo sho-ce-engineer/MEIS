@@ -42,7 +42,7 @@ export const facilityMiddleware: MiddlewareHandler<{
       f.facility_name
     FROM users u
     LEFT JOIN facilities f ON u.facility_code = f.facility_code
-    WHERE u.user_id = $1
+    WHERE u.user_id = $1 AND u.deleted_at IS NULL
   `;
 
   let AuthenticatedUserFacilityResult: QueryResult;
@@ -82,7 +82,7 @@ export const adminUserOnlyMiddleware: MiddlewareHandler<{
 
   const authenticatedUserRoleQuery = `
     SELECT user_role FROM users
-    WHERE user_id = $1
+    WHERE user_id = $1 AND deleted_at IS NULL
   `;
   let authenticatedUserRoleResult: QueryResult;
 

@@ -1,4 +1,4 @@
-import { asc, count, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
@@ -34,7 +34,7 @@ export const listUsers = async ({
       userRole: users.userRole,
     })
     .from(users)
-    .where(eq(users.facilityCode, facilityCode))
+    .where(and(eq(users.facilityCode, facilityCode), isNull(users.deletedAt)))
     .orderBy(orderFn(sortColumnMap[sortRow]))
     .limit(itemsPerPage)
     .offset((page - 1) * itemsPerPage);
@@ -42,7 +42,7 @@ export const listUsers = async ({
   const [{ total }] = await db
     .select({ total: count() })
     .from(users)
-    .where(eq(users.facilityCode, facilityCode));
+    .where(and(eq(users.facilityCode, facilityCode), isNull(users.deletedAt)));
 
   return { items: rows, total };
 };

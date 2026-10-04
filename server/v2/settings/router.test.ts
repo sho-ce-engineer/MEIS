@@ -171,11 +171,11 @@ describe('settings router: DELETE /user', () => {
     vi.clearAllMocks();
   });
 
-  it('バリデーション成功・DB正常応答の場合、204を返す', async () => {
-    deleteUserMock.mockResolvedValue({
-      userId: 'user-1',
-      facilityCode: 'FAC001',
-    });
+  it.each([
+    'hard',
+    'soft',
+  ] as const)('削除方式が%sの場合、200でdeleteTypeを返す', async (deleteType) => {
+    deleteUserMock.mockResolvedValue({ deleteType });
 
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/settings/user', {
@@ -184,7 +184,8 @@ describe('settings router: DELETE /user', () => {
       body: JSON.stringify(validBody),
     });
 
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ deleteType });
     expect(deleteUserMock).toHaveBeenCalledWith(
       expect.objectContaining({
         targetUserId: 'user-1',

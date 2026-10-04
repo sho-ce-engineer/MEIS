@@ -108,7 +108,7 @@ const app = new Hono<{ Variables: Variables }>()
       });
     }
 
-    return c.body(null, 204);
+    return c.json(result);
   })
   .post(
     '/invitations',

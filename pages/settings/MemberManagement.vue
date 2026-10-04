@@ -117,7 +117,8 @@
         <v-card-text
           >ユーザー {{ selectedUserName }} を削除してよろしいですか？
           <div class="text-caption mt-2">
-            ※一度削除したユーザーは復帰できません。再度登録が必要になります。
+            ※削除したユーザーは、ログインできなくなります。<br />
+            ※点検履歴がある場合、履歴上の名前は残ります。
           </div></v-card-text
         >
         <v-divider></v-divider>
@@ -289,16 +290,25 @@ const deleteUser = async () => {
     showAlert.value = true;
     return;
   }
+
   try {
-    await $fetch('/api/v2/settings/user', {
-      method: 'DELETE',
-      body: {
-        targetUserId: selectedUserId.value,
+    const result = await $fetch<{ deleteType: 'soft' | 'hard' }>(
+      '/api/v2/settings/user',
+      {
+        method: 'DELETE',
+        body: {
+          targetUserId: selectedUserId.value,
+        },
       },
-    });
-    alertMessage.value = `ユーザー ${selectedUserName.value} を削除しました。`;
+    );
+
     alertType.value = 'success';
     showAlert.value = true;
+    if (result.deleteType === 'soft') {
+      alertMessage.value = `ユーザー ${selectedUserName.value} を削除しました。点検履歴があるため、読み取り専用で保管されます。`;
+    } else {
+      alertMessage.value = `ユーザー ${selectedUserName.value} を完全に削除しました。`;
+    }
     loadItems();
   } catch (error) {
     alertMessage.value = getApiErrorMessage(

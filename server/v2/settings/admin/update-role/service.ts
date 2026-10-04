@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
@@ -20,7 +20,11 @@ export const updateUserRole = async ({
       updatedAt: sql`CURRENT_TIMESTAMP`,
     })
     .where(
-      and(eq(users.userId, targetUserId), eq(users.facilityCode, facilityCode)),
+      and(
+        eq(users.userId, targetUserId),
+        eq(users.facilityCode, facilityCode),
+        isNull(users.deletedAt),
+      ),
     )
     .returning();
   return row;

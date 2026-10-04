@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { facilities, users } from '~/server/db/schema';
 
@@ -18,7 +18,7 @@ export const getSessionUser = async ({ userId }: GetSessionUserParams) => {
     })
     .from(users)
     .leftJoin(facilities, eq(users.facilityCode, facilities.facilityCode))
-    .where(eq(users.userId, userId));
+    .where(and(eq(users.userId, userId), isNull(users.deletedAt)));
 
   return row;
 };

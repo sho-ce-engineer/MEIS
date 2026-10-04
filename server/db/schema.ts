@@ -58,6 +58,10 @@ export const users = pgTable(
       mode: 'string',
     }).default(sql`CURRENT_TIMESTAMP`),
     password: varchar({ length: 255 }).notNull(),
+    deletedAt: timestamp('deleted_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
   },
   (table) => [
     foreignKey({
