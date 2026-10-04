@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
@@ -27,7 +27,13 @@ export const updateUserData = async ({
       userEmail,
       password: hashedPassword,
     })
-    .where(and(eq(users.userId, userId), eq(users.facilityCode, facilityCode)))
+    .where(
+      and(
+        eq(users.userId, userId),
+        eq(users.facilityCode, facilityCode),
+        isNull(users.deletedAt),
+      ),
+    )
     .returning({ userName: users.userName, userEmail: users.userEmail });
   return row;
 };
