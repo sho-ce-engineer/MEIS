@@ -266,7 +266,11 @@
         ]"
       >
         <template v-slot:item="{ item }">
-          <v-dialog width="auto" scrollable>
+          <v-dialog
+            width="auto"
+            scrollable
+            @update:model-value="(isOpen) => isOpen && startEdit(item)"
+          >
             <template v-slot:activator="{ props: EquipmentEditActivaterProps }">
               <tr
                 v-bind="EquipmentEditActivaterProps"
@@ -284,7 +288,7 @@
               </tr></template
             >
             <template v-slot:default="{ isActive }">
-              <form>
+              <form v-if="editingItem">
                 <v-card
                   prepend-icon="mdi-clipboard-pulse-outline"
                   title="医療機器台帳　登録内容編集"
@@ -294,60 +298,60 @@
                   <v-card-text>
                     <v-text-field
                       label="院内管理ID"
-                      v-model="item.equipmentId"
+                      v-model="editingItem.equipmentId"
                       :rules="[rules.idreg]"
                       disabled
                     ></v-text-field>
                     <v-text-field
                       label="機器種別"
-                      v-model="item.equipmentType"
+                      v-model="editingItem.equipmentType"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="メーカー"
-                      v-model="item.equipmentManufacturer"
+                      v-model="editingItem.equipmentManufacturer"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="機器名称"
-                      v-model="item.equipmentName"
+                      v-model="editingItem.equipmentName"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="型番"
-                      v-model="item.equipmentModel"
+                      v-model="editingItem.equipmentModel"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="シリアル番号"
-                      v-model="item.equipmentSerialNumber"
+                      v-model="editingItem.equipmentSerialNumber"
                       :rules="[rules.required]"
                     ></v-text-field>
                     <v-text-field
                       label="設置保管場所"
-                      v-model="item.equipmentStorageLocation"
+                      v-model="editingItem.equipmentStorageLocation"
                     ></v-text-field>
                     <v-select
                       label="稼働状況"
                       :items="['active', 'inactive']"
-                      v-model="item.equipmentStatus"
+                      v-model="editingItem.equipmentStatus"
                       :rules="[rules.required]"
                     ></v-select>
                     <v-select
                       label="保守契約加入状況"
                       :items="['加入', '未加入']"
-                      v-model="item.equipmentMaintenanceContract"
+                      v-model="editingItem.equipmentMaintenanceContract"
                       :rules="[rules.required]"
                     ></v-select>
-                    <v-text-field
+                    <v-date-input
                       label="購入日"
-                      v-model="item.acquisitionDate"
-                      hint="yyyy-mm-ddの形式で入力してください。"
+                      :model-value="toAcquisitionDate(editingItem.acquisitionDate)"
+                      @update:model-value="editingItem.acquisitionDate = $event"
                       :rules="[rules.required]"
-                    ></v-text-field>
+                    ></v-date-input>
                     <v-textarea
                       label="備考"
-                      v-model="item.equipmentNotes"
+                      v-model="editingItem.equipmentNotes"
                     ></v-textarea>
                   </v-card-text>
                   <v-divider></v-divider>
@@ -361,7 +365,7 @@
                       color="primary"
                       text="保存する"
                       variant="flat"
-                      @click="updateRecord(item, isActive)"
+                      @click="updateRecord(editingItem, isActive)"
                     ></v-btn>
                   </v-card-actions>
                 </v-card>
@@ -381,6 +385,7 @@
 </template>
 
 <script setup lang="ts">
+import { parseISO } from 'date-fns';
 import { reactive, ref } from 'vue';
 
 interface EquipmentLedgerItem {
@@ -423,11 +428,23 @@ interface NewEquipmentPayload {
   equipmentStorageLocation?: string;
   equipmentStatus: string;
   equipmentMaintenanceContract: string;
-  acquisitionDate: string | null;
+  acquisitionDate: string | Date | null;
   equipmentNotes?: string;
 }
 
 const loading = ref(true);
+
+type EditingEquipmentItem = Omit<EquipmentLedgerItem, 'acquisitionDate'> & {
+  acquisitionDate: string | Date | null;
+};
+
+const editingItem = ref<EditingEquipmentItem | null>(null);
+const startEdit = (item: EquipmentLedgerItem) => {
+  editingItem.value = { ...item };
+};
+
+const toAcquisitionDate = (value: string | Date | null) =>
+  typeof value === 'string' ? parseISO(value) : value;
 const dialog = ref(false);
 
 //Alert
@@ -618,7 +635,7 @@ const handleUpdateOptions = (options: {
 };
 
 const updateRecord = async (
-  item: EquipmentLedgerItem,
+  item: EditingEquipmentItem,
   isActive: Ref<boolean>,
 ) => {
   try {
