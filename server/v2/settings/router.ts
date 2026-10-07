@@ -15,7 +15,7 @@ import { updateUserRole } from '~/server/v2/settings/admin/update-role/service';
 import { deleteUserRequestSchema } from './admin/delete-user/domain';
 import { deleteUser } from './admin/delete-user/service';
 import { inviteUserRequestSchema } from './admin/invite-user/domain';
-import { addInvitation } from './admin/invite-user/service';
+import { addInvitation, getInviterName } from './admin/invite-user/service';
 import { listUsersRequestSchema } from './admin/list-users/domain';
 import { updateUserRoleRequestSchema } from './admin/update-role/domain';
 import { updateUserDataRequestSchema } from './users/update-user-data/domain';
@@ -116,8 +116,32 @@ const app = new Hono<{ Variables: Variables }>()
     async (c) => {
       const facilityCode = c.get('facilityCode');
       const facilityName = c.get('facilityName');
+      const invitedByUserId = c.get('userId');
 
-      const { invitedByUserId, invitedByUserName, email } = c.req.valid('json');
+      const { email } = c.req.valid('json');
+
+      let invitedByUserName: Awaited<ReturnType<typeof getInviterName>>;
+
+      try {
+        invitedByUserName = await getInviterName({
+          userId: invitedByUserId,
+          facilityCode,
+        });
+      } catch (error) {
+        console.error('[settings/invite]Error getting inviter name:', error);
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました。',
+        });
+      }
+
+      if (!invitedByUserName) {
+        console.error(
+          `[settings/invite]Inviter not found for user_id: ${invitedByUserId}`,
+        );
+        throw new HTTPException(500, {
+          message: 'サーバーエラーが発生しました。',
+        });
+      }
 
       const inviteCode = generateInviteCode();
 

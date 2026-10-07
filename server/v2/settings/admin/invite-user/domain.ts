@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export const inviteUserRequestSchema = z.object({
-  invitedByUserId: z.string().min(1),
-  invitedByUserName: z.string().min(1),
+export const inviteUserRequestSchema = z.strictObject({
   email: z.string().min(1),
 });
