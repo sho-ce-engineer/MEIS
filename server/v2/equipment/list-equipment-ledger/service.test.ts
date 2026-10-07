@@ -27,7 +27,7 @@ function mockListQuery(rows: unknown[]) {
 }
 
 describe('listEquipmentLedger', () => {
-  it('DBから取得した行をitemsとして返し、totalを数値で返す', async () => {
+  it('DBから取得した行をitemsとして返し、購入日を日本時間のyyyy-MM-ddにし、totalを数値で返す', async () => {
     const listFromMock = mockListQuery([
       {
         equipmentId: 'EQ001',
@@ -37,7 +37,7 @@ describe('listEquipmentLedger', () => {
         equipmentModel: 'VT100',
         equipmentSerialNumber: 'SN001',
         equipmentStatus: 'active',
-        acquisitionDate: '2024-11-09',
+        acquisitionDate: '2024-11-08 15:00:00+00',
         equipmentMaintenanceContract: null,
       },
     ]);
@@ -63,6 +63,23 @@ describe('listEquipmentLedger', () => {
       acquisitionDate: '2024-11-09',
       equipmentMaintenanceContract: null,
     });
+  });
+
+  it('購入日がnullの場合、nullのまま返す', async () => {
+    const listFromMock = mockListQuery([
+      { equipmentId: 'EQ001', acquisitionDate: null },
+    ]);
+    const totalWhereMock = vi.fn().mockResolvedValue([{ total: 1 }]);
+    const totalFromMock = vi.fn().mockReturnValue({ where: totalWhereMock });
+
+    selectMock
+      .mockReturnValueOnce({ from: listFromMock })
+      .mockReturnValueOnce({ from: totalFromMock });
+
+    const { listEquipmentLedger } = await import('./service');
+    const result = await listEquipmentLedger(baseParams);
+
+    expect(result.items[0]?.acquisitionDate).toBeNull();
   });
 
   it('DBクエリが失敗した場合、エラーをそのまま伝播する', async () => {
