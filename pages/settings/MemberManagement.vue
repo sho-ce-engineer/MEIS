@@ -162,8 +162,6 @@ const loading = ref(true);
 // ユーザーデータ
 const { data } = useAuth();
 const sessionData = computed(() => data.value as SessionData | null);
-const currentUserId = computed(() => sessionData.value?.userId);
-const currentUserName = computed(() => sessionData.value?.name);
 const facilityCode = computed(() => sessionData.value?.facilityCode);
 const userRole = computed(() => sessionData.value?.role);
 
@@ -364,8 +362,6 @@ const sendInvite = async () => {
     await $fetch('/api/v2/settings/invitations', {
       method: 'POST',
       body: {
-        invitedByUserId: currentUserId.value,
-        invitedByUserName: currentUserName.value,
         email: inviteEmail.value,
       },
     });

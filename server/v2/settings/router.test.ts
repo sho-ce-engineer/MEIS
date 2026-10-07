@@ -29,11 +29,13 @@ vi.mock('./admin/list-users/service', () => ({
 }));
 
 const addInvitationMock = vi.fn();
+const getInviterNameMock = vi.fn();
 const sendMailMock = vi.fn();
 const makeInvitationMailTxtMock = vi.fn();
 
 vi.mock('./admin/invite-user/service', () => ({
   addInvitation: (...args: unknown[]) => addInvitationMock(...args),
+  getInviterName: (...args: unknown[]) => getInviterNameMock(...args),
 }));
 
 vi.mock('~/server/mail/send-mail', () => ({
@@ -434,14 +436,14 @@ describe('settings router: POST /users', () => {
 
 describe('settings router: POST /invitations', () => {
   const validBody = {
-    invitedByUserId: 'user-1',
-    invitedByUserName: '山田太郎',
     email: 'invitee@example.com',
   };
 
   beforeEach(() => {
     vi.resetModules();
     addInvitationMock.mockReset();
+    getInviterNameMock.mockReset();
+    getInviterNameMock.mockResolvedValue('山田太郎');
     sendMailMock.mockReset();
     makeInvitationMailTxtMock.mockReset();
     makeInvitationMailTxtMock.mockReturnValue({
@@ -528,15 +530,86 @@ describe('settings router: POST /invitations', () => {
     expect(res.status).toBe(500);
   });
 
+  it('招待者のIDはトークンのuserId、名前はDBの値を使う', async () => {
+    addInvitationMock.mockResolvedValue({
+      id: 1,
+      inviteCode: 'test-invite-code',
+    });
+    sendMailMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001', 'user-1');
+    const res = await app.request('/settings/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(204);
+    expect(getInviterNameMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      facilityCode: 'FAC001',
+    });
+    expect(addInvitationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ invitedByUserId: 'user-1' }),
+    );
+    expect(makeInvitationMailTxtMock).toHaveBeenCalledWith(
+      expect.objectContaining({ invitedByUserName: '山田太郎' }),
+    );
+  });
+
+  it.each([
+    ['invitedByUserId', 'other-user'],
+    ['invitedByUserName', 'なりすまし'],
+  ])('bodyに%sが含まれる場合、400になり何もしない', async (key, value) => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, [key]: value }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(getInviterNameMock).not.toHaveBeenCalled();
+    expect(addInvitationMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
+  it('招待者の名前が取得できない場合、500になり招待レコードは作らない', async () => {
+    getInviterNameMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+    expect(addInvitationMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
+  it('招待者の名前の取得でDBエラーの場合、500になり招待レコードは作らない', async () => {
+    getInviterNameMock.mockRejectedValue(new Error('DB接続エラー'));
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/settings/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validBody),
+    });
+
+    expect(res.status).toBe(500);
+    expect(addInvitationMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it('emailが無い場合、400になる', async () => {
     const app = await buildAppWithFacilityCode('FAC001');
     const res = await app.request('/settings/invitations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        invitedByUserId: 'user-1',
-        invitedByUserName: '山田太郎',
-      }),
+      body: JSON.stringify({}),
     });
 
     expect(res.status).toBe(400);

@@ -123,7 +123,13 @@ export async function listInspectionHistory({
     .from(inspectionResults)
     .innerJoin(
       inspectionItems,
-      eq(inspectionResults.inspectionItemId, inspectionItems.inspectionItemId),
+      and(
+        eq(
+          inspectionResults.inspectionItemId,
+          inspectionItems.inspectionItemId,
+        ),
+        eq(inspectionResults.facilityCode, inspectionItems.facilityCode),
+      ),
     )
     .innerJoin(
       equipmentLedger,
@@ -133,9 +139,16 @@ export async function listInspectionHistory({
           inspectionResults.equipmentSerialNumber,
           equipmentLedger.equipmentSerialNumber,
         ),
+        eq(inspectionResults.facilityCode, equipmentLedger.facilityCode),
       ),
     )
-    .innerJoin(users, eq(inspectionResults.userId, users.userId))
+    .innerJoin(
+      users,
+      and(
+        eq(inspectionResults.userId, users.userId),
+        eq(inspectionResults.facilityCode, users.facilityCode),
+      ),
+    )
     .where(whereCondition)
     .groupBy(
       inspectionResults.equipmentId,
@@ -166,7 +179,13 @@ export async function listInspectionHistory({
     .from(inspectionResults)
     .innerJoin(
       inspectionItems,
-      eq(inspectionResults.inspectionItemId, inspectionItems.inspectionItemId),
+      and(
+        eq(
+          inspectionResults.inspectionItemId,
+          inspectionItems.inspectionItemId,
+        ),
+        eq(inspectionResults.facilityCode, inspectionItems.facilityCode),
+      ),
     )
     .innerJoin(
       equipmentLedger,
@@ -176,6 +195,7 @@ export async function listInspectionHistory({
           inspectionResults.equipmentSerialNumber,
           equipmentLedger.equipmentSerialNumber,
         ),
+        eq(inspectionResults.facilityCode, equipmentLedger.facilityCode),
       ),
     )
     .where(whereCondition);

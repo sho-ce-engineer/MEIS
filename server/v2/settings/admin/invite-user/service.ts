@@ -1,5 +1,29 @@
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { invitations } from '~/server/db/schema';
+import { invitations, users } from '~/server/db/schema';
+
+export interface GetInviterNameParams {
+  userId: string;
+  facilityCode: string;
+}
+
+export const getInviterName = async ({
+  userId,
+  facilityCode,
+}: GetInviterNameParams) => {
+  const [inviter] = await db
+    .select({ userName: users.userName })
+    .from(users)
+    .where(
+      and(
+        eq(users.userId, userId),
+        eq(users.facilityCode, facilityCode),
+        isNull(users.deletedAt),
+      ),
+    );
+
+  return inviter?.userName;
+};
 
 export interface AddInvitationParams {
   email: string;
