@@ -526,6 +526,34 @@ describe('equipment router: POST /add', () => {
     );
   });
 
+  it('購入日がyyyy-MM-ddの場合、日本時間の0時にしてaddEquipmentへ渡す', async () => {
+    addEquipmentMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, acquisitionDate: '2026-10-15' }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(addEquipmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ acquisitionDate: '2026-10-14T15:00:00.000Z' }),
+    );
+  });
+
+  it('購入日が受け付けない形の場合、400になり登録しない', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, acquisitionDate: '2026/10/15' }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(addEquipmentMock).not.toHaveBeenCalled();
+  });
+
   it('一意制約違反（23505）の場合、409になる', async () => {
     const pgError = new DatabaseError(
       'duplicate key value violates unique constraint',
