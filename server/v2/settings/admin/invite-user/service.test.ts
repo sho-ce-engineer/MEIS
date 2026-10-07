@@ -1,10 +1,14 @@
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
 
 const insertMock = vi.fn();
+const selectMock = vi.fn();
 
 vi.mock('~/server/db', () => ({
   db: {
     insert: (...args: unknown[]) => insertMock(...args),
+    select: (...args: unknown[]) => selectMock(...args),
   },
 }));
 
@@ -54,5 +58,58 @@ describe('addInvitation', () => {
     const { addInvitation } = await import('./service');
 
     await expect(addInvitation(baseParams)).rejects.toThrow('DB接続エラー');
+  });
+});
+
+describe('getInviterName', () => {
+  const params = { userId: 'user-1', facilityCode: 'FAC001' };
+
+  const buildSelectChain = (rows: unknown[]) => {
+    const whereMock = vi.fn().mockResolvedValue(rows);
+    selectMock.mockReturnValue({ from: () => ({ where: whereMock }) });
+    return { whereMock };
+  };
+
+  it('ユーザーが見つかった場合、名前を返す', async () => {
+    buildSelectChain([{ userName: '山田太郎' }]);
+
+    const { getInviterName } = await import('./service');
+
+    expect(await getInviterName(params)).toBe('山田太郎');
+  });
+
+  it('ユーザーが見つからない場合、undefinedを返す', async () => {
+    buildSelectChain([]);
+
+    const { getInviterName } = await import('./service');
+
+    expect(await getInviterName(params)).toBeUndefined();
+  });
+
+  it('ユーザーID・施設コード・削除済みでないことを条件に検索する', async () => {
+    const { whereMock } = buildSelectChain([]);
+
+    const { getInviterName } = await import('./service');
+    await getInviterName(params);
+
+    const { sql, params: values } = new PgDialect().sqlToQuery(
+      whereMock.mock.lastCall?.[0] as SQL,
+    );
+    expect(sql).toBe(
+      '("users"."user_id" = $1 and "users"."facility_code" = $2 and "users"."deleted_at" is null)',
+    );
+    expect(values).toEqual(['user-1', 'FAC001']);
+  });
+
+  it('DBクエリが失敗した場合、エラーをそのまま伝播する', async () => {
+    selectMock.mockReturnValue({
+      from: () => ({
+        where: vi.fn().mockRejectedValue(new Error('DB接続エラー')),
+      }),
+    });
+
+    const { getInviterName } = await import('./service');
+
+    await expect(getInviterName(params)).rejects.toThrow('DB接続エラー');
   });
 });

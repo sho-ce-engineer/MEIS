@@ -1,4 +1,7 @@
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
+import { equipmentLedger, inspectionItems, users } from '~/server/db/schema';
 
 const selectMock = vi.fn();
 
@@ -37,6 +40,16 @@ function createTotalChainMock(total: string) {
   };
 }
 
+const dialect = new PgDialect();
+
+function findJoinConditionSql(
+  innerJoinMock: ReturnType<typeof vi.fn>,
+  table: unknown,
+) {
+  const call = innerJoinMock.mock.calls.find(([joined]) => joined === table);
+  return call ? dialect.sqlToQuery(call[1] as SQL).sql : undefined;
+}
+
 describe('listInspectionHistory', () => {
   it('DBから取得した行をitemsとして返し、inspectionDateをJST日付文字列に整形する', async () => {
     selectMock
@@ -68,6 +81,43 @@ describe('listInspectionHistory', () => {
     expect(result.items[0].equipmentId).toBe('EQ001');
     expect(result.items[0].inspectionResults).toEqual({
       ITEM001: { resultId: 'R001', result: '正常', notes: null },
+    });
+  });
+
+  describe('JOINの条件に、点検結果と同じ施設コードの条件を含める', () => {
+    it.each([
+      ['inspection_items', inspectionItems],
+      ['equipment_ledger', equipmentLedger],
+      ['users', users],
+    ])('一覧のクエリ：%s', async (tableName, table) => {
+      const listChain = createListChainMock([]);
+      selectMock
+        .mockReturnValueOnce(listChain)
+        .mockReturnValueOnce(createTotalChainMock('0'));
+
+      const { listInspectionHistory } = await import('./service');
+      await listInspectionHistory(baseParams);
+
+      expect(findJoinConditionSql(listChain.innerJoin, table)).toContain(
+        `"inspection_results"."facility_code" = "${tableName}"."facility_code"`,
+      );
+    });
+
+    it.each([
+      ['inspection_items', inspectionItems],
+      ['equipment_ledger', equipmentLedger],
+    ])('件数のクエリ：%s', async (tableName, table) => {
+      const totalChain = createTotalChainMock('0');
+      selectMock
+        .mockReturnValueOnce(createListChainMock([]))
+        .mockReturnValueOnce(totalChain);
+
+      const { listInspectionHistory } = await import('./service');
+      await listInspectionHistory(baseParams);
+
+      expect(findJoinConditionSql(totalChain.innerJoin, table)).toContain(
+        `"inspection_results"."facility_code" = "${tableName}"."facility_code"`,
+      );
     });
   });
 
