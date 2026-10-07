@@ -28,3 +28,10 @@
 - テストは実装と同じ階層に`xxx.test.ts`
   - `service.ts` → `service.test.ts`（DB層のモック、`vi.mock('~/server/db', ...)`）
   - 親`router.ts` → `router.test.ts`（service層のモック、`app.request()`でHTTP経由のテスト）
+
+## 日付・日時
+- DBの日付・日時の列は、すべて`timestamptz`（Drizzleでは`timestamp(…, { withTimezone: true, mode: 'string' })`）とする。`date`型は使わない
+- 日付だけの値（購入日など）は、日本時間のその日の0時として保存する
+  - 時差の付いた日時（例：`2026-10-14T15:00:00.000Z`）は、その時点のまま保存する
+  - 時差の無い日付（例：`2026-10-15`）は、受け取るときに日本時間の0時に直す
+- 日付だけを返すときは、`formatInTimeZone(value, 'Asia/Tokyo', 'yyyy-MM-dd')`で日本時間の日付に直して返す
