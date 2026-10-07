@@ -1,3 +1,4 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import { and, asc, count, desc, eq, ilike, type SQL } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { equipmentLedger } from '~/server/db/schema';
@@ -94,10 +95,17 @@ export async function listEquipmentLedger({
     .limit(itemsPerPage)
     .offset((page - 1) * itemsPerPage);
 
+  const formattedRows = rows.map((row) => ({
+    ...row,
+    acquisitionDate: row.acquisitionDate
+      ? formatInTimeZone(row.acquisitionDate, 'Asia/Tokyo', 'yyyy-MM-dd')
+      : row.acquisitionDate,
+  }));
+
   const [{ total }] = await db
     .select({ total: count() })
     .from(equipmentLedger)
     .where(whereCondition);
 
-  return { items: rows, total };
+  return { items: formattedRows, total };
 }
