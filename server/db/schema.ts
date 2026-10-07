@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
-  date,
   foreignKey,
   integer,
   numeric,
@@ -202,7 +201,10 @@ export const equipmentLedger = pgTable(
     equipmentSerialNumber: varchar('equipment_serial_number', { length: 100 }),
     equipmentType: varchar('equipment_type', { length: 100 }),
     facilityCode: varchar('facility_code', { length: 50 }).notNull(),
-    acquisitionDate: date('acquisition_date'),
+    acquisitionDate: timestamp('acquisition_date', {
+      withTimezone: true,
+      mode: 'string',
+    }),
     equipmentStatus: varchar('equipment_status', { length: 50 }).default(
       'active',
     ),

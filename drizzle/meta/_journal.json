@@ -36,6 +36,20 @@
       "when": 1791207100781,
       "tag": "0004_bind_inspection_results_fks_to_facility",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791377781314,
+      "tag": "0005_convert_acquisition_date_to_timestamptz",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791377793046,
+      "tag": "0006_sync_snapshot_acquisition_date_timestamptz",
+      "breakpoints": true
     }
   ]
 }
