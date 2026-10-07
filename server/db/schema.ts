@@ -47,7 +47,7 @@ export const users = pgTable(
     googleId: varchar('google_id', { length: 100 }),
     userName: varchar('user_name', { length: 100 }).notNull(),
     userEmail: varchar('user_email', { length: 255 }).notNull(),
-    facilityCode: varchar('facility_code', { length: 50 }),
+    facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     userRole: varchar('user_role', { length: 50 }).notNull(),
     createdAt: timestamp('created_at', {
       withTimezone: true,
@@ -72,6 +72,10 @@ export const users = pgTable(
     unique('users_user_id_key').on(table.userId),
     unique('users_google_id_key').on(table.googleId),
     unique('users_user_email_key').on(table.userEmail),
+    unique('users_user_id_facility_code_key').on(
+      table.userId,
+      table.facilityCode,
+    ),
   ],
 );
 
@@ -79,7 +83,7 @@ export const inspectionItems = pgTable(
   'inspection_items',
   {
     id: serial().primaryKey().notNull(),
-    facilityCode: varchar('facility_code', { length: 50 }),
+    facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     equipmentType: varchar('equipment_type', { length: 100 }),
     equipmentModel: varchar('equipment_model', { length: 100 }),
     inspectionItemId: varchar('inspection_item_id', { length: 50 }).notNull(),
@@ -106,6 +110,10 @@ export const inspectionItems = pgTable(
     unique('inspection_items_inspection_item_id_key').on(
       table.inspectionItemId,
     ),
+    unique('inspection_items_inspection_item_id_facility_code_key').on(
+      table.inspectionItemId,
+      table.facilityCode,
+    ),
   ],
 );
 
@@ -114,15 +122,15 @@ export const inspectionResults = pgTable(
   {
     id: serial().primaryKey().notNull(),
     resultId: varchar('result_id', { length: 100 }).notNull(),
-    inspectionItemId: varchar('inspection_item_id', { length: 50 }),
+    inspectionItemId: varchar('inspection_item_id', { length: 50 }).notNull(),
     equipmentSerialNumber: varchar('equipment_serial_number', { length: 100 }),
     equipmentId: varchar('equipment_id', { length: 50 }),
     inspectionDate: timestamp('inspection_date', {
       withTimezone: true,
       mode: 'string',
     }).notNull(),
-    userId: varchar('user_id', { length: 50 }),
-    facilityCode: varchar('facility_code', { length: 50 }),
+    userId: varchar('user_id', { length: 50 }).notNull(),
+    facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     result: varchar({ length: 50 }).notNull(),
     resultNotes: text('result_notes'),
     createdAt: timestamp('created_at', {
@@ -141,14 +149,17 @@ export const inspectionResults = pgTable(
       name: 'inspection_results_facility_code_fkey',
     }),
     foreignKey({
-      columns: [table.inspectionItemId],
-      foreignColumns: [inspectionItems.inspectionItemId],
-      name: 'inspection_results_inspection_item_id_fkey',
+      columns: [table.inspectionItemId, table.facilityCode],
+      foreignColumns: [
+        inspectionItems.inspectionItemId,
+        inspectionItems.facilityCode,
+      ],
+      name: 'inspection_results_inspection_item_id_facility_code_fkey',
     }),
     foreignKey({
-      columns: [table.userId],
-      foreignColumns: [users.userId],
-      name: 'inspection_results_user_id_fkey',
+      columns: [table.userId, table.facilityCode],
+      foreignColumns: [users.userId, users.facilityCode],
+      name: 'inspection_results_user_id_facility_code_fkey',
     }),
     foreignKey({
       columns: [table.equipmentId, table.facilityCode],
@@ -190,7 +201,7 @@ export const equipmentLedger = pgTable(
     equipmentManufacturer: varchar('equipment_manufacturer', { length: 100 }),
     equipmentSerialNumber: varchar('equipment_serial_number', { length: 100 }),
     equipmentType: varchar('equipment_type', { length: 100 }),
-    facilityCode: varchar('facility_code', { length: 50 }),
+    facilityCode: varchar('facility_code', { length: 50 }).notNull(),
     acquisitionDate: date('acquisition_date'),
     equipmentStatus: varchar('equipment_status', { length: 50 }).default(
       'active',

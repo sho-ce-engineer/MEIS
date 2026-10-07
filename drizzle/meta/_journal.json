@@ -22,6 +22,20 @@
       "when": 1791098887789,
       "tag": "0002_add_deleted_at_to_users",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791207093434,
+      "tag": "0003_add_facility_unique_and_not_null",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791207100781,
+      "tag": "0004_bind_inspection_results_fks_to_facility",
+      "breakpoints": true
     }
   ]
 }
