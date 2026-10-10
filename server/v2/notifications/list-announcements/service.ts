@@ -60,7 +60,8 @@ export async function listAnnouncements({
       : row.createdAt,
   }));
 
-  const [{ total }] = await db.select({ total: count() }).from(announcements);
+  const [countRow] = await db.select({ total: count() }).from(announcements);
+  const total = countRow?.total ?? 0;
 
   return { items: formattedRows, total };
 }

@@ -102,10 +102,11 @@ export async function listEquipmentLedger({
       : row.acquisitionDate,
   }));
 
-  const [{ total }] = await db
+  const [countRow] = await db
     .select({ total: count() })
     .from(equipmentLedger)
     .where(whereCondition);
+  const total = countRow?.total ?? 0;
 
   return { items: formattedRows, total };
 }

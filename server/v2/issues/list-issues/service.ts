@@ -85,10 +85,11 @@ export async function listIssues({
       : row.reportedDate,
   }));
 
-  const [{ total }] = await db
+  const [countRow] = await db
     .select({ total: count() })
     .from(issues)
     .where(whereCondition);
+  const total = countRow?.total ?? 0;
 
   return { items: formattedRows, total };
 }
