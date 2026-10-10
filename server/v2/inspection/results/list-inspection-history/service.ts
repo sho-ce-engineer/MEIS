@@ -172,7 +172,7 @@ export async function listInspectionHistory({
       : row.inspectionDate,
   }));
 
-  const [{ total }] = await db
+  const [countRow] = await db
     .select({
       total: sql<string>`COUNT(DISTINCT (${inspectionResults.equipmentId}, ${inspectionResults.equipmentSerialNumber}, ${inspectionResults.inspectionDate}, ${inspectionResults.userId}))`,
     })
@@ -200,5 +200,5 @@ export async function listInspectionHistory({
     )
     .where(whereCondition);
 
-  return { items: formattedRows, total: Number(total) };
+  return { items: formattedRows, total: Number(countRow?.total ?? 0) };
 }

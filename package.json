@@ -13,7 +13,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "start": "node ./.output/server/index.mjs",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "biome ci .",
+    "typecheck": "nuxi typecheck",
+    "typecheck:server": "tsc --noEmit -p tsconfig.server-v2.json"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.1",

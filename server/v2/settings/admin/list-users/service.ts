@@ -39,10 +39,11 @@ export const listUsers = async ({
     .limit(itemsPerPage)
     .offset((page - 1) * itemsPerPage);
 
-  const [{ total }] = await db
+  const [countRow] = await db
     .select({ total: count() })
     .from(users)
     .where(and(eq(users.facilityCode, facilityCode), isNull(users.deletedAt)));
+  const total = countRow?.total ?? 0;
 
   return { items: rows, total };
 };

@@ -13,9 +13,7 @@ export async function saveSortedInspectionItems({
 }: SaveSortedInspectionItemsParams) {
   await db.transaction(async (tx) => {
     for (const items of Object.values(updatedItems)) {
-      for (let i = 0; i < items.length; i++) {
-        const { inspectionItemId } = items[i];
-
+      for (const [i, { inspectionItemId }] of items.entries()) {
         await tx
           .update(inspectionItems)
           .set({ inspectionSortNumber: i + 1 })

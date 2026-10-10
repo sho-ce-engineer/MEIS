@@ -38,7 +38,7 @@ export async function addInspectionItem({
   lowerLimit,
   upperLimit,
 }: AddInspectionItemParams) {
-  const [{ maxSortNumber }] = await db
+  const [maxRow] = await db
     .select({ maxSortNumber: max(inspectionItems.inspectionSortNumber) })
     .from(inspectionItems)
     .where(
@@ -49,7 +49,7 @@ export async function addInspectionItem({
       ),
     );
 
-  const newSortNumber = (maxSortNumber ?? 0) + 1;
+  const newSortNumber = (maxRow?.maxSortNumber ?? 0) + 1;
 
   const [row] = await db
     .insert(inspectionItems)

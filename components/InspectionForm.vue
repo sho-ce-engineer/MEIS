@@ -434,7 +434,7 @@ const generateResultData = (item: InspectionItem) => {
   const inspectionResultId = generateInspectionResultId(item.inspectionItemId);
 
   // 点検結果を判定（OK/NG/日付/未入力）
-  let result;
+  let result: string;
   const value = inputResult.value[item.inspectionItemId];
   if (value === true) {
     result = 'OK';

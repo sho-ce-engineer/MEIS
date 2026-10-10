@@ -26,7 +26,7 @@ describe('verifyRecaptcha', () => {
 
     await expect(verifyRecaptcha('token')).resolves.toBe(true);
 
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe('https://www.google.com/recaptcha/api/siteverify');
     expect(String(init.body)).toBe(
       'secret=test-recaptcha-secret&response=token',

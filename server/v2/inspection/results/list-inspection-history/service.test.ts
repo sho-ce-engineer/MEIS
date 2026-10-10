@@ -77,9 +77,9 @@ describe('listInspectionHistory', () => {
     const result = await listInspectionHistory(baseParams);
 
     expect(result.total).toBe(1);
-    expect(result.items[0].inspectionDate).toBe('2026-09-14');
-    expect(result.items[0].equipmentId).toBe('EQ001');
-    expect(result.items[0].inspectionResults).toEqual({
+    expect(result.items[0]?.inspectionDate).toBe('2026-09-14');
+    expect(result.items[0]?.equipmentId).toBe('EQ001');
+    expect(result.items[0]?.inspectionResults).toEqual({
       ITEM001: { resultId: 'R001', result: '正常', notes: null },
     });
   });

@@ -49,7 +49,7 @@ describe('listIssues', () => {
     const result = await listIssues(baseParams);
 
     expect(result.total).toBe(1);
-    expect(result.items[0].reportedDate).toBe('2026-09-14');
+    expect(result.items[0]?.reportedDate).toBe('2026-09-14');
   });
 
   it('DBクエリが失敗した場合、エラーをそのまま伝播する', async () => {

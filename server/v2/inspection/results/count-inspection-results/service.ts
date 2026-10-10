@@ -11,7 +11,7 @@ export async function countInspectionResults({
   facilityCode,
   jpyDate,
 }: CountInspectionResultsParams) {
-  const [{ count: resultCount }] = await db
+  const [countRow] = await db
     .select({
       count: sql<string>`COUNT(DISTINCT ${inspectionResults.inspectionDate})`,
     })
@@ -23,5 +23,5 @@ export async function countInspectionResults({
       ),
     );
 
-  return Number(resultCount);
+  return Number(countRow?.count ?? 0);
 }

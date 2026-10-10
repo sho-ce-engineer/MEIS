@@ -3,7 +3,7 @@ import { db } from '~/server/db';
 import { issues } from '~/server/db/schema';
 
 export async function getTodayIssuesCount(facilityCode: string) {
-  const [{ count: todayCount }] = await db
+  const [countRow] = await db
     .select({ count: count() })
     .from(issues)
     .where(
@@ -14,5 +14,5 @@ export async function getTodayIssuesCount(facilityCode: string) {
       ),
     );
 
-  return todayCount;
+  return countRow?.count ?? 0;
 }
