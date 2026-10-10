@@ -19,7 +19,7 @@ export default defineNuxtConfig({
       },
       script: [
         {
-          src: 'https://www.google.com/recaptcha/api.js',
+          src: 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit',
           async: true,
           defer: true,
         },

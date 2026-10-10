@@ -8,6 +8,11 @@ declare global {
       options: { sitekey: string },
     ) => void;
   };
+
+  interface Window {
+    grecaptcha?: typeof grecaptcha;
+    onRecaptchaLoad?: () => void;
+  }
 }
 
 export {};
