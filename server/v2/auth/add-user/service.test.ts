@@ -167,7 +167,7 @@ describe('addUser', () => {
     expect(result).toEqual(returned);
     expect(result).not.toHaveProperty('password');
 
-    const inserted = valuesMock.mock.calls[0][0];
+    const inserted = valuesMock.mock.calls[0]?.[0];
     expect(inserted).toEqual(
       expect.objectContaining({
         userId: 'FAC00120260101090000',
@@ -183,7 +183,9 @@ describe('addUser', () => {
       bcrypt.compare('plain-password', inserted.password),
     ).resolves.toBe(true);
 
-    const returningColumns = Object.keys(returningMock.mock.calls[0][0]);
+    const returningColumns = Object.keys(
+      returningMock.mock.calls[0]?.[0] ?? {},
+    );
     expect(returningColumns).not.toContain('password');
   });
 
