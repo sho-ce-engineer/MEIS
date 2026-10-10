@@ -52,7 +52,7 @@
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.31.10",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7",
+    "vitest": "^4.1.11",
     "vue-tsc": "^2.2.12"
   },
   "allowScripts": {
