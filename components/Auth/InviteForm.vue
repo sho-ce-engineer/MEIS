@@ -149,15 +149,7 @@ const registerWithInvite = async () => {
 };
 
 onMounted(() => {
-  if (grecaptcha) {
-    grecaptcha.ready(() => {
-      grecaptcha.render('g-recaptcha', {
-        sitekey: siteKey,
-      });
-    });
-  } else {
-    console.error('reCAPTCHA is not loaded');
-  }
+  renderRecaptcha('g-recaptcha', siteKey);
 });
 </script>
 <style scoped>
