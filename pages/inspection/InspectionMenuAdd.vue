@@ -619,9 +619,9 @@ import draggable from 'vuedraggable';
 // groupedInspectionItemsをcomputedGroupedItemsで更新
 const groupedInspectionItems = reactive<Record<string, InspectionItem[]>>({});
 watchEffect(() => {
-  Object.keys(groupedInspectionItems).forEach(
-    (key) => delete groupedInspectionItems[key],
-  );
+  Object.keys(groupedInspectionItems).forEach((key) => {
+    delete groupedInspectionItems[key];
+  });
   Object.assign(groupedInspectionItems, computedGroupedItems.value);
 });
 
