@@ -547,7 +547,7 @@ describe('equipment router: POST /add', () => {
     const res = await app.request('/equipment/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...validBody, acquisitionDate: '2026/10/15' }),
+      body: JSON.stringify({ ...validBody, acquisitionDate: '令和8年' }),
     });
 
     expect(res.status).toBe(400);
@@ -810,6 +810,69 @@ describe('equipment router: POST /import', () => {
         }),
       ],
     });
+  });
+
+  it('購入日が年だけ・年月だけの行は、その年の1月1日・その月の1日の日本時間0時にしてimportEquipmentへ渡す', async () => {
+    importEquipmentMock.mockResolvedValue(undefined);
+
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ledgerData: [
+          {
+            equipmentId: 'EQ001',
+            equipmentName: '人工呼吸器A',
+            acquisitionDate: '2026',
+          },
+          {
+            equipmentId: 'EQ002',
+            equipmentName: '人工呼吸器B',
+            acquisitionDate: '2026年4月',
+          },
+        ],
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(importEquipmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ledgerData: [
+          expect.objectContaining({
+            acquisitionDate: '2025-12-31T15:00:00.000Z',
+          }),
+          expect.objectContaining({
+            acquisitionDate: '2026-03-31T15:00:00.000Z',
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('購入日が受け付けない形の行が1行でもある場合、400になり取り込まない', async () => {
+    const app = await buildAppWithFacilityCode('FAC001');
+    const res = await app.request('/equipment/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ledgerData: [
+          {
+            equipmentId: 'EQ001',
+            equipmentName: '人工呼吸器A',
+            acquisitionDate: '2026',
+          },
+          {
+            equipmentId: 'EQ002',
+            equipmentName: '人工呼吸器B',
+            acquisitionDate: '令和8年',
+          },
+        ],
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(importEquipmentMock).not.toHaveBeenCalled();
   });
 
   it('トランザクションが失敗した場合、500になる', async () => {
