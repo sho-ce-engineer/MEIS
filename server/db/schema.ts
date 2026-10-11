@@ -304,7 +304,7 @@ export const issues = pgTable(
       name: 'fk_facility_code',
     }),
     foreignKey({
-      columns: [table.facilityCode, table.equipmentId],
+      columns: [table.equipmentId, table.facilityCode],
       foreignColumns: [
         equipmentLedger.equipmentId,
         equipmentLedger.facilityCode,
@@ -380,7 +380,7 @@ export const equipmentLoans = pgTable(
       name: 'equipment_loans_facility_code_fkey',
     }).onDelete('cascade'),
     foreignKey({
-      columns: [table.facilityCode, table.equipmentId],
+      columns: [table.equipmentId, table.facilityCode],
       foreignColumns: [
         equipmentLedger.equipmentId,
         equipmentLedger.facilityCode,
