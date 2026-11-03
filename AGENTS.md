@@ -44,6 +44,11 @@ Vue側（frontend）のテストは現時点で未整備。
   - バックエンドは処理を行い、結果を事実（状態・値）として返す
   - 画面に出す文面や表示方法は、フロントエンドで決める
 
+### 設計判断の記録（ADR）
+- PJ全体に長く効く設計判断は、ADRとして`docs/decisions/`に記録する
+- 書く基準・フォーマット・運用ルールは [docs/decisions/README.md](docs/decisions/README.md) を参照
+- 設計・アーキテクチャに関わる変更の前に、`accepted`のADRを確認すること
+
 ## コードスタイル / Code Style
 - フォーマッター、リンター: **Biome** を使用（`npx biome check --write .` でソースコードを整形・import整理）
 - ブランチ名は <type>/<内容をkebab-case> とし、typeはConventional Commitsのtype語彙（feat/fix/chore/refactor/docsなど）から選ぶ。
@@ -64,7 +69,7 @@ Vue側（frontend）のテストは現時点で未整備。
     - 例）<type>(対象レイヤー、apiやwebなど): < 日本語で一行で完結にまとめる >
     - 例）大きなPJのissueの場合は、「<type>(対象レイヤー/PJの略):~」
 - 詳細な内容は箇条書きで、日本語で簡潔にまとめる。AIのシグネチャは含まない
-- コミットメッセージは"何をしたか"だけ書く。"なぜそう設計したか"はPR descriptionで説明する
+- コミットメッセージは"何をしたか"だけ書く。"なぜそう設計したか"はPR descriptionで説明する（PJ全体に効く判断はADRに記録し、PRからリンクする）
 - mainに直接Commitする場合は、設計意図をコミットメッセージに含んで良い。ただし、長文にならないよう端的にまとめること
 
 ## 参考文献
